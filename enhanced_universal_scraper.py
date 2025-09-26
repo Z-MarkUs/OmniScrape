@@ -28,7 +28,6 @@ import nltk
 # Download required NLTK data
 try:
     nltk.download('punkt', quiet=True)
-    nltk.download('punkt_tab', quiet=True)
     nltk.download('stopwords', quiet=True)
 except:
     pass
@@ -337,7 +336,9 @@ class EnhancedUniversalWebScraper:
     
     def __init__(self, scrapegraph_api_key: Optional[str] = None,
                  cache_size: int = 1000, cache_ttl_hours: int = 24,
-                 enable_monitoring: bool = True):
+                 enable_monitoring: bool = True,
+                 user_agent: str = "Mozilla/5.0 (UniversalScraper)",
+                 request_timeout: int = 20):
         """
         Initialize the Enhanced Universal Web Scraper
         
@@ -349,6 +350,8 @@ class EnhancedUniversalWebScraper:
         """
         self.scrapegraph_api_key = scrapegraph_api_key or os.getenv('SCRAPEGRAPH_API_KEY')
         self.scrapegraph_client = None
+        self.user_agent = user_agent
+        self.request_timeout = request_timeout
         
         # Initialize components
         self.method_selector = MethodSelectionEngine()
@@ -391,6 +394,13 @@ class EnhancedUniversalWebScraper:
         
         # Execute scraping with retry logic
         result = self._execute_with_retry(url, method, prompt, priority, **kwargs)
+        
+        # Normalize data to a consistent schema
+        try:
+            result.data = self._normalize_data(result.data, method)
+        except Exception as _:
+            # Keep original data if normalization fails
+            pass
         result.execution_time = time.time() - start_time
         result.priority = priority
         
@@ -527,7 +537,8 @@ class EnhancedUniversalWebScraper:
     def _scrape_with_newspaper3k(self, url: str, **kwargs) -> ScrapingResult:
         """Enhanced newspaper3k scraping with better error handling"""
         try:
-            article = Article(url)
+            # Apply user-agent via config where supported
+            article = Article(url, browser_user_agent=self.user_agent, request_timeout=self.request_timeout)
             article.download()
             article.parse()
             
@@ -576,6 +587,33 @@ class EnhancedUniversalWebScraper:
             return 0
         word_count = len(text.split())
         return max(1, word_count // 200)
+
+    def _normalize_data(self, raw: Dict[str, Any], method: ScrapingMethod) -> Dict[str, Any]:
+        """Normalize method-specific data into a unified schema.
+
+        Unified fields: title, text, html, images, videos, keywords, summary,
+        url, top_image, publish_date, authors. Any extras go under metadata.method_details.
+        """
+        if not isinstance(raw, dict):
+            return {'raw': raw}
+        unified: Dict[str, Any] = {
+            'title': raw.get('title'),
+            'text': raw.get('text') or raw.get('content') or raw.get('article_text'),
+            'html': raw.get('html'),
+            'images': raw.get('images') or raw.get('image_urls'),
+            'videos': raw.get('videos') or raw.get('video_urls') or raw.get('movies'),
+            'keywords': raw.get('keywords') or raw.get('tags'),
+            'summary': raw.get('summary') or raw.get('synopsis'),
+            'url': raw.get('url'),
+            'top_image': raw.get('top_image') or raw.get('main_image'),
+            'publish_date': raw.get('publish_date') or raw.get('date'),
+            'authors': raw.get('authors') or raw.get('author'),
+        }
+        # Attach remaining fields as method_details
+        remaining = {k: v for k, v in raw.items() if k not in unified or unified[k] is None}
+        if remaining:
+            unified['method_details'] = remaining
+        return unified
     
     def scrape_multiple_urls(self, urls: List[str], 
                            method: ScrapingMethod = ScrapingMethod.AUTO,
