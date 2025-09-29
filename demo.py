@@ -48,6 +48,16 @@ import random
 
 import json
 
+# Import for semantic similarity
+try:
+  from sentence_transformers import SentenceTransformer
+  from sklearn.metrics.pairwise import cosine_similarity
+  import numpy as np
+  SEMANTIC_AVAILABLE = True
+except ImportError:
+  SEMANTIC_AVAILABLE = False
+  print("Semantic matching not available - install sentence-transformers and scikit-learn")
+
 class Config:
 
   def __init__(self):
@@ -184,14 +194,14 @@ class Config:
 
     # self._init_lark_config()
     
-    # Hardcoded configuration for testing
+    # Hardcoded configuration for testing with HK Economic Journal
     self.lark_config_list = [
       {
         self.config_head_site_no: 0,
-        self.config_head_site_name: "Quamnet Test",
-        self.config_head_site_link: "https://www.quamnet.com/channel/news/042928e4-dde9-478f-9ffb-7d58e5582b06",
-        self.config_head_positive_words: ["test+news", "financial+market"],
-        self.config_head_negative_words: ["spam", "advertisement"]
+        self.config_head_site_name: "HK Economic Journal",
+        self.config_head_site_link: "https://www.hkej.com/instantnews",
+        self.config_head_positive_words: ["港股+直擊", "香港+財經", "中國+財經", "國際+財經"],
+        self.config_head_negative_words: ["廣告", "spam"]
       }
     ]
 
@@ -414,6 +424,17 @@ class Meta_0():
     self.meta_id = self.__class__.__name__.split("_")[1]
 
     self.meta_name = ""
+    
+    # Initialize semantic model if available
+    if SEMANTIC_AVAILABLE:
+      try:
+        self.semantic_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.config.logger.debug("Semantic model loaded successfully")
+      except Exception as e:
+        self.config.logger.debug(f"Failed to load semantic model: {e}")
+        self.semantic_model = None
+    else:
+      self.semantic_model = None
 
   def _fetch_html(
       self
@@ -453,73 +474,174 @@ class Meta_0():
         response.raise_for_status()
         return response.text
 
+  def _fetch_article_preview(self, article_url):
+    """Fetch article preview (meta description + first paragraph) for better keyword matching"""
+    try:
+      self.config.logger.debug(f"Fetching article preview from: {article_url}")
+      
+      # Fetch the article page
+      article_html = self._fetch_html(article_url)
+      article_tree = etree.HTML(article_html)
+      
+      # Try to get meta description first (most reliable)
+      meta_desc = article_tree.xpath('//meta[@name="description"]/@content')
+      if meta_desc and meta_desc[0].strip():
+        preview = meta_desc[0].strip()
+        self.config.logger.debug(f"Got meta description: {len(preview)} chars")
+        return preview
+      
+      # Fallback to first paragraph
+      first_p_selectors = [
+        '//div[@class="article-content"]/p[1]/text()',
+        '//article/p[1]/text()',
+        '//div[contains(@class, "content")]/p[1]/text()',
+        '//main/p[1]/text()',
+        '//p[1]/text()'
+      ]
+      
+      for selector in first_p_selectors:
+        first_p = article_tree.xpath(selector)
+        if first_p and first_p[0].strip():
+          preview = first_p[0].strip()
+          if len(preview) > 20:  # Only use if substantial
+            self.config.logger.debug(f"Got first paragraph: {len(preview)} chars")
+            return preview[:300]  # Limit to 300 chars
+      
+      # Last resort: get any text content
+      all_text = article_tree.xpath('//text()')
+      preview = " ".join(all_text)
+      preview = " ".join(preview.split())
+      
+      self.config.logger.debug(f"Got fallback preview: {len(preview)} chars")
+      return preview[:200]  # Limit to 200 chars
+      
+    except Exception as e:
+      self.config.logger.debug(f"Failed to fetch article preview: {e}")
+      return ""
+
+  def _fetch_article_content(self, article_url):
+    """Fetch the full content of an article"""
+    try:
+      self.config.logger.debug(f"Fetching article content from: {article_url}")
+      
+      # Fetch the article page
+      article_html = self._fetch_html(article_url)
+      article_tree = etree.HTML(article_html)
+      
+      # Try different XPath selectors to find article content
+      content_selectors = [
+        '//div[@class="article-content"]//text()',
+        '//div[@class="content"]//text()',
+        '//article//text()',
+        '//div[contains(@class, "article")]//text()',
+        '//div[contains(@class, "content")]//text()',
+        '//main//text()',
+        '//div[@id="content"]//text()'
+      ]
+      
+      article_content = ""
+      for selector in content_selectors:
+        content_parts = article_tree.xpath(selector)
+        if content_parts:
+          # Join all text content and clean it
+          raw_content = " ".join(content_parts)
+          # Clean up whitespace and newlines
+          article_content = " ".join(raw_content.split())
+          if len(article_content) > 100:  # Only use if we got substantial content
+            break
+      
+      # If no content found, try to get any text from the page
+      if not article_content or len(article_content) < 50:
+        all_text = article_tree.xpath('//text()')
+        article_content = " ".join(all_text)
+        article_content = " ".join(article_content.split())
+      
+      # Limit content length for testing
+      if len(article_content) > 1000:
+        article_content = article_content[:1000] + "..."
+      
+      self.config.logger.debug(f"Article content length: {len(article_content)} characters")
+      return article_content
+      
+    except Exception as e:
+      self.config.logger.debug(f"Failed to fetch article content: {e}")
+      return ""
+
   def _parse_page(self):
     
     response_text = ""
 
-    url = "https://www.quamnet.com/channel/news/042928e4-dde9-478f-9ffb-7d58e5582b06"
-
-    href = None
+    url = "https://www.hkej.com/instantnews"
 
     response_text = self._fetch_html(url=url)
 
     html = etree.HTML(response_text)
 
-    raw_title_list = html.xpath('//div[@class="post-list"]/div/h1/text()')
-
-    raw_link_list = html.xpath('//div[@class="post-list"]/div/div/div/div/div/a[@class="permalink"]/@href')
-
-    raw_date_list = html.xpath('//div[@class="post-list"]/div/div/div/div/div/a[@class="permalink"]/text()')
+    # Updated XPath selectors for HK Economic Journal website
+    # Look for actual news article links, not navigation items
+    raw_title_list = html.xpath('//a[contains(@href, "/instantnews/")]/text()[normalize-space()]')
+    
+    # Get links for the news items
+    raw_link_list = html.xpath('//a[contains(@href, "/instantnews/")]/@href')
+    
+    # Also try to get news items from different selectors
+    if not raw_title_list:
+      # Fallback selectors for news items
+      raw_title_list = html.xpath('//h3/a/text()[normalize-space()] | //h2/a/text()[normalize-space()]')
+      raw_link_list = html.xpath('//h3/a/@href | //h2/a/@href')
 
     self.config.logger.debug(
-      "raw_text_list:{} raw_link_list{} raw_date_list:{}".format(
-        len(raw_title_list),len(raw_link_list),len(raw_date_list)
+      "raw_title_list:{} raw_link_list:{}".format(
+        len(raw_title_list),len(raw_link_list)
       )
     )
 
-    assert len(raw_title_list)==len(raw_link_list)==len(raw_date_list)
-
-    date_list = []
-
+    # Filter and process the data
     title_list = []
-
     link_list = []
-
-    for title,link,date in zip(
-      raw_title_list,raw_link_list,raw_date_list
-    ):
-
-      date = date.strip()
-
-      date = datetime.strptime(date, "%Y-%m-%d %H:%M")
-
-      if self.config.day_now == date.strftime("%d"):
-
-        date = time.strftime("%Y-%m-%d %H:%M:%S")
-
-        title_list.append(
-          title
-        )
-
-        link_list.append(
-          link
-        )
-
-        date_list.append(
-          date
-        )
-
-      else:
-
-        continue
+    date_list = []
+    content_list = []
     
-    return title_list,link_list,date_list
+    # Use today's date for all items since this is instant news
+    today_date = time.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Process the scraped data - ORIGINAL LOGIC: Get titles first, filter later
+    for i, title in enumerate(raw_title_list):
+      if title and title.strip():
+        # Clean the title
+        clean_title = title.strip()
+        
+        # Get corresponding link if available
+        link = raw_link_list[i] if i < len(raw_link_list) else ""
+        
+        # Make link absolute if it's relative
+        if link and not link.startswith('http'):
+          link = "https://www.hkej.com" + link
+        
+        # Don't fetch content yet - just collect titles and links
+        title_list.append(clean_title)
+        link_list.append(link)
+        date_list.append(today_date)
+        content_list.append("")  # Empty content for now
+        
+        # Limit to first 20 items for testing (since we're not fetching content yet)
+        if len(title_list) >= 20:
+          break
+    
+    self.config.logger.debug(
+      "Processed - title_list:{} link_list:{} date_list:{} content_list:{}".format(
+        len(title_list),len(link_list),len(date_list),len(content_list)
+      )
+    )
+    
+    return title_list,link_list,date_list,content_list
 
   def _build_table(
       self
       ,title_list
       ,link_list
       ,date_list
+      ,content_list=None
     ):
 
     history_table_row_count = len(link_list)
@@ -536,17 +658,22 @@ class Meta_0():
       self.config.device
     ] * history_table_row_count
 
-    return pd.DataFrame(
-      {
-        self.config.history_head_site_no:meta_id_list
-        ,self.config.history_head_site_name:meta_name_list
-        ,self.config.history_head_news_title:title_list
-        ,self.config.history_head_news_link:link_list
-        ,self.config.history_head_news_date:date_list
-        ,self.config.history_head_log_stamp:log_stamp_list
-        ,self.config.history_head_push_device:push_device_list
-      }
-    )
+    # Create base DataFrame
+    df_data = {
+      self.config.history_head_site_no:meta_id_list
+      ,self.config.history_head_site_name:meta_name_list
+      ,self.config.history_head_news_title:title_list
+      ,self.config.history_head_news_link:link_list
+      ,self.config.history_head_news_date:date_list
+      ,self.config.history_head_log_stamp:log_stamp_list
+      ,self.config.history_head_push_device:push_device_list
+    }
+    
+    # Add content if available
+    if content_list:
+      df_data[self.config.hit_head_news_content] = content_list
+
+    return pd.DataFrame(df_data)
   
 
   
@@ -629,9 +756,15 @@ class Meta_0():
     self
     ,word_group_list:list
     ,title:str
+    ,preview:str=""
   ):
     
     hit_words_list = []
+
+    # Combine title and preview for better matching
+    search_text = title
+    if preview:
+      search_text = title + " " + preview
 
     for positive_word_group in word_group_list:
 
@@ -643,7 +776,7 @@ class Meta_0():
 
         search_hit = re.search(
           pattern=positive_word_pattern
-          ,string=title
+          ,string=search_text
           ,flags=re.I
           )
         
@@ -670,6 +803,68 @@ class Meta_0():
     else :
 
       return None
+
+  def semantic_keyword_matching(self, title: str, preview: str, target_keywords: list, threshold: float = 0.3):
+    """Use semantic similarity to match keywords with title + preview"""
+    
+    if not self.semantic_model:
+      return None
+    
+    try:
+      # Combine title and preview
+      combined_text = title
+      if preview:
+        combined_text = title + " " + preview
+      
+      # Encode the combined text and keywords
+      text_embedding = self.semantic_model.encode([combined_text])
+      keyword_embeddings = self.semantic_model.encode(target_keywords)
+      
+      # Calculate cosine similarities
+      similarities = cosine_similarity(text_embedding, keyword_embeddings)[0]
+      
+      # Find the best match
+      max_similarity = max(similarities)
+      best_keyword_idx = np.argmax(similarities)
+      
+      if max_similarity > threshold:
+        matched_keyword = target_keywords[best_keyword_idx]
+        self.config.logger.debug(f"Semantic match: '{matched_keyword}' (similarity: {max_similarity:.3f})")
+        return matched_keyword
+      else:
+        self.config.logger.debug(f"No semantic match found (max similarity: {max_similarity:.3f})")
+        return None
+        
+    except Exception as e:
+      self.config.logger.debug(f"Semantic matching failed: {e}")
+      return None
+
+  def hybrid_keyword_matching(self, title: str, preview: str, word_group_list: list):
+    """Hybrid approach: Try regex first, then semantic if regex fails"""
+    
+    # Step 1: Try regex matching first (fast)
+    regex_match = self.detect_words(word_group_list, title, preview)
+    if regex_match:
+      self.config.logger.debug(f"Regex match found: {regex_match}")
+      return regex_match
+    
+    # Step 2: If no regex match, try semantic matching
+    if self.semantic_model and preview:
+      # Extract individual keywords from word groups
+      all_keywords = []
+      for word_group in word_group_list:
+        keywords = word_group.split("+")
+        all_keywords.extend(keywords)
+      
+      # Remove duplicates and clean keywords
+      unique_keywords = list(set([kw.strip() for kw in all_keywords if kw.strip()]))
+      
+      semantic_match = self.semantic_keyword_matching(title, preview, unique_keywords)
+      if semantic_match:
+        self.config.logger.debug(f"Semantic match found: {semantic_match}")
+        return semantic_match
+    
+    return None
 
   def _filter_distinct(self,distinct_table:pd.DataFrame):
 
@@ -733,9 +928,13 @@ class Meta_0():
 
     lark_history_set = self._init_history_set()
 
-    title_list,link_list,date_list = self._parse_page()
+    title_list,link_list,date_list,content_list = self._parse_page()
 
-    spider_df = self._build_table(title_list,link_list,date_list)
+    spider_df = self._build_table(title_list,link_list,date_list,content_list)
+
+    # Add required columns for filtering
+    spider_df[self.config.config_head_positive_words] = [self.config.lark_config_list[0][self.config.config_head_positive_words]] * len(spider_df)
+    spider_df[self.config.config_head_negative_words] = [self.config.lark_config_list[0][self.config.config_head_negative_words]] * len(spider_df)
 
     distinct_df = self._distinct_spider(spider_df,lark_history_set)
 
@@ -744,6 +943,58 @@ class Meta_0():
     self._push_apx_history(distinct_df)
 
     filter_df = self._filter_distinct(distinct_df)
+
+    # ENHANCED LOGIC: Fetch previews first for better keyword matching
+    if len(distinct_df) > 0:
+      self.config.logger.debug(f"Fetching previews for {len(distinct_df)} articles for better matching...")
+      
+      # Fetch previews for all articles
+      preview_list = []
+      for idx, row in distinct_df.iterrows():
+        article_url = row[self.config.history_head_news_link]
+        if article_url:
+          preview = self._fetch_article_preview(article_url)
+          preview_list.append(preview)
+        else:
+          preview_list.append("")
+      
+      # Add previews to DataFrame
+      distinct_df['preview'] = preview_list
+      
+      # HYBRID APPROACH: Try regex first, then semantic matching
+      distinct_df[self.config.hit_head_positive_words] = distinct_df.apply(
+        lambda row: self.hybrid_keyword_matching(
+            row[self.config.history_head_news_title]
+            ,row['preview']
+            ,row[self.config.config_head_positive_words]
+          )
+        ,axis=1
+      )
+      
+      # Filter again with enhanced matching
+      filter_df = distinct_df[
+        distinct_df[self.config.hit_head_positive_words].notna()
+      ]
+      
+      self.config.logger.debug(f"Enhanced filtering: {len(filter_df)} articles match after preview analysis")
+      
+      # Now fetch full content only for final filtered articles
+      if len(filter_df) > 0:
+        self.config.logger.debug(f"Fetching full content for {len(filter_df)} final articles...")
+        
+        content_list = []
+        for idx, row in filter_df.iterrows():
+          article_url = row[self.config.history_head_news_link]
+          if article_url:
+            content = self._fetch_article_content(article_url)
+            content_list.append(content)
+          else:
+            content_list.append("")
+        
+        # Add content to the filtered DataFrame
+        filter_df[self.config.hit_head_news_content] = content_list
+        
+        self.config.logger.debug(f"Full content fetched for {len([c for c in content_list if c])} articles")
 
     self._push_lark_filter(filter_df)
 
