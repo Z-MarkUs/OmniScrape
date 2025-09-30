@@ -72,6 +72,7 @@ def root():
               try {
                 const res = await fetch('/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await res.json();
+                if (json._llm_notice) { alert(json._llm_notice); }
                 out.textContent = JSON.stringify(json, null, 2);
               } catch (err) {
                 out.textContent = String(err);

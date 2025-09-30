@@ -1,4 +1,5 @@
 from typing import Literal, Dict, Any
+import os
 from .fetcher import fetch_rendered
 from .extract_structured import extract_structured
 from .extract_readable import readable_article
@@ -37,6 +38,7 @@ async def extract(url: str, kind: Literal["article","product"]) -> Dict[str, Any
             article.text  = _first(article.text,  r["text"])
 
         # 4) ScrapeGraph fallback (LLM)
+        deepseek_used = False
         if not article.text:
             sg = scrapegraph_article(url)
             article.title = _first(article.title, sg.get("title"))
@@ -45,8 +47,14 @@ async def extract(url: str, kind: Literal["article","product"]) -> Dict[str, Any
             article.text = _first(article.text, sg.get("text") or sg.get("content"))
             imgs = sg.get("images") or []
             if isinstance(imgs, list): article.images = imgs
+            # mark if DeepSeek is the configured model
+            model_name = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini").lower()
+            deepseek_used = ("deepseek" in model_name)
 
-        return article.model_dump()
+        data = article.model_dump()
+        if deepseek_used:
+            data["_llm_notice"] = "LLM is in use (DeepSeek)"
+        return data
 
     if kind == "product":
         product = Product(url=url)
@@ -80,6 +88,10 @@ async def extract(url: str, kind: Literal["article","product"]) -> Dict[str, Any
         imgs = sg.get("images") or []
         if isinstance(imgs, list): product.images = imgs
 
-        return product.model_dump()
+        data = product.model_dump()
+        model_name = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini").lower()
+        if "deepseek" in model_name:
+            data["_llm_notice"] = "LLM is in use (DeepSeek)"
+        return data
 
     raise ValueError("Unknown kind")
