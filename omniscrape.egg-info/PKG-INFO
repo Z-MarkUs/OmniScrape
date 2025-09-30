@@ -19,3 +19,4 @@ Requires-Dist: pydantic-settings
 Requires-Dist: scrapegraphai>=1.6.0
 Requires-Dist: tiktoken
 Requires-Dist: orjson
+Requires-Dist: python-dotenv

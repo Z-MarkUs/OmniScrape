@@ -15,7 +15,8 @@ dependencies = [
   "pydantic>=2.7.0", "pydantic-settings",
   "scrapegraphai>=1.6.0",         # open-source extraction brain
   "tiktoken",                      # optional: token budget checks
-  "orjson"
+  "orjson",
+  "python-dotenv"
 ]
 
 [tool.setuptools.packages.find]
