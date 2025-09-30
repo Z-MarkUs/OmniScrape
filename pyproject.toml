@@ -1,5 +1,9 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "universal-scraper"
+name = "omniscrape"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
@@ -13,6 +17,11 @@ dependencies = [
   "tiktoken",                      # optional: token budget checks
   "orjson"
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+exclude = ["old*"]
 
 [tool.uvicorn]
 factory = false
