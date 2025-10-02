@@ -36,7 +36,26 @@ def _choose_proxy(url: str) -> str | None:
 def _format_proxy(proxy_url: str | None):
     if not proxy_url:
         return None
-    return {"server": proxy_url}
+    try:
+        parsed = urlparse(proxy_url)
+        server = f"{parsed.scheme}://{parsed.hostname}:{parsed.port}" if parsed.hostname and parsed.port else proxy_url
+        proxy_conf = {"server": server}
+        if parsed.username:
+            proxy_conf["username"] = parsed.username
+        if parsed.password:
+            proxy_conf["password"] = parsed.password
+        # Fallback to global credentials if set
+        proxy_conf.setdefault("username", os.getenv("PROXY_USERNAME") or None)
+        proxy_conf.setdefault("password", os.getenv("PROXY_PASSWORD") or None)
+        # Remove Nones
+        return {k: v for k, v in proxy_conf.items() if v}
+    except Exception:
+        # Best-effort
+        username = os.getenv("PROXY_USERNAME")
+        password = os.getenv("PROXY_PASSWORD")
+        if username or password:
+            return {"server": proxy_url, "username": username, "password": password}
+        return {"server": proxy_url}
 
 @contextlib.asynccontextmanager
 async def _browser():
@@ -286,7 +305,7 @@ async def fetch_rendered(url: str, user_agent: str | None = None) -> str:
         except Exception:
             try:
                 # Fallback: try with networkidle
-        await page.goto(url, wait_until="networkidle", timeout=RENDER_MS)
+                await page.goto(url, wait_until="networkidle", timeout=RENDER_MS)
                 await _simulate_human_behavior(page)
             except Exception:
                 try:
