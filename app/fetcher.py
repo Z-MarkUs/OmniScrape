@@ -1,8 +1,42 @@
 import asyncio, contextlib, os
+import random
+from urllib.parse import urlparse
 from playwright.async_api import async_playwright
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 RENDER_MS = int(os.getenv("MAX_RENDER_MS", "15000"))
+
+# Proxy rotation support
+_DOMAIN_PROXY_CACHE: dict[str, str] = {}
+
+def _get_proxy_pool() -> list[str]:
+    raw = os.getenv("PROXY_URLS", "").strip()
+    if not raw:
+        return []
+    return [p.strip() for p in raw.split(",") if p.strip()]
+
+def _choose_proxy(url: str) -> str | None:
+    pool = _get_proxy_pool()
+    if not pool:
+        return None
+    strategy = os.getenv("PROXY_ROTATION", "per_request").strip().lower()
+    if strategy == "per_domain":
+        try:
+            host = urlparse(url).hostname or ""
+        except Exception:
+            host = ""
+        if host in _DOMAIN_PROXY_CACHE and _DOMAIN_PROXY_CACHE[host] in pool:
+            return _DOMAIN_PROXY_CACHE[host]
+        proxy = random.choice(pool)
+        _DOMAIN_PROXY_CACHE[host] = proxy
+        return proxy
+    # default per_request
+    return random.choice(pool)
+
+def _format_proxy(proxy_url: str | None):
+    if not proxy_url:
+        return None
+    return {"server": proxy_url}
 
 @contextlib.asynccontextmanager
 async def _browser():
@@ -83,13 +117,17 @@ async def fetch_rendered(url: str, user_agent: str | None = None) -> str:
         # Use random user agent if not provided
         if not user_agent:
             user_agent = _get_random_user_agent()
-            
+
+        # Pick proxy for this primary attempt
+        primary_proxy = _choose_proxy(url)
+
         ctx = await browser.new_context(
             user_agent=user_agent,
             viewport={"width": 1920, "height": 1080},
             # Add more realistic browser settings
             locale="en-US",
             timezone_id="America/New_York",
+            proxy=_format_proxy(primary_proxy),
             # Disable automation detection
             extra_http_headers={
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -248,7 +286,7 @@ async def fetch_rendered(url: str, user_agent: str | None = None) -> str:
         except Exception:
             try:
                 # Fallback: try with networkidle
-                await page.goto(url, wait_until="networkidle", timeout=RENDER_MS)
+        await page.goto(url, wait_until="networkidle", timeout=RENDER_MS)
                 await _simulate_human_behavior(page)
             except Exception:
                 try:
@@ -262,8 +300,58 @@ async def fetch_rendered(url: str, user_agent: str | None = None) -> str:
         html = await page.content()
         await ctx.close()
 
+        # Generic mobile retry for all pages if content is empty or too short
+        try:
+            if not html or len(html.strip()) < 3000:
+                async with _browser() as browser_m:
+                    mobile_ua = (
+                        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+                        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1"
+                    )
+                    # If we have proxies, try a different one than primary for the retry
+                    retry_proxy = None
+                    pool = _get_proxy_pool()
+                    if pool:
+                        candidates = [p for p in pool if p != primary_proxy]
+                        retry_proxy = random.choice(candidates) if candidates else primary_proxy
+                    ctx_m = await browser_m.new_context(
+                        user_agent=mobile_ua,
+                        viewport={"width": 390, "height": 844},
+                        locale="zh-CN",
+                        timezone_id="Asia/Shanghai",
+                        proxy=_format_proxy(retry_proxy),
+                        extra_http_headers={
+                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                            "Cache-Control": "max-age=0",
+                            "Upgrade-Insecure-Requests": "1",
+                            "sec-ch-ua-mobile": "?1",
+                            "sec-ch-ua-platform": '"iOS"'
+                        }
+                    )
+                    page_m = await ctx_m.new_page()
+                    await page_m.route("**/*.{png,jpg,jpeg,gif,svg,ico,woff,woff2,ttf,eot}", lambda route: route.abort())
+                    try:
+                        await page_m.goto(url, wait_until="domcontentloaded", timeout=RENDER_MS)
+                        await page_m.wait_for_timeout(1200)
+                        await page_m.evaluate("window.scrollBy({top: 400, behavior: 'smooth'})")
+                        await page_m.wait_for_timeout(1200)
+                        await page_m.evaluate("window.scrollBy({top: 800, behavior: 'smooth'})")
+                        await page_m.wait_for_timeout(1200)
+                    except Exception:
+                        try:
+                            await page_m.goto(url, wait_until="networkidle", timeout=RENDER_MS)
+                        except Exception:
+                            pass
+                    mobile_same_html = await page_m.content()
+                    await ctx_m.close()
+                    if mobile_same_html and len(mobile_same_html.strip()) > len(html.strip()):
+                        html = mobile_same_html
+        except Exception:
+            pass
+
         # Targeted fallback: 36kr article pages often block desktop scraping.
-        # If URL matches 36kr article pattern and content seems empty/too short, retry mobile article page.
+        # If URL matches 36kr article pattern and content still seems too short, retry mobile article page.
         try:
             import re
             m = re.match(r"https?://(?:www\.)?36kr\.com/p/(\d+)", url)
