@@ -1,13 +1,15 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, HttpUrl
 from typing import Literal
 import orjson
+import asyncio
 from .pipeline import extract
 
 class ExtractRequest(BaseModel):
     url: HttpUrl
     kind: Literal["article", "product"]
+    llmMode: Literal["none", "llm", "auto"] = "auto"
 
 app = FastAPI(
     title="OmniScrape API",
@@ -57,7 +59,47 @@ def root():
                 <option value=\"article\">article</option>
                 <option value=\"product\">product</option>
               </select>
-              <button type=\"submit\">Extract</button>
+              
+              <div style=\"margin: 20px 0;\">
+                <h4 style=\"margin: 0 0 15px 0; color: #333; font-size: 16px;\">Extraction Method</h4>
+                
+                <div style=\"display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;\">
+                  <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
+                    <input type=\"radio\" name=\"llmMode\" value=\"none\" style=\"margin-bottom: 8px;\" />
+                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #28a745;\">SD</div>
+                    <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">Structured Data</div>
+                    <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">JSON-LD + Readability<br/>No LLM costs</div>
+                  </label>
+                  
+                  <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
+                    <input type=\"radio\" name=\"llmMode\" value=\"llm\" style=\"margin-bottom: 8px;\" />
+                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #dc3545;\">LLM</div>
+                    <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">LLM Direct</div>
+                    <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">Direct AI processing<br/>Token consumption</div>
+                  </label>
+                  
+                  <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
+                    <input type=\"radio\" name=\"llmMode\" value=\"auto\" checked style=\"margin-bottom: 8px;\" />
+                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #007bff;\">AUTO</div>
+                    <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">Smart Fallback</div>
+                    <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">SD first, LLM fallback<br/>Optimal performance</div>
+                  </label>
+                </div>
+                
+                <style>
+                  label:hover { border-color: #007bff !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,123,255,0.15); }
+                  label.selected { 
+                    border-color: #007bff !important; 
+                    background-color: #f8f9fa !important; 
+                    box-shadow: 0 4px 12px rgba(0,123,255,0.2) !important;
+                  }
+                  label.selected div:first-child { color: #007bff !important; }
+                  label.selected div:nth-child(2) { color: #007bff !important; }
+                </style>
+              </div>
+              
+              <button type=\"submit\" id=\"extractBtn\">Extract</button>
+              <button type=\"button\" id=\"stopBtn\" style=\"display: none; background-color: #dc3545; color: white; padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease;\" onclick=\"stopExtraction()\">Stop</button>
             </form>
             <pre id=\"out\" hidden></pre>
           </div>
@@ -65,17 +107,140 @@ def root():
           <script>
             const form = document.getElementById('form');
             const out = document.getElementById('out');
+            const extractBtn = document.getElementById('extractBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            let currentController = null;
+            
+            // Handle radio button selection styling
+            function updateSelection() {
+              console.log('updateSelection called');
+              // Remove selected class from all labels
+              document.querySelectorAll('label').forEach(label => {
+                label.classList.remove('selected');
+              });
+              // Add selected class to checked radio's label
+              const checkedRadio = document.querySelector('input[name=\"llmMode\"]:checked');
+              if (checkedRadio) {
+                checkedRadio.closest('label').classList.add('selected');
+                console.log('Selected:', checkedRadio.value);
+              } else {
+                console.log('No radio button checked');
+              }
+            }
+            
+            // Listen for radio button changes
+            document.querySelectorAll('input[name=\"llmMode\"]').forEach(radio => {
+              radio.addEventListener('change', function() {
+                console.log('Radio changed to:', this.value);
+                updateSelection();
+              });
+            });
+            
+            // Initialize selection on page load
+            document.addEventListener('DOMContentLoaded', function() {
+              console.log('DOMContentLoaded fired');
+              updateSelection();
+            });
+            
+            // Also run immediately in case DOMContentLoaded already fired
+            console.log('Running updateSelection immediately');
+            updateSelection();
+            
+            function stopExtraction() {
+              if (currentController) {
+                currentController.abort();
+                currentController = null;
+                extractBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                out.textContent = out.textContent + '\\n\\n--- Extraction Cancelled ---\\nProcess stopped by user.';
+              }
+            }
+            
             form.addEventListener('submit', async (e) => {
               e.preventDefault();
-              const payload = { url: form.url.value, kind: form.kind.value };
-              out.hidden = false; out.textContent = 'Loading...';
+              const llmMode = document.querySelector('input[name=\"llmMode\"]:checked').value;
+              const payload = { 
+                url: form.url.value, 
+                kind: form.kind.value,
+                llmMode: llmMode
+              };
+              
+              // Show stop button and hide extract button
+              extractBtn.style.display = 'none';
+              stopBtn.style.display = 'inline-block';
+              out.hidden = false; 
+              
+              // Set initial loading message based on mode
+              let loadingMessage = 'Loading...';
+              if (llmMode === 'none') {
+                loadingMessage = 'SD Processing...';
+              } else if (llmMode === 'llm') {
+                loadingMessage = 'LLM Processing...';
+              } else if (llmMode === 'auto') {
+                loadingMessage = 'SD Processing...';
+              }
+              
+              out.textContent = loadingMessage;
+              
+              // Create animated dots effect
+              let dotCount = 0;
+              const loadingInterval = setInterval(() => {
+                dotCount = (dotCount + 1) % 4;
+                const dots = '.'.repeat(dotCount);
+                out.textContent = loadingMessage + dots;
+              }, 500);
+              
+              // Create abort controller for cancellation
+              currentController = new AbortController();
+              
               try {
-                const res = await fetch('/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const json = await res.json();
-                if (json._llm_notice) { alert(json._llm_notice); }
-                out.textContent = JSON.stringify(json, null, 2);
+                const res = await fetch('/extract', { 
+                  method: 'POST', 
+                  headers: { 'Content-Type': 'application/json' }, 
+                  body: JSON.stringify(payload),
+                  signal: currentController.signal
+                });
+                
+                // Clear the loading animation
+                clearInterval(loadingInterval);
+                
+                if (res.ok) {
+                  const json = await res.json();
+                  
+                  // Display the result with method info and timing
+                  let displayText = JSON.stringify(json, null, 2);
+                  
+                  // Add method and timing info at the bottom
+                  if (json._method_used) {
+                    displayText += `\\n\\n--- Extraction Summary ---\\n`;
+                    displayText += `Method: ${json._method_used}\\n`;
+                    if (json._execution_time) {
+                      displayText += `Time: ${json._execution_time}ms\\n`;
+                    }
+                    if (json._llm_usage) {
+                      displayText += `LLM Usage: ${json._llm_usage.input_tokens} input + ${json._llm_usage.output_tokens} output = ${json._llm_usage.total_tokens} total tokens\\n`;
+                      displayText += `Model: ${json._llm_usage.model}\\n`;
+                    }
+                  }
+                  
+                  out.textContent = displayText;
+                } else {
+                  out.textContent = `Error: ${res.status} ${res.statusText}`;
+                }
               } catch (err) {
-                out.textContent = String(err);
+                // Clear the loading animation
+                clearInterval(loadingInterval);
+                
+                if (err.name === 'AbortError') {
+                  out.textContent = out.textContent + '\\n\\n--- Extraction Cancelled ---\\nProcess stopped by user.';
+                } else {
+                  out.textContent = String(err);
+                }
+              } finally {
+                // Reset button states
+                extractBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                currentController = null;
               }
             });
           </script>
@@ -89,6 +254,14 @@ def health():
     return {"ok": True}
 
 @app.post("/extract")
-async def do_extract(req: ExtractRequest):
-    data = await extract(str(req.url), req.kind)
-    return data
+async def do_extract(req: ExtractRequest, request: Request):
+    try:
+        # Check if client disconnected
+        if await request.is_disconnected():
+            return {"error": "Client disconnected"}
+        
+        data = await extract(str(req.url), req.kind, req.llmMode)
+        return data
+    except asyncio.CancelledError:
+        # Handle cancellation
+        return {"error": "Extraction cancelled", "cancelled": True}
