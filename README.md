@@ -188,3 +188,38 @@ MAX_RENDER_MS=15000
 - `app/fetcher.py` – Playwright rendering, stealth, human-like behavior, proxies
 - `app/extract_scrapegraph.py` – ScrapeGraphAI integration and token usage capture
 
+### Architecture Diagram (ASCII)
+
+```
+┌──────────────────────┐           ┌──────────────────────────┐
+│        Client        │  HTTP     │        FastAPI App       │
+│  (Browser/UI or API) ├──────────▶│        app/api.py        │
+└──────────────────────┘           └───────────┬──────────────┘
+                                               │
+                                               ▼
+                                     ┌──────────────────────┐
+                                     │   Pipeline Orchestration
+                                     │       app/pipeline.py │
+                                     └───────────┬──────────┘
+                                                 │
+         ┌───────────────────────────────┬────────┴─────────┬───────────────────────────────┐
+         │                               │                  │                               │
+         ▼                               ▼                  ▼                               ▼
+┌──────────────────┐           ┌──────────────────┐  ┌──────────────────┐         ┌──────────────────────┐
+│ Structured Data  │           │  Readability     │  │  Product Patterns│         │    LLM (ScrapeGraph) │
+│ JSON-LD/Microdata│           │  app/extract_... │  │  app/extract_... │         │ app/extract_scrape...│
+└─────────┬────────┘           └─────────┬────────┘  └─────────┬────────┘         └───────────┬──────────┘
+          │                              │                    │                              │
+          └──────────────┬───────────────┴──────────────┬──────┴──────────────┬───────────────┘
+                         │                              │                     │
+                         ▼                              ▼                     ▼
+                 ┌────────────────┐             ┌───────────────┐     ┌────────────────────────┐
+                 │  Fetcher       │             │  UI Feedback  │     │ Token Usage (DeepSeek) │
+                 │ app/fetcher.py │             │   app/api.py  │     │ via monkey patch       │
+                 │ Playwright +   │             │ loading/stop  │     │ app/extract_scrape...  │
+                 │ stealth + proxy│             │ summary       │     └────────────────────────┘
+                 └────────────────┘             └───────────────┘
+```
+
+Mobile fallback: The fetcher performs a generic mobile retry for any page whose initial desktop render is empty or too short. Additionally, 36kr article pages have a targeted mobile mapping (e.g., `https://m.36kr.com/p/<id>`) to maximize success rates.
+
