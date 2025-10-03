@@ -53,7 +53,22 @@ class CustomOpenAIClient:
     def chat_completions_create(self, **kwargs):
         """Create chat completion and capture token usage"""
         try:
-            response = self.client.chat.completions.create(**kwargs)
+            # Filter out unsupported parameters that ScrapeGraphAI might pass
+            filtered_kwargs = {}
+            supported_params = {
+                'model', 'messages', 'temperature', 'max_tokens', 'top_p', 'frequency_penalty',
+                'presence_penalty', 'stop', 'stream', 'user', 'functions', 'function_call',
+                'tools', 'tool_choice', 'response_format', 'seed', 'logit_bias', 'logprobs',
+                'top_logprobs', 'extra_headers', 'extra_query', 'extra_body'
+            }
+            
+            for key, value in kwargs.items():
+                if key in supported_params:
+                    filtered_kwargs[key] = value
+                else:
+                    print(f"Filtering out unsupported parameter: {key}")
+            
+            response = self.client.chat.completions.create(**filtered_kwargs)
             
             # Extract token usage from response
             if hasattr(response, 'usage') and response.usage:
