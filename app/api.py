@@ -66,21 +66,21 @@ def root():
                 <div style=\"display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;\">
                   <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
                     <input type=\"radio\" name=\"llmMode\" value=\"none\" style=\"margin-bottom: 8px;\" />
-                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #28a745;\">SD</div>
+                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #4CAF50;\">SD</div>
                     <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">Structured Data</div>
                     <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">JSON-LD + Readability<br/>No LLM costs</div>
                   </label>
                   
                   <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
                     <input type=\"radio\" name=\"llmMode\" value=\"llm\" style=\"margin-bottom: 8px;\" />
-                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #dc3545;\">LLM</div>
+                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #F44336;\">LLM</div>
                     <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">LLM Direct</div>
                     <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">Direct AI processing<br/>Token consumption</div>
                   </label>
                   
                   <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
                     <input type=\"radio\" name=\"llmMode\" value=\"auto\" checked style=\"margin-bottom: 8px;\" />
-                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #007bff;\">AUTO</div>
+                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #FFC107;\">AUTO</div>
                     <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">Smart Fallback</div>
                     <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">SD first, LLM fallback<br/>Optimal performance</div>
                   </label>
