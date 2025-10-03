@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, HttpUrl
 from typing import Literal
 import orjson
@@ -265,3 +265,10 @@ async def do_extract(req: ExtractRequest, request: Request):
     except asyncio.CancelledError:
         # Handle cancellation
         return {"error": "Extraction cancelled", "cancelled": True}
+    except Exception as e:
+        # Surface backend error details to the client
+        import traceback
+        tb = traceback.format_exc()
+        # Limit trace size to avoid huge responses
+        short_tb = tb[-4000:]
+        return JSONResponse(status_code=500, content={"error": str(e), "trace": short_tb})
