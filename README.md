@@ -198,8 +198,8 @@ MAX_RENDER_MS=15000
                                                │
                                                ▼
                                      ┌──────────────────────┐
-                                     │   Pipeline Orchestration
-                                     │       app/pipeline.py │
+                                     │Pipeline Orchestration│
+                                     │     app/pipeline.py  │
                                      └───────────┬──────────┘
                                                  │
          ┌───────────────────────────────┬────────┴─────────┬───────────────────────────────┐
@@ -209,7 +209,7 @@ MAX_RENDER_MS=15000
 │ Structured Data  │           │  Readability     │  │  Product Patterns│         │    LLM (ScrapeGraph) │
 │ JSON-LD/Microdata│           │  app/extract_... │  │  app/extract_... │         │ app/extract_scrape...│
 └─────────┬────────┘           └─────────┬────────┘  └─────────┬────────┘         └───────────┬──────────┘
-          │                              │                    │                              │
+          │                              │                     │                              │
           └──────────────┬───────────────┴──────────────┬──────┴──────────────┬───────────────┘
                          │                              │                     │
                          ▼                              ▼                     ▼
