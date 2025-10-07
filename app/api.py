@@ -207,19 +207,30 @@ def root():
                 if (res.ok) {
                   const json = await res.json();
                   
-                  // Display the result with method info and timing
-                  let displayText = JSON.stringify(json, null, 2);
+                  // Separate payload from metadata
+                  const meta = {
+                    method: json._method_used,
+                    execMs: json._execution_time,
+                    llm: json._llm_usage
+                  };
+                  const payload = { ...json };
+                  delete payload._method_used;
+                  delete payload._execution_time;
+                  delete payload._llm_usage;
                   
-                  // Add method and timing info at the bottom
-                  if (json._method_used) {
+                  // Display payload only
+                  let displayText = JSON.stringify(payload, null, 2);
+                  
+                  // Append summary with metadata
+                  if (meta.method) {
                     displayText += `\\n\\n--- Extraction Summary ---\\n`;
-                    displayText += `Method: ${json._method_used}\\n`;
-                    if (json._execution_time) {
-                      displayText += `Time: ${json._execution_time}ms\\n`;
+                    displayText += `Method: ${meta.method}\\n`;
+                    if (meta.execMs) {
+                      displayText += `Execution time: ${meta.execMs}ms\\n`;
                     }
-                    if (json._llm_usage) {
-                      displayText += `LLM Usage: ${json._llm_usage.input_tokens} input + ${json._llm_usage.output_tokens} output = ${json._llm_usage.total_tokens} total tokens\\n`;
-                      displayText += `Model: ${json._llm_usage.model}\\n`;
+                    if (meta.llm) {
+                      displayText += `LLM Usage: ${meta.llm.input_tokens} input + ${meta.llm.output_tokens} output = ${meta.llm.total_tokens} total tokens\\n`;
+                      if (meta.llm.model) displayText += `Model: ${meta.llm.model}\\n`;
                     }
                   }
                   

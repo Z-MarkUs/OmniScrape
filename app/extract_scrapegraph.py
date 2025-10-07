@@ -20,10 +20,14 @@ def scrapegraph_article(url: str):
             # OpenAI-compatible: rely on base_url for DeepSeek
             "model": model,
             "api_key": api_key,
-            "base_url": "https://api.deepseek.com/v1" if "deepseek" in model.lower() else None
+            "base_url": "https://api.deepseek.com/v1" if "deepseek" in model.lower() else None,
+            "temperature": 0.0,  # Zero temperature for deterministic extraction
+            "max_tokens": 16000  # Increase token limit for full content
         },
-        "verbose": False,
-        "headless": True
+        "verbose": True,  # Enable verbose to see what's happening
+        "headless": True,
+        "max_tokens": 16000,  # Increase token limit for full content
+        "model_tokens": 16000  # Set model tokens explicitly
     }
     
     # Remove None values
@@ -35,8 +39,27 @@ def scrapegraph_article(url: str):
         raise RuntimeError("LLM API key missing: set DEEPSEEK_API_KEY or OPENAI_API_KEY")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(_run_scrapegraph, url, config)
+        future = executor.submit(_run_scrapegraph_simple, url, config)
         return future.result()
+
+def _run_scrapegraph_simple(url: str, config: dict):
+    """Simple ScrapeGraph function without monkey patching"""
+    try:
+        graph = SmartScraperGraph(
+            prompt="List of all article content including title, author, date and full text",
+            source=url,
+            config=config
+        )
+        result = graph.run()
+        
+        # Return result without token usage for now
+        return {
+            'result': result,
+            'token_usage': {}
+        }
+    except Exception as e:
+        print(f"Error in simple ScrapeGraph: {e}")
+        raise
 
 def _run_scrapegraph(url: str, config: dict):
     """Helper function to run ScrapeGraph in a clean context"""
@@ -111,7 +134,7 @@ def _run_scrapegraph(url: str, config: dict):
     
     try:
         graph = SmartScraperGraph(
-            prompt="Extract the main article title, author, publication date, text, and image URLs.",
+            prompt="You are a web scraper. Extract the complete article content from this webpage and return it as JSON with these exact fields: 'title' (article headline), 'author' (author name), 'date_published' (publication date), 'text' (the complete article body text - copy all paragraphs, headings, and content exactly as they appear on the page, do not summarize or paraphrase), 'images' (image URLs). IMPORTANT: The 'text' field must contain the complete article content, not a summary. Extract every paragraph and section of the article.",
             source=url,
             config=config
         )
