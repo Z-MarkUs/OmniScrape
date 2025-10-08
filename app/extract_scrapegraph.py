@@ -39,7 +39,7 @@ def scrapegraph_article(url: str):
         raise RuntimeError("LLM API key missing: set DEEPSEEK_API_KEY or OPENAI_API_KEY")
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(_run_scrapegraph_simple, url, config)
+        future = executor.submit(_run_scrapegraph, url, config)
         return future.result()
 
 def _run_scrapegraph_simple(url: str, config: dict):

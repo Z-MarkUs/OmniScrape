@@ -112,20 +112,23 @@ The codebase is organized into modular components:
 - Pydantic: Input/output validation
 - Tenacity: Robust retries for fetching
 
-### DeepSeek Integration and Real Token Usage
+### LLM Backends, Token Usage, and Recommendation
 
-- Model selection via env `SCRAPEGRAPH_MODEL` (e.g., `deepseek-chat`)
-- API key via `DEEPSEEK_API_KEY` (or `OPENAI_API_KEY`)
-- Base URL for DeepSeek: `https://api.deepseek.com/v1`
-- Real token usage is captured without modifying ScrapeGraphAI by a safe, targeted monkey patch:
-  - ScrapeGraphAI uses LangChain's `ChatOpenAI._generate` under the hood
-  - We temporarily wrap `_generate` to:
-    - Filter unsupported params (e.g., `provider`) to prevent 500s
-    - Read `result.llm_output.token_usage` and expose it up to the API response
-  - Implementation lives in `app/extract_scrapegraph.py`
-  - Output surface: `_llm_usage = { input_tokens, output_tokens, total_tokens, model }`
+- You can select model/provider via `SCRAPEGRAPH_MODEL` (e.g., `gpt-4o-mini`, `deepseek-chat`).
+- Keys via `OPENAI_API_KEY` or `DEEPSEEK_API_KEY`. If the model contains `deepseek`, we route to `https://api.deepseek.com/v1`.
 
-Why monkey patch? It avoids forking or modifying ScrapeGraphAI and remains resilient to upstream changes, while providing accurate usage accounting directly from API responses.
+#### Token Usage (Monkey Patch)
+Real token usage is captured without modifying ScrapeGraphAI by a targeted monkey patch of LangChain's `ChatOpenAI._generate`:
+- Filter unsupported params (e.g., `provider`) to prevent 500s
+- Read `result.llm_output.token_usage` and surface it to the API response as `_llm_usage = { input_tokens, output_tokens, total_tokens, model }`
+- Implementation: `app/extract_scrapegraph.py`
+
+#### DeepSeek Limitations and Recommendation
+- Observed behavior: DeepSeek frequently returns summarized content even with explicit "do NOT summarize" prompts
+- Regional availability: May return 403 (unsupported region) or connection errors depending on IP/region
+- Prompt resistance: Tends to condense content compared to OpenAI
+
+Recommendation: Prefer OpenAI (`gpt-4o-mini`) for full-text article extraction and reliable token accounting. Keep DeepSeek as optional if your region supports it and summarization is acceptable.
 
 ### Anti-bot, Stealth, and Human-like Behavior
 
