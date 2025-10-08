@@ -13,14 +13,16 @@ def scrapegraph_article(url: str):
         base_name = model.split("/")[-1]
         model = f"openai/{base_name}"
     
-    # Configure for DeepSeek (OpenAI-compatible API)
+    # Configure provider by SCRAPEGRAPH_MODEL
     api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+    aily = False
     config = {
         "llm": {
-            # OpenAI-compatible: rely on base_url for DeepSeek
+            # OpenAI-compatible or Aily routed by custom client
             "model": model,
             "api_key": api_key,
-            "base_url": "https://api.deepseek.com/v1" if "deepseek" in model.lower() else None,
+            "base_url": ("https://api.deepseek.com/v1" if "deepseek" in model.lower() else None),
+            # Do NOT set provider to avoid ScrapeGraphAI provider validation errors
             "temperature": 0.0,  # Zero temperature for deterministic extraction
             "max_tokens": 16000  # Increase token limit for full content
         },
@@ -82,6 +84,44 @@ def _run_scrapegraph(url: str, config: dict):
     
     # Simple monkey patching approach - patch LangChain's _generate method
     import langchain_openai
+    # Additionally, if Aily env is present, patch OpenAI client's chat.completions.create
+    aily_enabled = bool(os.getenv("AILY_APP_ID") and os.getenv("AILY_APP_SECRET"))
+    original_openai_create = None
+    if aily_enabled:
+        try:
+            import openai  # type: ignore
+            original_openai_create = openai.OpenAI.chat.completions.create
+
+            from .aily_client import aily_chat
+
+            def aily_openai_compatible_create(self, **kwargs):
+                messages = kwargs.get("messages", [])
+                result = aily_chat(messages)
+                content = result.get("content", "")
+                usage = result.get("usage", {})
+                # Build a minimal OpenAI-compatible response object
+                class _Msg:
+                    def __init__(self, content: str):
+                        self.content = content
+                class _Choice:
+                    def __init__(self, content: str):
+                        self.message = _Msg(content)
+                class _Resp:
+                    def __init__(self, content: str, usage_dict):
+                        self.choices = [_Choice(content)]
+                        # normalize usage keys
+                        pt = usage_dict.get('prompt_tokens') or usage_dict.get('input') or usage_dict.get('input_tokens') or 0
+                        ct = usage_dict.get('completion_tokens') or usage_dict.get('output') or usage_dict.get('output_tokens') or 0
+                        self.usage = type('U', (), {
+                            'prompt_tokens': pt,
+                            'completion_tokens': ct,
+                            'total_tokens': pt + ct,
+                        })()
+                return _Resp(content, usage)
+
+            openai.OpenAI.chat.completions.create = aily_openai_compatible_create
+        except Exception as _e:
+            print(f"Aily routing setup failed, falling back to default OpenAI client: {_e}")
     
     # Store original method
     original_generate = None
@@ -92,7 +132,52 @@ def _run_scrapegraph(url: str, config: dict):
             original_generate = langchain_openai.chat_models.ChatOpenAI._generate
             
             def patched_generate(self, messages, stop=None, run_manager=None, **kwargs):
-                # Filter out unsupported parameters like 'provider'
+                # If Aily is configured, short-circuit to Aily and return a LangChain-compatible result
+                if os.getenv("AILY_APP_ID") and os.getenv("AILY_APP_SECRET"):
+                    try:
+                        from .aily_client import aily_chat
+                        from langchain_core.messages import AIMessage
+                        from langchain_core.outputs import ChatGeneration, ChatResult
+
+                        # Convert LangChain messages to simple role/content pairs
+                        converted = []
+                        for m in messages:
+                            role = getattr(m, 'type', None) or getattr(m, 'role', 'user')
+                            content = getattr(m, 'content', '')
+                            converted.append({"role": role, "content": content})
+
+                        aily_resp = aily_chat(converted)
+                        content = aily_resp.get('content', '')
+                        usage = aily_resp.get('usage', {})
+
+                        # Map usage keys
+                        prompt_tokens = usage.get('prompt_tokens') or usage.get('input') or usage.get('input_tokens') or 0
+                        completion_tokens = usage.get('completion_tokens') or usage.get('output') or usage.get('output_tokens') or 0
+                        total_tokens = usage.get('total_tokens') or (prompt_tokens + completion_tokens)
+
+                        # Feed usage to our tracker
+                        from .llm_wrapper import _tracker
+                        _tracker.set_usage({
+                            "prompt_tokens": prompt_tokens,
+                            "completion_tokens": completion_tokens,
+                            "total_tokens": total_tokens,
+                            "model": "aily"
+                        })
+
+                        # Build LangChain result
+                        ai_msg = AIMessage(content=content)
+                        gen = ChatGeneration(message=ai_msg)
+                        return ChatResult(generations=[gen], llm_output={
+                            'token_usage': {
+                                'prompt_tokens': prompt_tokens,
+                                'completion_tokens': completion_tokens,
+                                'total_tokens': total_tokens,
+                            }
+                        })
+                    except Exception as e:
+                        print(f"Aily short-circuit failed in _generate, falling back: {e}")
+
+                # Otherwise, filter and call original (OpenAI/DeepSeek etc.)
                 filtered_kwargs = {}
                 supported_params = {
                     'temperature', 'max_tokens', 'top_p', 'frequency_penalty',
@@ -100,17 +185,13 @@ def _run_scrapegraph(url: str, config: dict):
                     'tools', 'tool_choice', 'response_format', 'seed', 'logit_bias', 'logprobs',
                     'top_logprobs', 'extra_headers', 'extra_query', 'extra_body'
                 }
-                
                 for key, value in kwargs.items():
                     if key in supported_params:
                         filtered_kwargs[key] = value
                     else:
                         print(f"Filtering out unsupported parameter in _generate: {key}")
-                
-                # Call the original method with filtered kwargs
+
                 result = original_generate(self, messages, stop=stop, run_manager=run_manager, **filtered_kwargs)
-                
-                # Try to extract token usage from the result
                 if hasattr(result, 'llm_output') and result.llm_output:
                     if 'token_usage' in result.llm_output:
                         usage_data = result.llm_output['token_usage']
@@ -122,7 +203,6 @@ def _run_scrapegraph(url: str, config: dict):
                                 "total_tokens": usage_data.get('total_tokens', 0),
                                 "model": getattr(self, 'model_name', 'unknown')
                             })
-                
                 return result
             
             langchain_openai.chat_models.ChatOpenAI._generate = patched_generate
@@ -148,6 +228,13 @@ def _run_scrapegraph(url: str, config: dict):
         if original_generate:
             try:
                 langchain_openai.chat_models.ChatOpenAI._generate = original_generate
+            except:
+                pass
+        # Restore OpenAI client create if patched
+        if original_openai_create is not None:
+            try:
+                import openai  # type: ignore
+                openai.OpenAI.chat.completions.create = original_openai_create
             except:
                 pass
         

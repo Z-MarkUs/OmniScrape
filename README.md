@@ -112,23 +112,20 @@ The codebase is organized into modular components:
 - Pydantic: Input/output validation
 - Tenacity: Robust retries for fetching
 
-### LLM Backends, Token Usage, and Recommendation
+### LLM Backend (OpenAI/DeepSeek) and Token Usage
 
-- You can select model/provider via `SCRAPEGRAPH_MODEL` (e.g., `gpt-4o-mini`, `deepseek-chat`).
-- Keys via `OPENAI_API_KEY` or `DEEPSEEK_API_KEY`. If the model contains `deepseek`, we route to `https://api.deepseek.com/v1`.
+- Select model via `SCRAPEGRAPH_MODEL` (e.g., `gpt-4o-mini`, `deepseek-chat`).
+- Provide `OPENAI_API_KEY` (and optionally `DEEPSEEK_API_KEY` with `base_url=https://api.deepseek.com/v1`).
 
 #### Token Usage (Monkey Patch)
-Real token usage is captured without modifying ScrapeGraphAI by a targeted monkey patch of LangChain's `ChatOpenAI._generate`:
+We capture real token usage without modifying ScrapeGraphAI by monkey-patching LangChain's `ChatOpenAI._generate`:
 - Filter unsupported params (e.g., `provider`) to prevent 500s
-- Read `result.llm_output.token_usage` and surface it to the API response as `_llm_usage = { input_tokens, output_tokens, total_tokens, model }`
+- Read `result.llm_output.token_usage` and surface it as `_llm_usage = { input_tokens, output_tokens, total_tokens, model }`
 - Implementation: `app/extract_scrapegraph.py`
 
-#### DeepSeek Limitations and Recommendation
-- Observed behavior: DeepSeek frequently returns summarized content even with explicit "do NOT summarize" prompts
-- Regional availability: May return 403 (unsupported region) or connection errors depending on IP/region
-- Prompt resistance: Tends to condense content compared to OpenAI
-
-Recommendation: Prefer OpenAI (`gpt-4o-mini`) for full-text article extraction and reliable token accounting. Keep DeepSeek as optional if your region supports it and summarization is acceptable.
+Notes:
+- OpenAI is the recommended default for full-text extraction and stable usage accounting.
+- DeepSeek is OpenAI-compatible; behavior may vary by region/availability (403) and may summarize more aggressively.
 
 ### Anti-bot, Stealth, and Human-like Behavior
 

@@ -7,6 +7,7 @@ import os
 import json
 from typing import Dict, Any, Optional, List
 from openai import OpenAI
+# Aily integration removed
 import threading
 
 # Thread-local storage for token usage
@@ -53,6 +54,8 @@ class CustomOpenAIClient:
     def chat_completions_create(self, **kwargs):
         """Create chat completion and capture token usage"""
         try:
+            # Aily routing removed; always use OpenAI-compatible path
+
             # Filter out unsupported parameters that ScrapeGraphAI might pass
             filtered_kwargs = {}
             supported_params = {
