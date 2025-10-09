@@ -16,7 +16,8 @@ dependencies = [
   "scrapegraphai>=1.6.0",         # open-source extraction brain
   "tiktoken",                      # optional: token budget checks
   "orjson",
-  "python-dotenv"
+  "python-dotenv",
+  "psutil"                         # system metrics for health check
 ]
 
 [tool.setuptools.packages.find]

@@ -15,7 +15,7 @@ from scrapegraphai.graphs import (
     SmartScraperMultiGraph,
     ScriptCreatorMultiGraph
 )
-from .llm_wrapper import get_token_usage, clear_token_usage
+from src.core.llm_wrapper import get_token_usage, clear_token_usage
 
 
 def get_base_config() -> Dict[str, Any]:

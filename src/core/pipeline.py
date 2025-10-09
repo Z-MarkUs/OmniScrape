@@ -2,12 +2,12 @@ from typing import Literal, Dict, Any
 import os
 import time
 import asyncio
-from .fetcher import fetch_rendered
-from .extract_structured import extract_structured
-from .extract_readable import readable_article
-from .extract_patterns import find_prices
-from .extract_scrapegraph import scrapegraph_article, scrapegraph_product
-from .schemas import Article, Product
+from src.core.fetcher import fetch_rendered
+from src.extractors.extract_structured import extract_structured
+from src.extractors.extract_readable import readable_article
+from src.extractors.extract_patterns import find_prices
+from src.extractors.extract_scrapegraph import scrapegraph_article, scrapegraph_product
+from src.core.schemas import Article, Product
 from bs4 import BeautifulSoup
 
 def _first(*vals): 

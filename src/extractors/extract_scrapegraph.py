@@ -3,7 +3,7 @@ import asyncio
 from scrapegraphai.graphs import SmartScraperGraph
 import concurrent.futures
 import random
-from .llm_wrapper import CustomOpenAIClient, get_token_usage, clear_token_usage
+from src.core.llm_wrapper import CustomOpenAIClient, get_token_usage, clear_token_usage
 
 def scrapegraph_article(url: str):
     model = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini")
