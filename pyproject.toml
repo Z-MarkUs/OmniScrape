@@ -21,8 +21,8 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*"]
-exclude = ["old*"]
+include = ["src*"]
+exclude = ["old*", "tests*", "docs*", "examples*", "config*"]
 
 [tool.uvicorn]
 factory = false

@@ -2,7 +2,7 @@
 
 A sophisticated, multi-layered web scraping service that can extract articles and products from any website using a cascading fallback strategy.
 
-## Features
+## ✨ Features
 
 - **Multi-layered Extraction**: Structured data → Readability → LLM fallback
 - **Article Extraction**: Title, author, content, images, publication date
@@ -10,8 +10,10 @@ A sophisticated, multi-layered web scraping service that can extract articles an
 - **Browser Rendering**: Playwright for JavaScript-heavy sites
 - **FastAPI**: Modern, fast web framework with automatic API documentation
 - **Type Safety**: Full Pydantic validation and type hints
+- **Interactive Labs**: Test ScrapeGraphAI capabilities with real-time results
+- **Token Usage Tracking**: Real-time LLM token consumption monitoring
 
-## Quick Start
+## 🚀 Quick Start
 
 1. **Install dependencies**:
    ```bash
@@ -19,16 +21,51 @@ A sophisticated, multi-layered web scraping service that can extract articles an
    playwright install chromium
    ```
 
-2. **Start the server**:
+2. **Configure environment**:
    ```bash
-   python main.py
+   export OPENAI_API_KEY="your_openai_api_key"
+   export SCRAPEGRAPH_MODEL="gpt-4o-mini"
    ```
 
-3. **Access the API**:
-   - API Documentation: http://localhost:8000/docs
-   - Health Check: http://localhost:8000/health
+3. **Start the server**:
+   ```bash
+   python src/main.py
+   ```
 
-## API Usage
+4. **Access the services**:
+   - **Main API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+   - **Interactive Labs**: http://localhost:8000/labs
+   - **Health Check**: http://localhost:8000/health
+
+## 📚 Documentation
+
+### 📖 Comprehensive Documentation
+- **[API Documentation](docs/api/)** - Complete API reference and usage examples
+- **[Extractors Guide](docs/extractors/)** - Detailed extraction methods documentation
+- **[Labs Documentation](docs/labs/)** - Interactive ScrapeGraphAI testing environment
+- **[Architecture Overview](docs/architecture/)** - System design and technical details
+
+### 🏗️ Project Structure
+```
+OmniScrape/
+├── src/                    # Source code
+│   ├── core/              # Core engine components
+│   ├── api/               # FastAPI application
+│   ├── extractors/        # Extraction methods
+│   └── labs/              # ScrapeGraphAI implementations
+├── docs/                  # Comprehensive documentation
+│   ├── api/               # API documentation
+│   ├── extractors/        # Extraction methods guide
+│   ├── labs/              # Labs documentation
+│   └── architecture/      # System architecture
+├── tests/                 # Test suites
+├── examples/              # Usage examples
+├── config/                # Configuration files
+└── old/                   # Legacy implementations (untouched)
+```
+
+## 🔧 API Usage
 
 ### Extract Article
 ```bash
@@ -44,182 +81,137 @@ curl -X POST "http://localhost:8000/extract" \
   -d '{"url": "https://example.com/product", "kind": "product"}'
 ```
 
-## Environment Variables
+### Interactive Labs
+Visit [http://localhost:8000/labs](http://localhost:8000/labs) to test:
+- **SmartScraperGraph** - Single page extraction with custom prompts
+- **SearchGraph** - Multi-page search-based extraction
+- **SpeechGraph** - Audio generation from web content
+- **ScriptCreatorGraph** - Python script generation
+- **SmartScraperMultiGraph** - Multi-page extraction
+- **ScriptCreatorMultiGraph** - Multi-page script generation
 
-- `SCRAPEGRAPH_MODEL`: LLM model for ScrapeGraph AI (default: "gpt-4o-mini")
-- `MAX_RENDER_MS`: Maximum page render time in milliseconds (default: 15000)
+## ⚙️ Environment Variables
 
-## Architecture
+### Required
+- `OPENAI_API_KEY` - OpenAI API key for LLM features
+
+### Optional
+- `SCRAPEGRAPH_MODEL` - LLM model (default: "gpt-4o-mini")
+- `BING_SEARCH_API_KEY` - Bing Search API key (for SearchGraph)
+- `MAX_RENDER_MS` - Maximum page render time (default: 15000)
+- `HTTP_PROXY` / `HTTPS_PROXY` - Proxy configuration
+
+## 🏗️ Architecture
 
 The extraction pipeline uses a cascading fallback strategy:
 
 ### For Articles:
 1. **Structured Data** - JSON-LD, Microdata, OpenGraph
 2. **Readability** - Clean text extraction using readability-lxml
-3. **LLM Fallback** - ScrapeGraph AI for complex cases
+3. **LLM Fallback** - ScrapeGraphAI for complex cases
 
 ### For Products:
 1. **Structured Data** - JSON-LD Product schemas
 2. **Pattern Matching** - Regex-based price detection
-3. **LLM Fallback** - ScrapeGraph AI for complex product pages
+3. **LLM Fallback** - ScrapeGraphAI for complex product pages
 
-## Development
+### LLM Modes
+- **SD (Structured Data Only)**: JSON-LD + Readability, never calls LLM
+- **LLM (LLM Only)**: Directly uses LLM-based extraction
+- **AUTO (Smart Fallback)**: SD first; if content insufficient, fallback to LLM
 
-The codebase is organized into modular components:
+## 🔬 Advanced Features
 
-- `app/api.py` - FastAPI web service
-- `app/pipeline.py` - Core extraction orchestration
-- `app/schemas.py` - Pydantic data models
-- `app/fetcher.py` - Browser rendering with Playwright
-- `app/extract_*.py` - Specialized extraction modules
+### Anti-Bot Measures
+- User agent rotation
+- Stealth JavaScript injection
+- Human behavior simulation
+- Resource blocking
+- Proxy rotation support
 
-## System Architecture and Technical Walkthrough
+### Token Usage Tracking
+Real-time monitoring of LLM token consumption:
+```json
+{
+  "_llm_usage": {
+    "prompt_tokens": 150,
+    "completion_tokens": 300,
+    "total_tokens": 450,
+    "model": "gpt-4o-mini"
+  }
+}
+```
 
-### High-level Flow
+### Mobile Fallback
+- Generic mobile retry for insufficient content
+- Site-specific mobile URL mapping (e.g., 36kr)
 
-1) User submits an extraction request from the UI or via API
-2) `app/api.py` receives the request and calls `app/pipeline.py`
-3) `pipeline.extract` orchestrates a cascading strategy:
-   - Try Structured Data (JSON-LD/Microdata/OpenGraph)
-   - If insufficient, try Readability-based clean extraction
-   - If still insufficient (or LLM mode requires), invoke LLM via ScrapeGraphAI
-4) `app/fetcher.py` renders pages (Playwright) with anti-bot/stealth and proxy options
-5) Results are normalized to Pydantic schemas and returned with metadata
+## 🧪 Development
 
-### Request → Response Path
-
-- UI (served in `app/api.py`) → POST `/extract` → `pipeline.extract`
-- Fetch HTML: `fetcher.fetch_rendered` (Playwright, stealth, proxies)
-- Non-LLM paths:
-  - Articles: `extract_readable.py` + `extract_patterns.py`
-  - Products: `extract_structured.py` + `extract_patterns.py`
-- LLM path (fallback or direct): `extract_scrapegraph.py` (ScrapeGraphAI)
-- Return payload includes `_method_used`, optional `_execution_time`, and `_llm_usage` (token counts)
-
-### LLM Modes (UI)
-
-- SD (Structured Data Only): JSON-LD + Readability, never calls LLM
-- LLM (LLM Only): Directly uses LLM-based extraction
-- AUTO (Smart Fallback): SD first; if content insufficient, fallback to LLM
-
-### Key Technologies
-
-- FastAPI: API server, UI hosting, request handling
-- Playwright: Headless Chromium page rendering with stealth and human-like behavior
-- ScrapeGraphAI: LLM graph for complex extraction tasks
-- LangChain (via ScrapeGraphAI): Chat model plumbing used by ScrapeGraphAI
-- DeepSeek LLM (OpenAI-compatible): Primary LLM backend
-- Pydantic: Input/output validation
-- Tenacity: Robust retries for fetching
-
-### LLM Backend (OpenAI/DeepSeek) and Token Usage
-
-- Select model via `SCRAPEGRAPH_MODEL` (e.g., `gpt-4o-mini`, `deepseek-chat`).
-- Provide `OPENAI_API_KEY` (and optionally `DEEPSEEK_API_KEY` with `base_url=https://api.deepseek.com/v1`).
-
-#### Token Usage (Monkey Patch)
-We capture real token usage without modifying ScrapeGraphAI by monkey-patching LangChain's `ChatOpenAI._generate`:
-- Filter unsupported params (e.g., `provider`) to prevent 500s
-- Read `result.llm_output.token_usage` and surface it as `_llm_usage = { input_tokens, output_tokens, total_tokens, model }`
-- Implementation: `app/extract_scrapegraph.py`
-
-Notes:
-- OpenAI is the recommended default for full-text extraction and stable usage accounting.
-- DeepSeek is OpenAI-compatible; behavior may vary by region/availability (403) and may summarize more aggressively.
-
-### Anti-bot, Stealth, and Human-like Behavior
-
-Implemented in `app/fetcher.py`:
-- Chromium launch args for stealth, reduced fingerprinting, and stability
-- JS injection to remove `navigator.webdriver`, mock plugins/languages/WebGL/Canvas
-- Advanced headers (`sec-ch-ua*`, `Sec-Fetch-*`, etc.) and viewport tuning
-- Human-like behavior simulation: curated mouse moves, scrolls, small delays
-- Resource controls and timeouts (configurable via `MAX_RENDER_MS`)
-
-### Proxy Rotation
-
-- Optional support via env:
-  - `PROXY_URLS` (comma-separated)
-  - `PROXY_ROTATION` = `per_request` | `per_domain`
-  - Optional `PROXY_USERNAME`/`PROXY_PASSWORD`
-- Different proxies can be used for desktop and mobile retries
-
-### Mobile Retry and 36kr Mobile Fallback
-
-- If initial desktop fetch yields too little content → retry same URL as mobile
-- Site-specific: for 36kr articles, fallback to corresponding `https://m.36kr.com/p/<id>`
-
-### UI Behavior
-
-- Three extraction modes (SD, LLM, AUTO) with visual cards
-- Animated loading indicator and clear status messages
-- Stop button using `AbortController` to cancel long-running requests
-- Results enriched with method, execution time, and LLM token usage when applicable
-
-### Error Handling
-
-- Structured error responses with status, message, and traceback (for debug)
-- Resilient retries for network/render steps (Tenacity)
-- Clean cancellation path for user-initiated stop
-
-### Configuration (.env)
-
-Example:
-
+### Running Tests
 ```bash
-SCRAPEGRAPH_MODEL=deepseek-chat
-DEEPSEEK_API_KEY=your_deepseek_key
-# Optional proxy
-PROXY_URLS=http://user:pass@host1:port,http://user:pass@host2:port
-PROXY_ROTATION=per_request
-MAX_RENDER_MS=15000
+# Run all tests
+pytest tests/
+
+# Run specific test categories
+pytest tests/unit/          # Unit tests
+pytest tests/integration/   # Integration tests
 ```
 
-### Operational Notes
+### Code Quality
+```bash
+# Format code
+black src/
 
-- Port conflicts: kill previous dev server using `kill -9 $(lsof -ti:8000)`
-- If DeepSeek returns SSL/EOF errors, ensure system proxies are not leaking into LLM calls; we clear proxy env vars around LLM execution.
-- Logs may warn about provider: it’s expected because we strip unsupported params before calling the OpenAI-compatible API.
+# Lint code
+flake8 src/
 
-### Files to Read First
-
-- `app/api.py` – endpoint, UI markup, client-side behavior
-- `app/pipeline.py` – orchestrates SD/Readability/LLM flow and mode handling
-- `app/fetcher.py` – Playwright rendering, stealth, human-like behavior, proxies
-- `app/extract_scrapegraph.py` – ScrapeGraphAI integration and token usage capture
-
-### Architecture Diagram (ASCII)
-
-```
-┌──────────────────────┐           ┌──────────────────────────┐
-│        Client        │  HTTP     │        FastAPI App       │
-│  (Browser/UI or API) ├──────────▶│        app/api.py        │
-└──────────────────────┘           └───────────┬──────────────┘
-                                               │
-                                               ▼
-                                     ┌──────────────────────┐
-                                     │Pipeline Orchestration│
-                                     │     app/pipeline.py  │
-                                     └───────────┬──────────┘
-                                                 │
-         ┌───────────────────────────────┬────────┴─────────┬───────────────────────────────┐
-         │                               │                  │                               │
-         ▼                               ▼                  ▼                               ▼
-┌──────────────────┐           ┌──────────────────┐  ┌──────────────────┐         ┌──────────────────────┐
-│ Structured Data  │           │  Readability     │  │  Product Patterns│         │    LLM (ScrapeGraph) │
-│ JSON-LD/Microdata│           │  app/extract_... │  │  app/extract_... │         │ app/extract_scrape...│
-└─────────┬────────┘           └─────────┬────────┘  └─────────┬────────┘         └───────────┬──────────┘
-          │                              │                     │                              │
-          └──────────────┬───────────────┴──────────────┬──────┴──────────────┬───────────────┘
-                         │                              │                     │
-                         ▼                              ▼                     ▼
-                 ┌────────────────┐             ┌───────────────┐     ┌────────────────────────┐
-                 │  Fetcher       │             │  UI Feedback  │     │ Token Usage (DeepSeek) │
-                 │ app/fetcher.py │             │   app/api.py  │     │ via monkey patch       │
-                 │ Playwright +   │             │ loading/stop  │     │ app/extract_scrape...  │
-                 │ stealth + proxy│             │ summary       │     └────────────────────────┘
-                 └────────────────┘             └───────────────┘
+# Type checking
+mypy src/
 ```
 
-Mobile fallback: The fetcher performs a generic mobile retry for any page whose initial desktop render is empty or too short. Additionally, 36kr article pages have a targeted mobile mapping (e.g., `https://m.36kr.com/p/<id>`) to maximize success rates.
+## 🚀 Deployment
+
+### Docker
+```bash
+docker build -t omniscrape .
+docker run -p 8000:8000 -e OPENAI_API_KEY=your_key omniscrape
+```
+
+### Production
+```bash
+uvicorn src.api.api:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+## 📊 Monitoring
+
+### Health Checks
+- **Endpoint**: `GET /health`
+- **Response**: `{"ok": true}`
+
+### Metrics
+- Response times and throughput
+- Extraction success rates
+- Token usage statistics
+- Error tracking and analysis
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **ScrapeGraphAI** - LLM-powered extraction graphs
+- **Playwright** - Browser automation
+- **FastAPI** - Modern web framework
+- **OpenAI** - Language model services
 
