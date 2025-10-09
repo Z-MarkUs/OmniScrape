@@ -5,11 +5,17 @@ from typing import Literal
 import orjson
 import asyncio
 from src.core.pipeline import extract
+from src.crawlers.article_crawler import crawl_with_full_content
 
 class ExtractRequest(BaseModel):
     url: HttpUrl
     kind: Literal["article", "product"]
     llmMode: Literal["none", "llm", "auto"] = "auto"
+
+class CrawlRequest(BaseModel):
+    url: HttpUrl
+    count: int = 10
+    crawlMode: Literal["sd", "llm", "auto"] = "auto"
 
 app = FastAPI(
     title="OmniScrape API",
@@ -122,6 +128,7 @@ def root():
             <a href=\"/redoc\">ReDoc</a>
             <a href=\"/health\">Health</a>
             <a href=\"/labs\">Labs</a>
+            <a href=\"/crawler\">Crawler</a>
           </div>
 
           <div class=\"card\">
@@ -939,6 +946,189 @@ https://httpbin.org/json</textarea>
         </html>
         """
     )
+
+@app.get("/crawler", response_class=HTMLResponse)
+def crawler():
+    return (
+        """
+        <!DOCTYPE html>
+        <html lang=\"en\">
+        <head>
+          <meta charset=\"utf-8\" />
+          <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+          <title>OmniScrape Crawler</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
+            h1 { margin-bottom: 8px; }
+            .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 16px; }
+            .name { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+            .desc { color: #555; margin-bottom: 12px; }
+            .form { margin-top: 12px; }
+            input, textarea, select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 8px; box-sizing: border-box; }
+            button { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+            button:hover { background: #1d4ed8; }
+            .result { margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+            .error { background: #fef2f2; color: #dc2626; }
+            .loading { color: #6b7280; }
+            a { color: #2563eb; text-decoration: none; }
+            .note { background: #fef3c7; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
+            .mode-selection { display: flex; gap: 12px; margin: 16px 0; }
+            .mode-option { 
+              flex: 1; 
+              border: 2px solid #e5e7eb; 
+              border-radius: 8px; 
+              padding: 12px; 
+              cursor: pointer; 
+              transition: all 0.2s;
+              text-align: center;
+            }
+            .mode-option:hover { border-color: #d1d5db; background: #f9fafb; }
+            .mode-option.active { 
+              border-color: #2563eb; 
+              background: #eff6ff; 
+            }
+            .mode-option input[type=\"radio\"] { display: none; }
+            .mode-option label { 
+              display: block; 
+              font-weight: 700; 
+              font-size: 16px; 
+              margin-bottom: 4px;
+              cursor: pointer;
+            }
+            .mode-desc { 
+              font-size: 12px; 
+              color: #6b7280; 
+              display: block;
+            }
+            .mode-option.active label { color: #2563eb; }
+          </style>
+        </head>
+        <body>
+          <h1>🕷️ Universal Article Crawler</h1>
+          <p>Crawl article list pages and extract full content using cascading fallback strategy.</p>
+          
+          <div class=\"note\">
+            <strong>How it works:</strong> 
+            1. <strong>Structured Data</strong> - Fast extraction from JSON-LD, Microdata
+            2. <strong>Pattern Matching</strong> - Common HTML patterns (article, li, etc.)
+            3. <strong>AI Fallback</strong> - Universal extraction for any page structure
+          </div>
+
+          <div class=\"card\">
+            <div class=\"name\">Article List Crawler</div>
+            <div class=\"desc\">Provide any article list page URL and get the top N articles with full content.</div>
+            
+            <div class=\"mode-selection\">
+              <div class=\"mode-option\" onclick=\"selectMode('sd')\">
+                <input type=\"radio\" name=\"crawlMode\" value=\"sd\" id=\"mode-sd\">
+                <label for=\"mode-sd\">SD</label>
+                <span class=\"mode-desc\">Structured Data + Patterns</span>
+              </div>
+              <div class=\"mode-option\" onclick=\"selectMode('llm')\">
+                <input type=\"radio\" name=\"crawlMode\" value=\"llm\" id=\"mode-llm\">
+                <label for=\"mode-llm\">LLM</label>
+                <span class=\"mode-desc\">AI Extraction Only</span>
+              </div>
+              <div class=\"mode-option active\" onclick=\"selectMode('auto')\">
+                <input type=\"radio\" name=\"crawlMode\" value=\"auto\" id=\"mode-auto\" checked>
+                <label for=\"mode-auto\">AUTO</label>
+                <span class=\"mode-desc\">Smart Fallback</span>
+              </div>
+            </div>
+            
+            <div class=\"form\">
+              <input type=\"text\" id=\"crawl-url\" placeholder=\"Enter article list URL\" value=\"https://column.etnetchina.cn/list/article-latest\">
+              <input type=\"number\" id=\"crawl-count\" placeholder=\"Number of articles\" value=\"5\" min=\"1\" max=\"50\">
+              <button onclick=\"runCrawler()\">🕷️ Crawl Articles</button>
+              <div id=\"crawl-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
+          </div>
+
+          <p style=\"margin-top:16px;\"><a href=\"/\">← Back</a></p>
+
+          <script>
+            function selectMode(mode) {
+              // Remove active class from all options
+              document.querySelectorAll('.mode-option').forEach(option => {
+                option.classList.remove('active');
+              });
+              
+              // Add active class to selected option
+              document.querySelector(`[onclick=\"selectMode('${mode}')\"]`).classList.add('active');
+              
+              // Update radio button
+              document.getElementById(`mode-${mode}`).checked = true;
+            }
+            
+            async function runCrawler() {
+              const resultDiv = document.getElementById('crawl-result');
+              resultDiv.style.display = 'block';
+              resultDiv.textContent = 'Crawling articles...';
+              resultDiv.className = 'result loading';
+              
+              try {
+                const selectedMode = document.querySelector('input[name=\"crawlMode\"]:checked').value;
+                
+                const response = await fetch('/crawl', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    url: document.getElementById('crawl-url').value,
+                    count: parseInt(document.getElementById('crawl-count').value),
+                    crawlMode: selectedMode
+                  })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                  resultDiv.textContent = JSON.stringify(result, null, 2);
+                  resultDiv.className = 'result';
+                } else {
+                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.className = 'result error';
+                }
+              } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+              }
+            }
+          </script>
+        </body>
+        </html>
+        """
+    )
+
+@app.post("/crawl", tags=["extraction"], summary="Crawl Article List", description="Crawl article list page and extract full content for each article using cascading fallback strategy")
+async def do_crawl(req: CrawlRequest, request: Request):
+    try:
+        # Check if client disconnected
+        if await request.is_disconnected():
+            return {"error": "Client disconnected"}
+        
+        # Validate count
+        if req.count < 1 or req.count > 50:
+            return {"error": "Count must be between 1 and 50"}
+        
+        # Run crawler
+        articles = await crawl_with_full_content(str(req.url), req.count, req.crawlMode)
+        
+        return {
+            "success": True,
+            "url": str(req.url),
+            "requested_count": req.count,
+            "found_count": len(articles),
+            "articles": articles,
+            "crawled_at": articles[0]["crawled_at"] if articles else None
+        }
+        
+    except asyncio.CancelledError:
+        return {"error": "Request cancelled by client"}
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 # Labs API endpoints
 @app.post("/labs/smart", tags=["labs"], summary="SmartScraperGraph", description="Single-page scraper with custom prompts")
