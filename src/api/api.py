@@ -389,8 +389,12 @@ def root():
           </div>
 
               <div class=\"nav-section\">
-                <div class=\"nav-title\">Main Functions</div>
+                <div class=\"nav-title\">Navigation</div>
                 <div class=\"nav-item active\" onclick=\"showSection('home')\">Home</div>
+              </div>
+
+              <div class=\"nav-section\">
+                <div class=\"nav-title\">Main Functions</div>
                 <div class=\"nav-item\" onclick=\"showSection('monitor')\">Monitor All Articles</div>
                 <div class=\"nav-item\" onclick=\"showSection('extract')\">Extract Single Article</div>
                 <div class=\"nav-item\" onclick=\"showSection('crawler')\">Article Crawler</div>
