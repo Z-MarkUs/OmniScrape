@@ -106,236 +106,670 @@ def root():
         <head>
           <meta charset=\"utf-8\" />
           <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
-          <title>OmniScrape API</title>
+          <title>OmniScrape - Universal Web Scraping Platform</title>
           <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
-            h1 { margin-bottom: 8px; }
-            .tag { display: inline-block; background: #eef2ff; color: #3730a3; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
-            .links a { display: inline-block; margin-right: 12px; color: #2563eb; text-decoration: none; }
-            .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 20px; }
-            label { display:block; margin: 8px 0 4px; font-weight: 600; }
-            input, select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
-            button { margin-top: 12px; background: #111827; color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
-            pre { background: #0b1020; color: #e5e7eb; padding: 12px; border-radius: 8px; overflow:auto; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; 
+              background: #f8fafc; 
+              color: #1e293b;
+            }
+            .container { display: flex; min-height: 100vh; }
+            
+            /* Sidebar */
+            .sidebar { 
+              width: 280px; 
+              background: white; 
+              border-right: 1px solid #e2e8f0; 
+              padding: 24px 0;
+              position: fixed;
+              height: 100vh;
+              overflow-y: auto;
+            }
+            .sidebar-header { 
+              padding: 0 24px 24px; 
+              border-bottom: 1px solid #e2e8f0; 
+              margin-bottom: 24px;
+            }
+            .sidebar h1 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+            .sidebar p { color: #64748b; font-size: 14px; }
+            
+            .nav-section { margin-bottom: 32px; }
+            .nav-title { 
+              font-size: 12px; 
+              font-weight: 600; 
+              color: #64748b; 
+              text-transform: uppercase; 
+              letter-spacing: 0.05em;
+              padding: 0 24px 12px;
+            }
+            .nav-item { 
+              display: block; 
+              padding: 12px 24px; 
+              color: #475569; 
+              text-decoration: none; 
+              border-left: 3px solid transparent;
+              transition: all 0.2s;
+              cursor: pointer;
+            }
+            .nav-item:hover { 
+              background: #f1f5f9; 
+              color: #1e293b;
+            }
+            .nav-item.active { 
+              background: #eff6ff; 
+              color: #2563eb; 
+              border-left-color: #2563eb;
+            }
+            .nav-item .icon { 
+              display: inline-block; 
+              width: 20px; 
+              margin-right: 12px; 
+              text-align: center;
+            }
+            
+            /* Main Content */
+            .main-content { 
+              flex: 1; 
+              margin-left: 280px; 
+              padding: 32px;
+            }
+            .content-header { 
+              margin-bottom: 32px; 
+              padding-bottom: 24px; 
+              border-bottom: 1px solid #e2e8f0;
+            }
+            .content-header h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+            .content-header p { color: #64748b; font-size: 16px; }
+            
+            /* Function Cards */
+            .function-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+              gap: 24px;
+              margin-top: 32px;
+            }
+            .function-card {
+              background: white;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 24px;
+              transition: all 0.2s;
+              cursor: pointer;
+            }
+            .function-card:hover {
+              border-color: #2563eb;
+              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+            }
+            .function-card h3 {
+              font-size: 18px;
+              font-weight: 600;
+              margin-bottom: 8px;
+              color: #1e293b;
+            }
+            .function-card p {
+              color: #64748b;
+              margin-bottom: 16px;
+              line-height: 1.5;
+            }
+            .function-card .icon {
+              font-size: 24px;
+              margin-bottom: 12px;
+              display: block;
+            }
+            
+            /* Form Elements */
+            .form-group { margin-bottom: 20px; }
+            .form-group label { 
+              display: block; 
+              font-weight: 600; 
+              margin-bottom: 8px; 
+              color: #374151;
+            }
+            .form-group input, 
+            .form-group textarea, 
+            .form-group select { 
+              width: 100%; 
+              padding: 12px; 
+              border: 1px solid #d1d5db; 
+              border-radius: 8px; 
+              font-size: 14px;
+              transition: border-color 0.2s;
+            }
+            .form-group input:focus, 
+            .form-group textarea:focus, 
+            .form-group select:focus { 
+              outline: none; 
+              border-color: #2563eb; 
+              box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+            
+            /* Buttons */
+            .btn { 
+              background: #2563eb; 
+              color: white; 
+              border: none; 
+              padding: 12px 24px; 
+              border-radius: 8px; 
+              font-weight: 600; 
+              cursor: pointer; 
+              transition: background-color 0.2s;
+              width: 100%;
+            }
+            .btn:hover { background: #1d4ed8; }
+            .btn:disabled { 
+              background: #9ca3af; 
+              cursor: not-allowed;
+            }
+            .btn-danger { background: #dc2626; }
+            .btn-danger:hover { background: #b91c1c; }
+            
+            /* Results */
+            .result { 
+              margin-top: 20px; 
+              padding: 16px; 
+              background: #f8fafc; 
+              border: 1px solid #e2e8f0; 
+              border-radius: 8px; 
+              font-family: 'Monaco', 'Menlo', monospace; 
+              font-size: 13px; 
+              white-space: pre-wrap; 
+              max-height: 400px; 
+              overflow-y: auto;
+            }
+            .result.loading { 
+              color: #64748b; 
+              font-style: italic;
+            }
+            .result.error { 
+              background: #fef2f2; 
+              border-color: #fecaca; 
+              color: #dc2626;
+            }
+            .result.success { 
+              background: #f0fdf4; 
+              border-color: #bbf7d0; 
+              color: #166534;
+            }
+            
+            /* Mode Selection */
+            .mode-selection { display: flex; gap: 12px; margin: 16px 0; }
+            .mode-option { 
+              flex: 1; 
+              border: 2px solid #e5e7eb; 
+              border-radius: 8px; 
+              padding: 12px; 
+              cursor: pointer; 
+              transition: all 0.2s;
+              text-align: center;
+            }
+            .mode-option:hover { border-color: #d1d5db; background: #f9fafb; }
+            .mode-option.active { 
+              border-color: #2563eb; 
+              background: #eff6ff; 
+            }
+            .mode-option input[type=\"radio\"] { display: none; }
+            .mode-option label { 
+              display: block; 
+              font-weight: 700; 
+              font-size: 16px; 
+              margin-bottom: 4px;
+              cursor: pointer;
+            }
+            .mode-desc { 
+              font-size: 12px; 
+              color: #6b7280; 
+              display: block;
+            }
+            .mode-option.active label { color: #2563eb; }
+            
+            /* Responsive */
+            @media (max-width: 768px) {
+              .sidebar { 
+                transform: translateX(-100%); 
+                transition: transform 0.3s;
+              }
+              .sidebar.open { transform: translateX(0); }
+              .main-content { margin-left: 0; }
+            }
           </style>
         </head>
         <body>
-          <h1>OmniScrape API</h1>
-          <div class=\"tag\">v0.1.0</div>
-          <p>Extract articles and products using structured data, readability, and LLM fallbacks.</p>
-          <div class=\"links\">
-            <a href=\"/docs\">Swagger Docs</a>
-            <a href=\"/redoc\">ReDoc</a>
-            <a href=\"/health\">Health</a>
-            <a href=\"/labs\">Labs</a>
-            <a href=\"/crawler\">Crawler</a>
+          <div class=\"container\">
+            <!-- Sidebar -->
+            <div class=\"sidebar\">
+              <div class=\"sidebar-header\">
+                <h1>🚀 OmniScrape</h1>
+                <p>Universal Web Scraping Platform</p>
           </div>
 
-          <div class=\"card\">
-            <h2>Quick Test</h2>
-            <form id=\"form\">
-              <label for=\"url\">URL</label>
-              <input id=\"url\" name=\"url\" type=\"url\" placeholder=\"https://example.com\" required />
-              <label for=\"kind\">Kind</label>
-              <select id=\"kind\" name=\"kind\">
-                <option value=\"article\">article</option>
-                <option value=\"product\">product</option>
-              </select>
-              
-              <div style=\"margin: 20px 0;\">
-                <h4 style=\"margin: 0 0 15px 0; color: #333; font-size: 16px;\">Extraction Method</h4>
-                
-                <div style=\"display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;\">
-                  <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
-                    <input type=\"radio\" name=\"llmMode\" value=\"none\" style=\"margin-bottom: 8px;\" />
-                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #4CAF50;\">SD</div>
-                    <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">Structured Data</div>
-                    <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">JSON-LD + Readability<br/>No LLM costs</div>
-                  </label>
-                  
-                  <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
-                    <input type=\"radio\" name=\"llmMode\" value=\"llm\" style=\"margin-bottom: 8px;\" />
-                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #F44336;\">LLM</div>
-                    <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">LLM Direct</div>
-                    <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">Direct AI processing<br/>Token consumption</div>
-                  </label>
-                  
-                  <label style=\"display: block; cursor: pointer; padding: 16px; background: white; border: 2px solid #e9ecef; border-radius: 8px; text-align: center; transition: all 0.2s;\">
-                    <input type=\"radio\" name=\"llmMode\" value=\"auto\" checked style=\"margin-bottom: 8px;\" />
-                    <div style=\"font-size: 18px; margin-bottom: 8px; color: #FFC107;\">AUTO</div>
-                    <div style=\"font-weight: 600; color: #495057; margin-bottom: 4px;\">Smart Fallback</div>
-                    <div style=\"font-size: 12px; color: #6c757d; line-height: 1.3;\">SD first, LLM fallback<br/>Optimal performance</div>
-                  </label>
+              <div class=\"nav-section\">
+                <div class=\"nav-title\">Main Functions</div>
+                <div class=\"nav-item active\" onclick=\"showSection('home')\">
+                  <span class=\"icon\">🏠</span>Home
                 </div>
-                
-                <style>
-                  label:hover { border-color: #007bff !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,123,255,0.15); }
-                  label.selected { 
-                    border-color: #007bff !important; 
-                    background-color: #f8f9fa !important; 
-                    box-shadow: 0 4px 12px rgba(0,123,255,0.2) !important;
-                  }
-                  label.selected div:first-child { color: #007bff !important; }
-                  label.selected div:nth-child(2) { color: #007bff !important; }
-                </style>
+                <div class=\"nav-item\" onclick=\"showSection('monitor')\">
+                  <span class=\"icon\">📊</span>Monitor All Articles
+                </div>
+                <div class=\"nav-item\" onclick=\"showSection('extract')\">
+                  <span class=\"icon\">📄</span>Extract Single Article
+                </div>
+                <div class=\"nav-item\" onclick=\"showSection('auto')\">
+                  <span class=\"icon\">🤖</span>Auto Workflow
+                </div>
               </div>
               
-              <button type=\"submit\" id=\"extractBtn\">Extract</button>
-              <button type=\"button\" id=\"stopBtn\" style=\"display: none; background-color: #dc3545; color: white; padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease;\" onclick=\"stopExtraction()\">Stop</button>
-            </form>
-            <pre id=\"out\" hidden></pre>
+              <div class=\"nav-section\">
+                <div class=\"nav-title\">Advanced</div>
+                <div class=\"nav-item\" onclick=\"showSection('labs')\">
+                  <span class=\"icon\">🧪</span>ScrapeGraphAI Labs
+                </div>
+                <div class=\"nav-item\" onclick=\"showSection('crawler')\">
+                  <span class=\"icon\">🕷️</span>Article Crawler
+                </div>
+              </div>
+              
+              <div class=\"nav-section\">
+                <div class=\"nav-title\">Documentation</div>
+                <a href=\"/docs\" class=\"nav-item\">
+                  <span class=\"icon\">📖</span>API Documentation
+                </a>
+                <a href=\"/redoc\" class=\"nav-item\">
+                  <span class=\"icon\">📚</span>ReDoc
+                </a>
+                <a href=\"/health\" class=\"nav-item\">
+                  <span class=\"icon\">❤️</span>Health Check
+                </a>
+              </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class=\"main-content\">
+              <!-- Home Section -->
+              <div id=\"home\" class=\"content-section\">
+                <div class=\"content-header\">
+                  <h2>Welcome to OmniScrape</h2>
+                  <p>Universal web scraping platform with intelligent extraction and monitoring capabilities.</p>
+                </div>
+                
+                <div class=\"function-grid\">
+                  <div class=\"function-card\" onclick=\"showSection('monitor')\">
+                    <span class=\"icon\">📊</span>
+                    <h3>Monitor All Articles</h3>
+                    <p>Monitor article list pages and extract ALL articles (not just top 10). Perfect for comprehensive content monitoring and analysis.</p>
+                  </div>
+                  
+                  <div class=\"function-card\" onclick=\"showSection('extract')\">
+                    <span class=\"icon\">📄</span>
+                    <h3>Extract Single Article</h3>
+                    <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
+                  </div>
+                  
+                  <div class=\"function-card\" onclick=\"showSection('auto')\">
+                    <span class=\"icon\">🤖</span>
+                    <h3>Auto Workflow</h3>
+                    <p>Complete automated workflow: monitor article lists → extract all articles → get full content. One-click comprehensive extraction.</p>
+                  </div>
+                  
+                  <div class=\"function-card\" onclick=\"showSection('labs')\">
+                    <span class=\"icon\">🧪</span>
+                    <h3>ScrapeGraphAI Labs</h3>
+                    <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
+                  </div>
+                  
+                  <div class=\"function-card\" onclick=\"showSection('crawler')\">
+                    <span class=\"icon\">🕷️</span>
+                    <h3>Article Crawler</h3>
+                    <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
+                  </div>
+                  
+                  <div class=\"function-card\" onclick=\"window.open('/docs', '_blank')\">
+                    <span class=\"icon\">📖</span>
+                    <h3>API Documentation</h3>
+                    <p>Complete API reference with interactive documentation. Explore all endpoints, parameters, and response formats.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Monitor Section -->
+              <div id=\"monitor\" class=\"content-section\" style=\"display:none;\">
+                <div class=\"content-header\">
+                  <h2>📊 Monitor All Articles</h2>
+                  <p>Monitor article list pages and extract ALL articles for comprehensive analysis.</p>
+                </div>
+                
+                <div class=\"function-card\">
+                  <h3>Article List Monitor</h3>
+                  <p>Provide any article list page URL and get ALL articles (not limited to top 10). Perfect for comprehensive content monitoring.</p>
+                  
+                  <div class=\"form-group\">
+                    <label for=\"monitor-url\">Article List URL</label>
+                    <input type=\"text\" id=\"monitor-url\" placeholder=\"Enter article list URL\" value=\"https://column.etnetchina.cn/list/article-latest\">
+                  </div>
+                  
+                  <div class=\"mode-selection\">
+                    <div class=\"mode-option\" onclick=\"selectMonitorMode('sd')\">
+                      <input type=\"radio\" name=\"monitorMode\" value=\"sd\" id=\"monitor-mode-sd\">
+                      <label for=\"monitor-mode-sd\">SD</label>
+                      <span class=\"mode-desc\">Structured Data + Patterns</span>
+                    </div>
+                    <div class=\"mode-option\" onclick=\"selectMonitorMode('llm')\">
+                      <input type=\"radio\" name=\"monitorMode\" value=\"llm\" id=\"monitor-mode-llm\">
+                      <label for=\"monitor-mode-llm\">LLM</label>
+                      <span class=\"mode-desc\">AI Extraction Only</span>
+                    </div>
+                    <div class=\"mode-option active\" onclick=\"selectMonitorMode('auto')\">
+                      <input type=\"radio\" name=\"monitorMode\" value=\"auto\" id=\"monitor-mode-auto\" checked>
+                      <label for=\"monitor-mode-auto\">AUTO</label>
+                      <span class=\"mode-desc\">Smart Fallback</span>
+                    </div>
+                  </div>
+                  
+                  <button class=\"btn\" onclick=\"runMonitor()\">📊 Monitor All Articles</button>
+                  <div id=\"monitor-result\" class=\"result\" style=\"display:none;\"></div>
+                </div>
+              </div>
+              
+              <!-- Extract Section -->
+              <div id=\"extract\" class=\"content-section\" style=\"display:none;\">
+                <div class=\"content-header\">
+                  <h2>📄 Extract Single Article</h2>
+                  <p>Extract full content from individual article URLs with intelligent extraction methods.</p>
+                </div>
+                
+                <div class=\"function-card\">
+                  <h3>Article Extraction</h3>
+                  <p>Extract full content from a single article URL. Choose the extraction method that best fits your needs.</p>
+                  
+                  <div class=\"form-group\">
+                    <label for=\"extract-url\">Article URL</label>
+                    <input type=\"text\" id=\"extract-url\" placeholder=\"Enter article URL\" value=\"https://httpbin.org/html\">
+                  </div>
+                  
+                  <div class=\"form-group\">
+                    <label for=\"extract-kind\">Content Type</label>
+                    <select id=\"extract-kind\">
+                      <option value=\"article\">Article</option>
+                      <option value=\"product\">Product</option>
+              </select>
+                  </div>
+                  
+                  <div class=\"mode-selection\">
+                    <div class=\"mode-option\" onclick=\"selectExtractMode('none')\">
+                      <input type=\"radio\" name=\"extractMode\" value=\"none\" id=\"extract-mode-none\">
+                      <label for=\"extract-mode-none\">SD</label>
+                      <span class=\"mode-desc\">Structured Data Only</span>
+                    </div>
+                    <div class=\"mode-option\" onclick=\"selectExtractMode('llm')\">
+                      <input type=\"radio\" name=\"extractMode\" value=\"llm\" id=\"extract-mode-llm\">
+                      <label for=\"extract-mode-llm\">LLM</label>
+                      <span class=\"mode-desc\">LLM Only</span>
+                    </div>
+                    <div class=\"mode-option active\" onclick=\"selectExtractMode('auto')\">
+                      <input type=\"radio\" name=\"extractMode\" value=\"auto\" id=\"extract-mode-auto\" checked>
+                      <label for=\"extract-mode-auto\">AUTO</label>
+                      <span class=\"mode-desc\">Smart Fallback</span>
+                    </div>
+                  </div>
+                  
+                  <button class=\"btn\" onclick=\"runExtract()\">📄 Extract Article</button>
+                  <div id=\"extract-result\" class=\"result\" style=\"display:none;\"></div>
+                </div>
+              </div>
+              
+              <!-- Auto Section -->
+              <div id=\"auto\" class=\"content-section\" style=\"display:none;\">
+                <div class=\"content-header\">
+                  <h2>🤖 Auto Workflow</h2>
+                  <p>Complete automated workflow: monitor article lists → extract all articles → get full content.</p>
+                </div>
+                
+                <div class=\"function-card\">
+                  <h3>Complete Automation</h3>
+                  <p>One-click comprehensive extraction: monitor article list → extract all articles → get full content for each article.</p>
+                  
+                  <div class=\"form-group\">
+                    <label for=\"auto-url\">Article List URL</label>
+                    <input type=\"text\" id=\"auto-url\" placeholder=\"Enter article list URL\" value=\"https://column.etnetchina.cn/list/article-latest\">
+                </div>
+                
+                  <div class=\"mode-selection\">
+                    <div class=\"mode-option\" onclick=\"selectAutoMode('sd')\">
+                      <input type=\"radio\" name=\"autoMode\" value=\"sd\" id=\"auto-mode-sd\">
+                      <label for=\"auto-mode-sd\">SD</label>
+                      <span class=\"mode-desc\">Structured Data + Patterns</span>
+                    </div>
+                    <div class=\"mode-option\" onclick=\"selectAutoMode('llm')\">
+                      <input type=\"radio\" name=\"autoMode\" value=\"llm\" id=\"auto-mode-llm\">
+                      <label for=\"auto-mode-llm\">LLM</label>
+                      <span class=\"mode-desc\">AI Extraction Only</span>
+                    </div>
+                    <div class=\"mode-option active\" onclick=\"selectAutoMode('auto')\">
+                      <input type=\"radio\" name=\"autoMode\" value=\"auto\" id=\"auto-mode-auto\" checked>
+                      <label for=\"auto-mode-auto\">AUTO</label>
+                      <span class=\"mode-desc\">Smart Fallback</span>
+                    </div>
+              </div>
+              
+                  <button class=\"btn\" onclick=\"runAuto()\">🤖 Run Complete Workflow</button>
+                  <div id=\"auto-result\" class=\"result\" style=\"display:none;\"></div>
+                </div>
+              </div>
+              
+              <!-- Labs Section -->
+              <div id=\"labs\" class=\"content-section\" style=\"display:none;\">
+                <div class=\"content-header\">
+                  <h2>🧪 ScrapeGraphAI Labs</h2>
+                  <p>Test and experiment with different ScrapeGraphAI graph types for advanced web scraping.</p>
+                </div>
+                
+                <div class=\"function-card\">
+                  <h3>Interactive Labs</h3>
+                  <p>Access the full ScrapeGraphAI Labs interface with sidebar navigation and all graph types.</p>
+                  <button class=\"btn\" onclick=\"window.open('/labs', '_blank')\">🧪 Open Labs</button>
+                </div>
+              </div>
+              
+              <!-- Crawler Section -->
+              <div id=\"crawler\" class=\"content-section\" style=\"display:none;\">
+                <div class=\"content-header\">
+                  <h2>🕷️ Article Crawler</h2>
+                  <p>Universal article list crawler with three-choice system and smart fallback strategy.</p>
+                </div>
+                
+                <div class=\"function-card\">
+                  <h3>Universal Crawler</h3>
+                  <p>Access the dedicated crawler interface with advanced features and comprehensive article extraction.</p>
+                  <button class=\"btn\" onclick=\"window.open('/crawler', '_blank')\">🕷️ Open Crawler</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <script>
-            const form = document.getElementById('form');
-            const out = document.getElementById('out');
-            const extractBtn = document.getElementById('extractBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            let currentController = null;
-            
-            // Handle radio button selection styling
-            function updateSelection() {
-              console.log('updateSelection called');
-              // Remove selected class from all labels
-              document.querySelectorAll('label').forEach(label => {
-                label.classList.remove('selected');
+            function showSection(sectionId) {
+              // Hide all sections
+              document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
               });
-              // Add selected class to checked radio's label
-              const checkedRadio = document.querySelector('input[name=\"llmMode\"]:checked');
-              if (checkedRadio) {
-                checkedRadio.closest('label').classList.add('selected');
-                console.log('Selected:', checkedRadio.value);
-              } else {
-                console.log('No radio button checked');
+              
+              // Remove active class from all nav items
+              document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+              });
+              
+              // Show selected section
+              document.getElementById(sectionId).style.display = 'block';
+              
+              // Add active class to clicked nav item
+              event.target.classList.add('active');
+            }
+            
+            // Mode selection functions
+            function selectMonitorMode(mode) {
+              selectMode('monitor', mode);
+            }
+            
+            function selectExtractMode(mode) {
+              selectMode('extract', mode);
+            }
+            
+            function selectAutoMode(mode) {
+              selectMode('auto', mode);
+            }
+            
+            function selectMode(section, mode) {
+              const sectionElement = document.getElementById(section);
+              const modeOptions = sectionElement.querySelectorAll('.mode-option');
+              
+              modeOptions.forEach(option => {
+                option.classList.remove('active');
+              });
+              
+              const selectedOption = sectionElement.querySelector(`[onclick*=\"select${section.charAt(0).toUpperCase() + section.slice(1)}Mode('${mode}')\"]`);
+              if (selectedOption) {
+                selectedOption.classList.add('active');
+                sectionElement.querySelector(`#${section}-mode-${mode}`).checked = true;
               }
             }
             
-            // Listen for radio button changes
-            document.querySelectorAll('input[name=\"llmMode\"]').forEach(radio => {
-              radio.addEventListener('change', function() {
-                console.log('Radio changed to:', this.value);
-                updateSelection();
-              });
-            });
-            
-            // Initialize selection on page load
-            document.addEventListener('DOMContentLoaded', function() {
-              console.log('DOMContentLoaded fired');
-              updateSelection();
-            });
-            
-            // Also run immediately in case DOMContentLoaded already fired
-            console.log('Running updateSelection immediately');
-            updateSelection();
-            
-            function stopExtraction() {
-              if (currentController) {
-                currentController.abort();
-                currentController = null;
-                extractBtn.style.display = 'inline-block';
-                stopBtn.style.display = 'none';
-                out.textContent = out.textContent + '\\n\\n--- Extraction Cancelled ---\\nProcess stopped by user.';
-              }
-            }
-            
-            form.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              const llmMode = document.querySelector('input[name=\"llmMode\"]:checked').value;
-              const payload = { 
-                url: form.url.value, 
-                kind: form.kind.value,
-                llmMode: llmMode
-              };
-              
-              // Show stop button and hide extract button
-              extractBtn.style.display = 'none';
-              stopBtn.style.display = 'inline-block';
-              out.hidden = false; 
-              
-              // Set initial loading message based on mode
-              let loadingMessage = 'Loading...';
-              if (llmMode === 'none') {
-                loadingMessage = 'SD Processing...';
-              } else if (llmMode === 'llm') {
-                loadingMessage = 'LLM Processing...';
-              } else if (llmMode === 'auto') {
-                loadingMessage = 'SD Processing...';
-              }
-              
-              out.textContent = loadingMessage;
-              
-              // Create animated dots effect
-              let dotCount = 0;
-              const loadingInterval = setInterval(() => {
-                dotCount = (dotCount + 1) % 4;
-                const dots = '.'.repeat(dotCount);
-                out.textContent = loadingMessage + dots;
-              }, 500);
-              
-              // Create abort controller for cancellation
-              currentController = new AbortController();
+            // API functions
+            async function runMonitor() {
+              const resultDiv = document.getElementById('monitor-result');
+              resultDiv.style.display = 'block';
+              resultDiv.textContent = 'Monitoring articles...';
+              resultDiv.className = 'result loading';
               
               try {
-                const res = await fetch('/extract', { 
-                  method: 'POST', 
-                  headers: { 'Content-Type': 'application/json' }, 
-                  body: JSON.stringify(payload),
-                  signal: currentController.signal
+                const selectedMode = document.querySelector('input[name=\"monitorMode\"]:checked').value;
+                
+                const response = await fetch('/crawl', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    url: document.getElementById('monitor-url').value,
+                    count: 100, // Get all articles
+                    crawlMode: selectedMode
+                  })
                 });
                 
-                // Clear the loading animation
-                clearInterval(loadingInterval);
-                
-                if (res.ok) {
-                  const json = await res.json();
-                  
-                  // Separate payload from metadata
-                  const meta = {
-                    method: json._method_used,
-                    execMs: json._execution_time,
-                    llm: json._llm_usage
-                  };
-                  const payload = { ...json };
-                  delete payload._method_used;
-                  delete payload._execution_time;
-                  delete payload._llm_usage;
-                  
-                  // Display payload only
-                  let displayText = JSON.stringify(payload, null, 2);
-                  
-                  // Append summary with metadata
-                  if (meta.method) {
-                    displayText += `\\n\\n--- Extraction Summary ---\\n`;
-                    displayText += `Method: ${meta.method}\\n`;
-                    if (meta.execMs) {
-                      displayText += `Execution time: ${meta.execMs}ms\\n`;
-                    }
-                    if (meta.llm) {
-                      displayText += `LLM Usage: ${meta.llm.input_tokens} input + ${meta.llm.output_tokens} output = ${meta.llm.total_tokens} total tokens\\n`;
-                      if (meta.llm.model) displayText += `Model: ${meta.llm.model}\\n`;
-                    }
-                  }
-                  
-                  out.textContent = displayText;
+                const result = await response.json();
+                if (result.success) {
+                  resultDiv.textContent = JSON.stringify(result, null, 2);
+                  resultDiv.className = 'result success';
                 } else {
-                  out.textContent = `Error: ${res.status} ${res.statusText}`;
+                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.className = 'result error';
                 }
-              } catch (err) {
-                // Clear the loading animation
-                clearInterval(loadingInterval);
-                
-                if (err.name === 'AbortError') {
-                  out.textContent = out.textContent + '\\n\\n--- Extraction Cancelled ---\\nProcess stopped by user.';
-                } else {
-                  out.textContent = String(err);
-                }
-              } finally {
-                // Reset button states
-                extractBtn.style.display = 'inline-block';
-                stopBtn.style.display = 'none';
-                currentController = null;
+              } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
               }
-            });
+            }
+            
+            async function runExtract() {
+              const resultDiv = document.getElementById('extract-result');
+              resultDiv.style.display = 'block';
+              resultDiv.textContent = 'Extracting article...';
+              resultDiv.className = 'result loading';
+              
+              try {
+                const selectedMode = document.querySelector('input[name=\"extractMode\"]:checked').value;
+                
+                const response = await fetch('/extract', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    url: document.getElementById('extract-url').value,
+                    kind: document.getElementById('extract-kind').value,
+                    llmMode: selectedMode
+                  })
+                });
+                
+                const result = await response.json();
+                if (result.error) {
+                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.className = 'result error';
+                } else {
+                  resultDiv.textContent = JSON.stringify(result, null, 2);
+                  resultDiv.className = 'result success';
+                }
+              } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+              }
+            }
+            
+            async function runAuto() {
+              const resultDiv = document.getElementById('auto-result');
+              resultDiv.style.display = 'block';
+              resultDiv.textContent = 'Running complete workflow...';
+              resultDiv.className = 'result loading';
+              
+              try {
+                const selectedMode = document.querySelector('input[name=\"autoMode\"]:checked').value;
+                
+                // Step 1: Monitor articles
+                const monitorResponse = await fetch('/crawl', {
+                  method: 'POST', 
+                  headers: { 'Content-Type': 'application/json' }, 
+                  body: JSON.stringify({
+                    url: document.getElementById('auto-url').value,
+                    count: 100,
+                    crawlMode: selectedMode
+                  })
+                });
+                
+                const monitorResult = await monitorResponse.json();
+                if (!monitorResult.success) {
+                  throw new Error('Monitor failed: ' + monitorResult.error);
+                }
+                
+                // Step 2: Extract full content for each article
+                const articles = monitorResult.articles;
+                const fullArticles = [];
+                
+                for (let i = 0; i < Math.min(articles.length, 10); i++) { // Limit to 10 for demo
+                  const article = articles[i];
+                  try {
+                    const extractResponse = await fetch('/extract', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        url: article.url,
+                        kind: 'article',
+                        llmMode: 'auto'
+                      })
+                    });
+                    
+                    const extractResult = await extractResponse.json();
+                    if (!extractResult.error) {
+                      fullArticles.push({
+                        title: article.title,
+                        url: article.url,
+                        author: article.author,
+                        published_date: article.published_date,
+                        content: extractResult
+                      });
+                    }
+                  } catch (e) {
+                    console.error('Failed to extract:', article.url, e);
+                  }
+                }
+                
+                resultDiv.textContent = JSON.stringify({
+                  success: true,
+                  monitored_count: articles.length,
+                  extracted_count: fullArticles.length,
+                  articles: fullArticles
+                }, null, 2);
+                resultDiv.className = 'result success';
+                
+              } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+              }
+            }
           </script>
         </body>
         </html>
@@ -611,8 +1045,8 @@ def labs():
                 <div class=\"nav-item\" onclick=\"showGraph('script')\">
                   <span class=\"icon\">📝</span>ScriptCreator
                 </div>
-              </div>
-              
+          </div>
+
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Multi Page</div>
                 <div class=\"nav-item\" onclick=\"showGraph('search')\">
@@ -693,17 +1127,17 @@ def labs():
                   
                   <div class=\"form-group\">
                     <label for=\"smart-prompt\">Extraction Prompt</label>
-                    <textarea id=\"smart-prompt\" placeholder=\"Enter your extraction prompt\" rows=\"3\">Extract the main title, author, and key points from this article</textarea>
+              <textarea id=\"smart-prompt\" placeholder=\"Enter your extraction prompt\" rows=\"3\">Extract the main title, author, and key points from this article</textarea>
                   </div>
                   
                   <button class=\"btn\" onclick=\"runGraph('smart')\">
                     <span class=\"status-indicator ready\"></span>Run SmartScraper
                   </button>
                   
-                  <div id=\"smart-result\" class=\"result\" style=\"display:none;\"></div>
-                </div>
-              </div>
-              
+              <div id=\"smart-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
+          </div>
+
               <!-- SearchGraph -->
               <div id=\"search\" class=\"graph-content\">
                 <div class=\"graph-card\">
@@ -712,27 +1146,27 @@ def labs():
                   
                   <div class=\"form-group\">
                     <label for=\"search-query\">Search Query</label>
-                    <input type=\"text\" id=\"search-query\" placeholder=\"Enter search query\" value=\"artificial intelligence news\">
+              <input type=\"text\" id=\"search-query\" placeholder=\"Enter search query\" value=\"artificial intelligence news\">
                   </div>
                   
                   <div class=\"form-group\">
                     <label for=\"search-count\">Number of Results</label>
-                    <input type=\"number\" id=\"search-count\" placeholder=\"Number of results\" value=\"3\" min=\"1\" max=\"10\">
+              <input type=\"number\" id=\"search-count\" placeholder=\"Number of results\" value=\"3\" min=\"1\" max=\"10\">
                   </div>
                   
                   <div class=\"form-group\">
                     <label for=\"search-prompt\">Extraction Prompt</label>
-                    <textarea id=\"search-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the title, summary, and publication date from each article</textarea>
+              <textarea id=\"search-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the title, summary, and publication date from each article</textarea>
                   </div>
                   
                   <button class=\"btn\" onclick=\"runGraph('search')\">
                     <span class=\"status-indicator ready\"></span>Run SearchGraph
                   </button>
                   
-                  <div id=\"search-result\" class=\"result\" style=\"display:none;\"></div>
-                </div>
-              </div>
-              
+              <div id=\"search-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
+          </div>
+
               <!-- SpeechGraph -->
               <div id=\"speech\" class=\"graph-content\">
                 <div class=\"graph-card\">
@@ -746,17 +1180,17 @@ def labs():
                   
                   <div class=\"form-group\">
                     <label for=\"speech-prompt\">Extraction Prompt</label>
-                    <textarea id=\"speech-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the main content and convert it to speech</textarea>
+              <textarea id=\"speech-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the main content and convert it to speech</textarea>
                   </div>
                   
                   <button class=\"btn\" onclick=\"runGraph('speech')\">
                     <span class=\"status-indicator ready\"></span>Run SpeechGraph
                   </button>
                   
-                  <div id=\"speech-result\" class=\"result\" style=\"display:none;\"></div>
-                </div>
-              </div>
-              
+              <div id=\"speech-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
+          </div>
+
               <!-- ScriptCreatorGraph -->
               <div id=\"script\" class=\"graph-content\">
                 <div class=\"graph-card\">
@@ -770,17 +1204,17 @@ def labs():
                   
                   <div class=\"form-group\">
                     <label for=\"script-prompt\">Extraction Prompt</label>
-                    <textarea id=\"script-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Create a Python script to extract product information from this page</textarea>
+              <textarea id=\"script-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Create a Python script to extract product information from this page</textarea>
                   </div>
                   
                   <button class=\"btn\" onclick=\"runGraph('script')\">
                     <span class=\"status-indicator ready\"></span>Run ScriptCreator
                   </button>
                   
-                  <div id=\"script-result\" class=\"result\" style=\"display:none;\"></div>
-                </div>
-              </div>
-              
+              <div id=\"script-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
+          </div>
+
               <!-- SmartScraperMultiGraph -->
               <div id=\"multi\" class=\"graph-content\">
                 <div class=\"graph-card\">
@@ -796,17 +1230,17 @@ https://example.com</textarea>
                   
                   <div class=\"form-group\">
                     <label for=\"multi-prompt\">Extraction Prompt</label>
-                    <textarea id=\"multi-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the title and main content from each page</textarea>
+              <textarea id=\"multi-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the title and main content from each page</textarea>
                   </div>
                   
                   <button class=\"btn\" onclick=\"runGraph('multi')\">
                     <span class=\"status-indicator ready\"></span>Run SmartScraperMulti
                   </button>
                   
-                  <div id=\"multi-result\" class=\"result\" style=\"display:none;\"></div>
-                </div>
-              </div>
-              
+              <div id=\"multi-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
+          </div>
+
               <!-- ScriptCreatorMultiGraph -->
               <div id=\"script-multi\" class=\"graph-content\">
                 <div class=\"graph-card\">
@@ -821,14 +1255,14 @@ https://httpbin.org/json</textarea>
                   
                   <div class=\"form-group\">
                     <label for=\"script-multi-prompt\">Extraction Prompt</label>
-                    <textarea id=\"script-multi-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Create a Python script to extract structured data from these pages</textarea>
+              <textarea id=\"script-multi-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Create a Python script to extract structured data from these pages</textarea>
                   </div>
                   
                   <button class=\"btn\" onclick=\"runGraph('script-multi')\">
                     <span class=\"status-indicator ready\"></span>Run ScriptCreatorMulti
                   </button>
                   
-                  <div id=\"script-multi-result\" class=\"result\" style=\"display:none;\"></div>
+              <div id=\"script-multi-result\" class=\"result\" style=\"display:none;\"></div>
                 </div>
               </div>
             </div>
