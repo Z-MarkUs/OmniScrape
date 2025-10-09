@@ -34,7 +34,7 @@ def root():
             .links a { display: inline-block; margin-right: 12px; color: #2563eb; text-decoration: none; }
             .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 20px; }
             label { display:block; margin: 8px 0 4px; font-weight: 600; }
-            input, select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
+            input, select { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
             button { margin-top: 12px; background: #111827; color: white; border: none; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
             pre { background: #0b1020; color: #e5e7eb; padding: 12px; border-radius: 8px; overflow:auto; }
           </style>
@@ -47,6 +47,7 @@ def root():
             <a href=\"/docs\">Swagger Docs</a>
             <a href=\"/redoc\">ReDoc</a>
             <a href=\"/health\">Health</a>
+            <a href=\"/labs\">Labs</a>
           </div>
 
           <div class=\"card\">
@@ -255,6 +256,60 @@ def root():
               }
             });
           </script>
+        </body>
+        </html>
+        """
+    )
+
+@app.get("/labs", response_class=HTMLResponse)
+def labs():
+    return (
+        """
+        <!DOCTYPE html>
+        <html lang=\"en\">
+        <head>
+          <meta charset=\"utf-8\" />
+          <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+          <title>OmniScrape Labs</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
+            h1 { margin-bottom: 8px; }
+            .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 16px; }
+            .name { font-weight: 700; font-size: 16px; }
+            .desc { color: #555; margin-top: 6px; }
+            a { color: #2563eb; text-decoration: none; }
+          </style>
+        </head>
+        <body>
+          <h1>Labs</h1>
+          <p>ScrapeGraphAI capabilities available for experimentation (descriptions only for now).</p>
+
+          <div class=\"card\">
+            <div class=\"name\">SmartScraperGraph</div>
+            <div class=\"desc\">Single-page scraper that only needs a user prompt and an input source.</div>
+          </div>
+          <div class=\"card\">
+            <div class=\"name\">SearchGraph</div>
+            <div class=\"desc\">Multi-page scraper that extracts information from the top n search results of a search engine.</div>
+          </div>
+          <div class=\"card\">
+            <div class=\"name\">SpeechGraph</div>
+            <div class=\"desc\">Single-page scraper that extracts information from a website and generates an audio file.</div>
+          </div>
+          <div class=\"card\">
+            <div class=\"name\">ScriptCreatorGraph</div>
+            <div class=\"desc\">Single-page scraper that extracts information from a website and generates a Python script.</div>
+          </div>
+          <div class=\"card\">
+            <div class=\"name\">SmartScraperMultiGraph</div>
+            <div class=\"desc\">Multi-page scraper that extracts information from multiple pages given a single prompt and a list of sources.</div>
+          </div>
+          <div class=\"card\">
+            <div class=\"name\">ScriptCreatorMultiGraph</div>
+            <div class=\"desc\">Multi-page scraper that generates a Python script for extracting information from multiple pages and sources.</div>
+          </div>
+
+          <p style=\"margin-top:16px;\"><a href=\"/\">← Back</a></p>
         </body>
         </html>
         """
