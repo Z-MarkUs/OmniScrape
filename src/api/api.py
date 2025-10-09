@@ -178,6 +178,7 @@ def root():
             .main-content { 
               flex: 1; 
               padding: 32px;
+              transition: margin-left 0.3s ease;
             }
             .content-header { 
               margin-bottom: 32px; 
@@ -352,6 +353,10 @@ def root():
               display: block;
               line-height: 1.3;
             }
+            /* Google color accents per option (default state) */
+            .mode-option.sd label { color: #34a853; }   /* Google Green */
+            .mode-option.llm label { color: #ea4335; }  /* Google Red */
+            .mode-option.auto label { color: #fbbc05; } /* Google Amber */
             .mode-option.active label { 
               color: #4285f4; 
             }
@@ -364,6 +369,11 @@ def root():
               }
               .sidebar.open { transform: translateX(0); }
               .main-content { margin-left: 0; }
+            }
+
+            /* When sidebar is open on larger screens, shift content */
+            @media (min-width: 769px) {
+              .sidebar.open ~ .main-content { margin-left: 280px; }
             }
           </style>
         </head>
@@ -482,17 +492,17 @@ def root():
                   </div>
                   
                   <div class=\"mode-selection\">
-                    <div class=\"mode-option\" onclick=\"selectMonitorMode('sd')\">
+                    <div class=\"mode-option sd\" onclick=\"selectMonitorMode('sd')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"sd\" id=\"monitor-mode-sd\">
                       <label for=\"monitor-mode-sd\">SD</label>
                       <span class=\"mode-desc\">Structured Data + Patterns</span>
                     </div>
-                    <div class=\"mode-option\" onclick=\"selectMonitorMode('llm')\">
+                    <div class=\"mode-option llm\" onclick=\"selectMonitorMode('llm')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"llm\" id=\"monitor-mode-llm\">
                       <label for=\"monitor-mode-llm\">LLM</label>
                       <span class=\"mode-desc\">AI Extraction Only</span>
                     </div>
-                    <div class=\"mode-option active\" onclick=\"selectMonitorMode('auto')\">
+                    <div class=\"mode-option auto active\" onclick=\"selectMonitorMode('auto')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"auto\" id=\"monitor-mode-auto\" checked>
                       <label for=\"monitor-mode-auto\">AUTO</label>
                       <span class=\"mode-desc\">Smart Fallback</span>
@@ -529,17 +539,17 @@ def root():
                   </div>
                   
                   <div class=\"mode-selection\">
-                    <div class=\"mode-option\" onclick=\"selectExtractMode('none')\">
+                    <div class=\"mode-option sd\" onclick=\"selectExtractMode('none')\">
                       <input type=\"radio\" name=\"extractMode\" value=\"none\" id=\"extract-mode-none\">
                       <label for=\"extract-mode-none\">SD</label>
                       <span class=\"mode-desc\">Structured Data Only</span>
                     </div>
-                    <div class=\"mode-option\" onclick=\"selectExtractMode('llm')\">
+                    <div class=\"mode-option llm\" onclick=\"selectExtractMode('llm')\">
                       <input type=\"radio\" name=\"extractMode\" value=\"llm\" id=\"extract-mode-llm\">
                       <label for=\"extract-mode-llm\">LLM</label>
                       <span class=\"mode-desc\">LLM Only</span>
                     </div>
-                    <div class=\"mode-option active\" onclick=\"selectExtractMode('auto')\">
+                    <div class=\"mode-option auto active\" onclick=\"selectExtractMode('auto')\">
                       <input type=\"radio\" name=\"extractMode\" value=\"auto\" id=\"extract-mode-auto\" checked>
                       <label for=\"extract-mode-auto\">AUTO</label>
                       <span class=\"mode-desc\">Smart Fallback</span>
@@ -568,17 +578,17 @@ def root():
                 </div>
                 
                   <div class=\"mode-selection\">
-                    <div class=\"mode-option\" onclick=\"selectAutoMode('sd')\">
+                    <div class=\"mode-option sd\" onclick=\"selectAutoMode('sd')\">
                       <input type=\"radio\" name=\"autoMode\" value=\"sd\" id=\"auto-mode-sd\">
                       <label for=\"auto-mode-sd\">SD</label>
                       <span class=\"mode-desc\">Structured Data + Patterns</span>
                     </div>
-                    <div class=\"mode-option\" onclick=\"selectAutoMode('llm')\">
+                    <div class=\"mode-option llm\" onclick=\"selectAutoMode('llm')\">
                       <input type=\"radio\" name=\"autoMode\" value=\"llm\" id=\"auto-mode-llm\">
                       <label for=\"auto-mode-llm\">LLM</label>
                       <span class=\"mode-desc\">AI Extraction Only</span>
                     </div>
-                    <div class=\"mode-option active\" onclick=\"selectAutoMode('auto')\">
+                    <div class=\"mode-option auto active\" onclick=\"selectAutoMode('auto')\">
                       <input type=\"radio\" name=\"autoMode\" value=\"auto\" id=\"auto-mode-auto\" checked>
                       <label for=\"auto-mode-auto\">AUTO</label>
                       <span class=\"mode-desc\">Smart Fallback</span>
@@ -1460,9 +1470,9 @@ def crawler():
               transition: all 0.2s;
               text-align: center;
             }
-            .mode-option:hover { border-color: #d1d5db; background: #f9fafb; }
+            .mode-option:hover { border-color: #4285f4; background: #f9fafb; }
             .mode-option.active { 
-              border-color: #2563eb; 
+              border-color: #4285f4; 
               background: #eff6ff; 
             }
             .mode-option input[type=\"radio\"] { display: none; }
@@ -1478,7 +1488,7 @@ def crawler():
               color: #6b7280; 
               display: block;
             }
-            .mode-option.active label { color: #2563eb; }
+            .mode-option.active label { color: #4285f4; }
           </style>
         </head>
         <body>
