@@ -390,41 +390,23 @@ def root():
 
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Main Functions</div>
-                <div class=\"nav-item active\" onclick=\"showSection('home')\">
-                  <span class=\"icon\">Home</span>
-                </div>
-                <div class=\"nav-item\" onclick=\"showSection('monitor')\">
-                  <span class=\"icon\">Monitor All Articles</span>
-                </div>
-                <div class=\"nav-item\" onclick=\"showSection('extract')\">
-                  <span class=\"icon\">Extract Single Article</span>
-                </div>
-                <div class=\"nav-item\" onclick=\"showSection('auto')\">
-                  <span class=\"icon\">Auto Workflow</span>
-                </div>
+                <div class=\"nav-item active\" onclick=\"showSection('home')\">Home</div>
+                <div class=\"nav-item\" onclick=\"showSection('monitor')\">Monitor All Articles</div>
+                <div class=\"nav-item\" onclick=\"showSection('extract')\">Extract Single Article</div>
+                <div class=\"nav-item\" onclick=\"showSection('auto')\">Auto Workflow</div>
               </div>
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Advanced</div>
-                <div class=\"nav-item\" onclick=\"showSection('labs')\">
-                  <span class=\"icon\">ScrapeGraphAI Labs</span>
-                </div>
-                <div class=\"nav-item\" onclick=\"showSection('crawler')\">
-                  <span class=\"icon\">Article Crawler</span>
-                </div>
+                <div class=\"nav-item\" onclick=\"showSection('labs')\">ScrapeGraphAI Labs</div>
+                <div class=\"nav-item\" onclick=\"showSection('crawler')\">Article Crawler</div>
               </div>
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Documentation</div>
-                <a href=\"/docs\" class=\"nav-item\">
-                  <span class=\"icon\">API Documentation</span>
-                </a>
-                <a href=\"/redoc\" class=\"nav-item\">
-                  <span class=\"icon\">ReDoc</span>
-                </a>
-                <a href=\"/health\" class=\"nav-item\">
-                  <span class=\"icon\">Health Check</span>
-                </a>
+                <a href=\"/docs\" class=\"nav-item\">API Documentation</a>
+                <a href=\"/redoc\" class=\"nav-item\">ReDoc</a>
+                <a href=\"/health\" class=\"nav-item\">Health Check</a>
               </div>
             </div>
             
@@ -439,37 +421,31 @@ def root():
                 
                 <div class=\"function-grid\">
                   <div class=\"function-card\" onclick=\"showSection('monitor')\">
-                    <span class=\"icon\">Monitor All Articles</span>
                     <h3>Monitor All Articles</h3>
                     <p>Monitor article list pages and extract ALL articles (not just top 10). Perfect for comprehensive content monitoring and analysis.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('extract')\">
-                    <span class=\"icon\">Extract Single Article</span>
                     <h3>Extract Single Article</h3>
                     <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('auto')\">
-                    <span class=\"icon\">Auto Workflow</span>
                     <h3>Auto Workflow</h3>
                     <p>Complete automated workflow: monitor article lists → extract all articles → get full content. One-click comprehensive extraction.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('labs')\">
-                    <span class=\"icon\">ScrapeGraphAI Labs</span>
                     <h3>ScrapeGraphAI Labs</h3>
                     <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('crawler')\">
-                    <span class=\"icon\">Article Crawler</span>
                     <h3>Article Crawler</h3>
                     <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"window.open('/docs', '_blank')\">
-                    <span class=\"icon\">API Documentation</span>
                     <h3>API Documentation</h3>
                     <p>Complete API reference with interactive documentation. Explore all endpoints, parameters, and response formats.</p>
                   </div>
