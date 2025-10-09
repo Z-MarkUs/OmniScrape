@@ -125,6 +125,12 @@ def root():
               position: fixed;
               height: 100vh;
               overflow-y: auto;
+              transform: translateX(-100%);
+              transition: transform 0.3s ease;
+              z-index: 1000;
+            }
+            .sidebar.open { 
+              transform: translateX(0); 
             }
             .sidebar-header { 
               padding: 0 24px 24px; 
@@ -158,8 +164,8 @@ def root():
             }
             .nav-item.active { 
               background: #eff6ff; 
-              color: #2563eb; 
-              border-left-color: #2563eb;
+              color: #4285f4; 
+              border-left-color: #4285f4;
             }
             .nav-item .icon { 
               display: inline-block; 
@@ -171,7 +177,6 @@ def root():
             /* Main Content */
             .main-content { 
               flex: 1; 
-              margin-left: 280px; 
               padding: 32px;
             }
             .content-header { 
@@ -198,8 +203,8 @@ def root():
               cursor: pointer;
             }
             .function-card:hover {
-              border-color: #2563eb;
-              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+              border-color: #4285f4;
+              box-shadow: 0 4px 12px rgba(66, 133, 244, 0.1);
             }
             .function-card h3 {
               font-size: 18px;
@@ -240,13 +245,13 @@ def root():
             .form-group textarea:focus, 
             .form-group select:focus { 
               outline: none; 
-              border-color: #2563eb; 
-              box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+              border-color: #4285f4; 
+              box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
             }
             
             /* Buttons */
             .btn { 
-              background: #2563eb; 
+              background: #4285f4; 
               color: white; 
               border: none; 
               padding: 12px 24px; 
@@ -256,13 +261,31 @@ def root():
               transition: background-color 0.2s;
               width: 100%;
             }
-            .btn:hover { background: #1d4ed8; }
+            .btn:hover { background: #3367d6; }
             .btn:disabled { 
               background: #9ca3af; 
               cursor: not-allowed;
             }
-            .btn-danger { background: #dc2626; }
-            .btn-danger:hover { background: #b91c1c; }
+            .btn-danger { background: #ea4335; }
+            .btn-danger:hover { background: #d33b2c; }
+            
+            .menu-toggle {
+              position: fixed;
+              top: 20px;
+              left: 20px;
+              background: #4285f4;
+              color: white;
+              border: none;
+              padding: 12px;
+              border-radius: 8px;
+              cursor: pointer;
+              z-index: 1001;
+              font-size: 16px;
+              box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+            }
+            .menu-toggle:hover {
+              background: #3367d6;
+            }
             
             /* Results */
             .result { 
@@ -298,15 +321,21 @@ def root():
               flex: 1; 
               border: 2px solid #e5e7eb; 
               border-radius: 8px; 
-              padding: 12px; 
+              padding: 16px; 
               cursor: pointer; 
               transition: all 0.2s;
               text-align: center;
+              background: white;
             }
-            .mode-option:hover { border-color: #d1d5db; background: #f9fafb; }
+            .mode-option:hover { 
+              border-color: #4285f4; 
+              transform: translateY(-2px); 
+              box-shadow: 0 4px 12px rgba(66, 133, 244, 0.15);
+            }
             .mode-option.active { 
-              border-color: #2563eb; 
-              background: #eff6ff; 
+              border-color: #4285f4; 
+              background: #f8f9ff; 
+              box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
             }
             .mode-option input[type=\"radio\"] { display: none; }
             .mode-option label { 
@@ -315,13 +344,17 @@ def root():
               font-size: 16px; 
               margin-bottom: 4px;
               cursor: pointer;
+              color: #495057;
             }
             .mode-desc { 
               font-size: 12px; 
-              color: #6b7280; 
+              color: #6c757d; 
               display: block;
+              line-height: 1.3;
             }
-            .mode-option.active label { color: #2563eb; }
+            .mode-option.active label { 
+              color: #4285f4; 
+            }
             
             /* Responsive */
             @media (max-width: 768px) {
@@ -335,50 +368,51 @@ def root():
           </style>
         </head>
         <body>
+          <button class=\"menu-toggle\" onclick=\"toggleSidebar()\">☰</button>
           <div class=\"container\">
             <!-- Sidebar -->
             <div class=\"sidebar\">
               <div class=\"sidebar-header\">
-                <h1>🚀 OmniScrape</h1>
+                <h1>OmniScrape</h1>
                 <p>Universal Web Scraping Platform</p>
           </div>
 
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Main Functions</div>
                 <div class=\"nav-item active\" onclick=\"showSection('home')\">
-                  <span class=\"icon\">🏠</span>Home
+                  <span class=\"icon\">Home</span>
                 </div>
                 <div class=\"nav-item\" onclick=\"showSection('monitor')\">
-                  <span class=\"icon\">📊</span>Monitor All Articles
+                  <span class=\"icon\">Monitor All Articles</span>
                 </div>
                 <div class=\"nav-item\" onclick=\"showSection('extract')\">
-                  <span class=\"icon\">📄</span>Extract Single Article
+                  <span class=\"icon\">Extract Single Article</span>
                 </div>
                 <div class=\"nav-item\" onclick=\"showSection('auto')\">
-                  <span class=\"icon\">🤖</span>Auto Workflow
+                  <span class=\"icon\">Auto Workflow</span>
                 </div>
               </div>
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Advanced</div>
                 <div class=\"nav-item\" onclick=\"showSection('labs')\">
-                  <span class=\"icon\">🧪</span>ScrapeGraphAI Labs
+                  <span class=\"icon\">ScrapeGraphAI Labs</span>
                 </div>
                 <div class=\"nav-item\" onclick=\"showSection('crawler')\">
-                  <span class=\"icon\">🕷️</span>Article Crawler
+                  <span class=\"icon\">Article Crawler</span>
                 </div>
               </div>
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Documentation</div>
                 <a href=\"/docs\" class=\"nav-item\">
-                  <span class=\"icon\">📖</span>API Documentation
+                  <span class=\"icon\">API Documentation</span>
                 </a>
                 <a href=\"/redoc\" class=\"nav-item\">
-                  <span class=\"icon\">📚</span>ReDoc
+                  <span class=\"icon\">ReDoc</span>
                 </a>
                 <a href=\"/health\" class=\"nav-item\">
-                  <span class=\"icon\">❤️</span>Health Check
+                  <span class=\"icon\">Health Check</span>
                 </a>
               </div>
             </div>
@@ -394,37 +428,37 @@ def root():
                 
                 <div class=\"function-grid\">
                   <div class=\"function-card\" onclick=\"showSection('monitor')\">
-                    <span class=\"icon\">📊</span>
+                    <span class=\"icon\">Monitor All Articles</span>
                     <h3>Monitor All Articles</h3>
                     <p>Monitor article list pages and extract ALL articles (not just top 10). Perfect for comprehensive content monitoring and analysis.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('extract')\">
-                    <span class=\"icon\">📄</span>
+                    <span class=\"icon\">Extract Single Article</span>
                     <h3>Extract Single Article</h3>
                     <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('auto')\">
-                    <span class=\"icon\">🤖</span>
+                    <span class=\"icon\">Auto Workflow</span>
                     <h3>Auto Workflow</h3>
                     <p>Complete automated workflow: monitor article lists → extract all articles → get full content. One-click comprehensive extraction.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('labs')\">
-                    <span class=\"icon\">🧪</span>
+                    <span class=\"icon\">ScrapeGraphAI Labs</span>
                     <h3>ScrapeGraphAI Labs</h3>
                     <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('crawler')\">
-                    <span class=\"icon\">🕷️</span>
+                    <span class=\"icon\">Article Crawler</span>
                     <h3>Article Crawler</h3>
                     <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"window.open('/docs', '_blank')\">
-                    <span class=\"icon\">📖</span>
+                    <span class=\"icon\">API Documentation</span>
                     <h3>API Documentation</h3>
                     <p>Complete API reference with interactive documentation. Explore all endpoints, parameters, and response formats.</p>
                   </div>
@@ -434,7 +468,7 @@ def root():
               <!-- Monitor Section -->
               <div id=\"monitor\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
-                  <h2>📊 Monitor All Articles</h2>
+                  <h2>Monitor All Articles</h2>
                   <p>Monitor article list pages and extract ALL articles for comprehensive analysis.</p>
                 </div>
                 
@@ -465,7 +499,7 @@ def root():
                     </div>
                   </div>
                   
-                  <button class=\"btn\" onclick=\"runMonitor()\">📊 Monitor All Articles</button>
+                  <button class=\"btn\" onclick=\"runMonitor()\">Monitor All Articles</button>
                   <div id=\"monitor-result\" class=\"result\" style=\"display:none;\"></div>
                 </div>
               </div>
@@ -473,7 +507,7 @@ def root():
               <!-- Extract Section -->
               <div id=\"extract\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
-                  <h2>📄 Extract Single Article</h2>
+                  <h2>Extract Single Article</h2>
                   <p>Extract full content from individual article URLs with intelligent extraction methods.</p>
                 </div>
                 
@@ -512,7 +546,7 @@ def root():
                     </div>
                   </div>
                   
-                  <button class=\"btn\" onclick=\"runExtract()\">📄 Extract Article</button>
+                  <button class=\"btn\" onclick=\"runExtract()\">Extract Article</button>
                   <div id=\"extract-result\" class=\"result\" style=\"display:none;\"></div>
                 </div>
               </div>
@@ -520,7 +554,7 @@ def root():
               <!-- Auto Section -->
               <div id=\"auto\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
-                  <h2>🤖 Auto Workflow</h2>
+                  <h2>Auto Workflow</h2>
                   <p>Complete automated workflow: monitor article lists → extract all articles → get full content.</p>
                 </div>
                 
@@ -551,42 +585,47 @@ def root():
                     </div>
               </div>
               
-                  <button class=\"btn\" onclick=\"runAuto()\">🤖 Run Complete Workflow</button>
+                  <button class=\"btn\" onclick=\"runAuto()\">Run Complete Workflow</button>
                   <div id=\"auto-result\" class=\"result\" style=\"display:none;\"></div>
                 </div>
-              </div>
-              
+          </div>
+
               <!-- Labs Section -->
               <div id=\"labs\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
-                  <h2>🧪 ScrapeGraphAI Labs</h2>
+                  <h2>ScrapeGraphAI Labs</h2>
                   <p>Test and experiment with different ScrapeGraphAI graph types for advanced web scraping.</p>
                 </div>
                 
                 <div class=\"function-card\">
                   <h3>Interactive Labs</h3>
                   <p>Access the full ScrapeGraphAI Labs interface with sidebar navigation and all graph types.</p>
-                  <button class=\"btn\" onclick=\"window.open('/labs', '_blank')\">🧪 Open Labs</button>
+                  <button class=\"btn\" onclick=\"window.open('/labs', '_blank')\">Open Labs</button>
                 </div>
               </div>
               
               <!-- Crawler Section -->
               <div id=\"crawler\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
-                  <h2>🕷️ Article Crawler</h2>
+                  <h2>Article Crawler</h2>
                   <p>Universal article list crawler with three-choice system and smart fallback strategy.</p>
                 </div>
                 
                 <div class=\"function-card\">
                   <h3>Universal Crawler</h3>
                   <p>Access the dedicated crawler interface with advanced features and comprehensive article extraction.</p>
-                  <button class=\"btn\" onclick=\"window.open('/crawler', '_blank')\">🕷️ Open Crawler</button>
+                  <button class=\"btn\" onclick=\"window.open('/crawler', '_blank')\">Open Crawler</button>
                 </div>
               </div>
             </div>
           </div>
 
           <script>
+            function toggleSidebar() {
+              const sidebar = document.querySelector('.sidebar');
+              sidebar.classList.toggle('open');
+            }
+            
             function showSection(sectionId) {
               // Hide all sections
               document.querySelectorAll('.content-section').forEach(section => {
@@ -603,6 +642,11 @@ def root():
               
               // Add active class to clicked nav item
               event.target.classList.add('active');
+              
+              // Close sidebar on mobile after selection
+              if (window.innerWidth <= 768) {
+                document.querySelector('.sidebar').classList.remove('open');
+              }
             }
             
             // Mode selection functions
@@ -644,8 +688,8 @@ def root():
                 const selectedMode = document.querySelector('input[name=\"monitorMode\"]:checked').value;
                 
                 const response = await fetch('/crawl', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  method: 'POST', 
+                  headers: { 'Content-Type': 'application/json' }, 
                   body: JSON.stringify({
                     url: document.getElementById('monitor-url').value,
                     count: 100, // Get all articles
@@ -711,8 +755,8 @@ def root():
                 
                 // Step 1: Monitor articles
                 const monitorResponse = await fetch('/crawl', {
-                  method: 'POST', 
-                  headers: { 'Content-Type': 'application/json' }, 
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     url: document.getElementById('auto-url').value,
                     count: 100,
