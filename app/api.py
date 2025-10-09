@@ -275,45 +275,303 @@ def labs():
             body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
             h1 { margin-bottom: 8px; }
             .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 16px; }
-            .name { font-weight: 700; font-size: 16px; }
-            .desc { color: #555; margin-top: 6px; }
+            .name { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+            .desc { color: #555; margin-bottom: 12px; }
+            .form { margin-top: 12px; }
+            input, textarea, select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 8px; box-sizing: border-box; }
+            button { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+            button:hover { background: #1d4ed8; }
+            .result { margin-top: 12px; padding: 12px; background: #f9fafb; border-radius: 6px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+            .error { background: #fef2f2; color: #dc2626; }
+            .loading { color: #6b7280; }
             a { color: #2563eb; text-decoration: none; }
+            .note { background: #fef3c7; padding: 8px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
           </style>
         </head>
         <body>
           <h1>Labs</h1>
-          <p>ScrapeGraphAI capabilities available for experimentation (descriptions only for now).</p>
+          <p>ScrapeGraphAI capabilities available for experimentation.</p>
+          
+          <div class=\"note\">
+            <strong>Note:</strong> Some graphs require additional API keys (Bing Search API for SearchGraph). 
+            OpenAI API key is required for all LLM-powered graphs.
+          </div>
 
           <div class=\"card\">
             <div class=\"name\">SmartScraperGraph</div>
             <div class=\"desc\">Single-page scraper that only needs a user prompt and an input source.</div>
+            <div class=\"form\">
+              <input type=\"text\" id=\"smart-url\" placeholder=\"Enter URL\" value=\"https://example.com\">
+              <textarea id=\"smart-prompt\" placeholder=\"Enter your extraction prompt\" rows=\"3\">Extract the main title, author, and key points from this article</textarea>
+              <button onclick=\"runSmartScraper()\">Run SmartScraper</button>
+              <div id=\"smart-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
           </div>
+
           <div class=\"card\">
             <div class=\"name\">SearchGraph</div>
             <div class=\"desc\">Multi-page scraper that extracts information from the top n search results of a search engine.</div>
+            <div class=\"form\">
+              <input type=\"text\" id=\"search-query\" placeholder=\"Enter search query\" value=\"artificial intelligence news\">
+              <input type=\"number\" id=\"search-count\" placeholder=\"Number of results\" value=\"3\" min=\"1\" max=\"10\">
+              <textarea id=\"search-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the title, summary, and publication date from each article</textarea>
+              <button onclick=\"runSearchGraph()\">Run SearchGraph</button>
+              <div id=\"search-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
           </div>
+
           <div class=\"card\">
             <div class=\"name\">SpeechGraph</div>
             <div class=\"desc\">Single-page scraper that extracts information from a website and generates an audio file.</div>
+            <div class=\"form\">
+              <input type=\"text\" id=\"speech-url\" placeholder=\"Enter URL\" value=\"https://example.com\">
+              <textarea id=\"speech-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the main content and convert it to speech</textarea>
+              <button onclick=\"runSpeechGraph()\">Run SpeechGraph</button>
+              <div id=\"speech-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
           </div>
+
           <div class=\"card\">
             <div class=\"name\">ScriptCreatorGraph</div>
             <div class=\"desc\">Single-page scraper that extracts information from a website and generates a Python script.</div>
+            <div class=\"form\">
+              <input type=\"text\" id=\"script-url\" placeholder=\"Enter URL\" value=\"https://example.com\">
+              <textarea id=\"script-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Create a Python script to extract product information from this page</textarea>
+              <button onclick=\"runScriptCreator()\">Run ScriptCreator</button>
+              <div id=\"script-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
           </div>
+
           <div class=\"card\">
             <div class=\"name\">SmartScraperMultiGraph</div>
             <div class=\"desc\">Multi-page scraper that extracts information from multiple pages given a single prompt and a list of sources.</div>
+            <div class=\"form\">
+              <textarea id=\"multi-urls\" placeholder=\"Enter URLs (one per line)\" rows=\"3\">https://example.com
+https://httpbin.org/html
+https://httpbin.org/json</textarea>
+              <textarea id=\"multi-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Extract the title and main content from each page</textarea>
+              <button onclick=\"runSmartScraperMulti()\">Run SmartScraperMulti</button>
+              <div id=\"multi-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
           </div>
+
           <div class=\"card\">
             <div class=\"name\">ScriptCreatorMultiGraph</div>
             <div class=\"desc\">Multi-page scraper that generates a Python script for extracting information from multiple pages and sources.</div>
+            <div class=\"form\">
+              <textarea id=\"script-multi-urls\" placeholder=\"Enter URLs (one per line)\" rows=\"3\">https://example.com
+https://httpbin.org/html</textarea>
+              <textarea id=\"script-multi-prompt\" placeholder=\"Enter extraction prompt\" rows=\"3\">Create a Python script to extract structured data from these pages</textarea>
+              <button onclick=\"runScriptCreatorMulti()\">Run ScriptCreatorMulti</button>
+              <div id=\"script-multi-result\" class=\"result\" style=\"display:none;\"></div>
+            </div>
           </div>
 
           <p style=\"margin-top:16px;\"><a href=\"/\">← Back</a></p>
+
+          <script>
+            async function runGraph(graphType, data) {
+              const resultDiv = document.getElementById(graphType + '-result');
+              resultDiv.style.display = 'block';
+              resultDiv.textContent = 'Loading...';
+              resultDiv.className = 'result loading';
+              
+              try {
+                const response = await fetch('/labs/' + graphType, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                  resultDiv.textContent = JSON.stringify(result.data, null, 2);
+                  resultDiv.className = 'result';
+                } else {
+                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.className = 'result error';
+                }
+              } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+              }
+            }
+            
+            function runSmartScraper() {
+              runGraph('smart', {
+                url: document.getElementById('smart-url').value,
+                prompt: document.getElementById('smart-prompt').value
+              });
+            }
+            
+            function runSearchGraph() {
+              runGraph('search', {
+                query: document.getElementById('search-query').value,
+                count: parseInt(document.getElementById('search-count').value),
+                prompt: document.getElementById('search-prompt').value
+              });
+            }
+            
+            function runSpeechGraph() {
+              runGraph('speech', {
+                url: document.getElementById('speech-url').value,
+                prompt: document.getElementById('speech-prompt').value
+              });
+            }
+            
+            function runScriptCreator() {
+              runGraph('script', {
+                url: document.getElementById('script-url').value,
+                prompt: document.getElementById('script-prompt').value
+              });
+            }
+            
+            function runSmartScraperMulti() {
+              runGraph('multi', {
+                urls: document.getElementById('multi-urls').value.split('\\n').filter(u => u.trim()),
+                prompt: document.getElementById('multi-prompt').value
+              });
+            }
+            
+            function runScriptCreatorMulti() {
+              runGraph('script-multi', {
+                urls: document.getElementById('script-multi-urls').value.split('\\n').filter(u => u.trim()),
+                prompt: document.getElementById('script-multi-prompt').value
+              });
+            }
+          </script>
         </body>
         </html>
         """
     )
+
+# Labs API endpoints
+@app.post("/labs/smart")
+async def labs_smart(request: Request):
+    try:
+        data = await request.json()
+        url = data.get("url")
+        prompt = data.get("prompt")
+        
+        if not url or not prompt:
+            return {"success": False, "error": "URL and prompt are required"}
+        
+        # Use SmartScraperGraph
+        from .labs_graphs import run_graph_async, run_smart_scraper
+        result = await run_graph_async(run_smart_scraper, url, prompt)
+        
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/labs/search")
+async def labs_search(request: Request):
+    try:
+        data = await request.json()
+        query = data.get("query")
+        count = data.get("count", 3)
+        prompt = data.get("prompt")
+        
+        if not query or not prompt:
+            return {"success": False, "error": "Query and prompt are required"}
+        
+        # Use SearchGraph (requires Bing API key)
+        from .labs_graphs import run_graph_async, run_search_graph
+        result = await run_graph_async(run_search_graph, query, count, prompt)
+        
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/labs/speech")
+async def labs_speech(request: Request):
+    try:
+        data = await request.json()
+        url = data.get("url")
+        prompt = data.get("prompt")
+        
+        if not url or not prompt:
+            return {"success": False, "error": "URL and prompt are required"}
+        
+        # Use SpeechGraph
+        from .labs_graphs import run_graph_async, run_speech_graph
+        result = await run_graph_async(run_speech_graph, url, prompt)
+        
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/labs/script")
+async def labs_script(request: Request):
+    try:
+        data = await request.json()
+        url = data.get("url")
+        prompt = data.get("prompt")
+        
+        if not url or not prompt:
+            return {"success": False, "error": "URL and prompt are required"}
+        
+        # Use ScriptCreatorGraph
+        from .labs_graphs import run_graph_async, run_script_creator
+        result = await run_graph_async(run_script_creator, url, prompt)
+        
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/labs/multi")
+async def labs_multi(request: Request):
+    try:
+        data = await request.json()
+        urls = data.get("urls", [])
+        prompt = data.get("prompt")
+        
+        if not urls or not prompt:
+            return {"success": False, "error": "URLs and prompt are required"}
+        
+        # Use SmartScraperMultiGraph
+        from .labs_graphs import run_graph_async, run_smart_scraper_multi
+        result = await run_graph_async(run_smart_scraper_multi, urls, prompt)
+        
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/labs/script-multi")
+async def labs_script_multi(request: Request):
+    try:
+        data = await request.json()
+        urls = data.get("urls", [])
+        prompt = data.get("prompt")
+        
+        if not urls or not prompt:
+            return {"success": False, "error": "URLs and prompt are required"}
+        
+        # Use ScriptCreatorMultiGraph
+        from .labs_graphs import run_graph_async, run_script_creator_multi
+        result = await run_graph_async(run_script_creator_multi, urls, prompt)
+        
+        if "error" in result:
+            return {"success": False, "error": result["error"]}
+        
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/health")
 def health(): 
