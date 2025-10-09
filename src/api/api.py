@@ -540,16 +540,65 @@ def root():
               
               
               <!-- Labs Section -->
-              <div id=\"labs\" class=\"content-section\" style=\"display:none;\">
-                <div class=\"content-header\">
+              <div id="labs" class="content-section" style="display:none;">
+                <div class="content-header">
                   <h2>ScrapeGraphAI Labs</h2>
-                  <p>Test and experiment with different ScrapeGraphAI graph types for advanced web scraping.</p>
+                  <p>Experiment with ScrapeGraphAI graph types. Results appear below each card.</p>
                 </div>
                 
-                <div class=\"function-card\">
-                  <h3>Interactive Labs</h3>
-                  <p>Access the full ScrapeGraphAI Labs interface with sidebar navigation and all graph types.</p>
-                  <button class=\"btn\" onclick=\"window.open('/labs', '_blank')\">Open Labs</button>
+                <div class="function-grid">
+                  <!-- SmartScraperGraph -->
+                  <div class="function-card">
+                    <h3>SmartScraperGraph</h3>
+                    <p>Single-page extraction with a prompt.</p>
+                    <div class="form-group">
+                      <label for="lab-smart-url">URL</label>
+                      <input type="text" id="lab-smart-url" placeholder="Enter URL" value="https://httpbin.org/html">
+                    </div>
+                    <div class="form-group">
+                      <label for="lab-smart-prompt">Prompt</label>
+                      <textarea id="lab-smart-prompt" rows="3">Extract the title and main content</textarea>
+                    </div>
+                    <button class="btn" onclick="runLab('smart')">Run SmartScraper</button>
+                    <div id="lab-smart-result" class="result" style="display:none;"></div>
+                  </div>
+
+                  <!-- SearchGraph -->
+                  <div class="function-card">
+                    <h3>SearchGraph</h3>
+                    <p>Extract from top N search results (requires Bing API key).</p>
+                    <div class="form-group">
+                      <label for="lab-search-query">Query</label>
+                      <input type="text" id="lab-search-query" value="artificial intelligence news">
+                    </div>
+                    <div class="form-group">
+                      <label for="lab-search-count">Results (1–10)</label>
+                      <input type="number" id="lab-search-count" value="3" min="1" max="10">
+                    </div>
+                    <div class="form-group">
+                      <label for="lab-search-prompt">Prompt</label>
+                      <textarea id="lab-search-prompt" rows="3">Extract title, summary, and publication date</textarea>
+                    </div>
+                    <button class="btn" onclick="runLab('search')">Run SearchGraph</button>
+                    <div id="lab-search-result" class="result" style="display:none;"></div>
+                  </div>
+
+                  <!-- SmartScraperMultiGraph -->
+                  <div class="function-card">
+                    <h3>SmartScraperMultiGraph</h3>
+                    <p>Multi-page extraction with a single prompt.</p>
+                    <div class="form-group">
+                      <label for="lab-multi-urls">URLs (one per line)</label>
+                      <textarea id="lab-multi-urls" rows="3">https://httpbin.org/html
+https://example.com</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label for="lab-multi-prompt">Prompt</label>
+                      <textarea id="lab-multi-prompt" rows="3">Extract the title and main content</textarea>
+                    </div>
+                    <button class="btn" onclick="runLab('multi')">Run SmartScraperMulti</button>
+                    <div id="lab-multi-result" class="result" style="display:none;"></div>
+                  </div>
                 </div>
               </div>
               
@@ -752,6 +801,41 @@ def root():
               } catch (e) {
                 resultDiv.textContent = 'Error: ' + e.message;
                 resultDiv.className = 'result error';
+              }
+            }
+
+            // Labs inline helpers
+            async function runLab(kind) {
+              const endpoints = {
+                smart: '/labs/smart',
+                search: '/labs/search',
+                multi: '/labs/multi'
+              };
+              const resultEl = document.getElementById(`lab-${kind}-result`);
+              resultEl.style.display = 'block';
+              resultEl.textContent = 'Running...';
+              resultEl.className = 'result loading';
+              try {
+                let payload = {};
+                if (kind === 'smart') {
+                  payload = { url: document.getElementById('lab-smart-url').value, prompt: document.getElementById('lab-smart-prompt').value };
+                } else if (kind === 'search') {
+                  payload = { query: document.getElementById('lab-search-query').value, count: parseInt(document.getElementById('lab-search-count').value), prompt: document.getElementById('lab-search-prompt').value };
+                } else if (kind === 'multi') {
+                  payload = { urls: document.getElementById('lab-multi-urls').value.split('\n').filter(u => u.trim()), prompt: document.getElementById('lab-multi-prompt').value };
+                }
+                const res = await fetch(endpoints[kind], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await res.json();
+                if (json.success) {
+                  resultEl.textContent = JSON.stringify(json.data, null, 2);
+                  resultEl.className = 'result success';
+                } else {
+                  resultEl.textContent = 'Error: ' + json.error;
+                  resultEl.className = 'result error';
+                }
+              } catch (e) {
+                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.className = 'result error';
               }
             }
           </script>
