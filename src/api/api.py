@@ -273,7 +273,8 @@ def root():
             .menu-toggle {
               position: fixed;
               top: 20px;
-              left: 20px;
+              right: 20px;
+              left: auto;
               background: #4285f4;
               color: white;
               border: none;
