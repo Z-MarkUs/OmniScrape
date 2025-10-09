@@ -393,13 +393,12 @@ def root():
                 <div class=\"nav-item active\" onclick=\"showSection('home')\">Home</div>
                 <div class=\"nav-item\" onclick=\"showSection('monitor')\">Monitor All Articles</div>
                 <div class=\"nav-item\" onclick=\"showSection('extract')\">Extract Single Article</div>
-                <div class=\"nav-item\" onclick=\"showSection('auto')\">Auto Workflow</div>
+                <div class=\"nav-item\" onclick=\"showSection('crawler')\">Article Crawler</div>
               </div>
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Advanced</div>
                 <div class=\"nav-item\" onclick=\"showSection('labs')\">ScrapeGraphAI Labs</div>
-                <div class=\"nav-item\" onclick=\"showSection('crawler')\">Article Crawler</div>
               </div>
               
               <div class=\"nav-section\">
@@ -430,19 +429,14 @@ def root():
                     <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"showSection('auto')\">
-                    <h3>Auto Workflow</h3>
-                    <p>Complete automated workflow: monitor article lists → extract all articles → get full content. One-click comprehensive extraction.</p>
+                  <div class=\"function-card\" onclick=\"showSection('crawler')\">
+                    <h3>Article Crawler</h3>
+                    <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('labs')\">
                     <h3>ScrapeGraphAI Labs</h3>
                     <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
-                  </div>
-                  
-                  <div class=\"function-card\" onclick=\"showSection('crawler')\">
-                    <h3>Article Crawler</h3>
-                    <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"window.open('/docs', '_blank')\">
@@ -538,45 +532,9 @@ def root():
                 </div>
               </div>
               
-              <!-- Auto Section -->
-              <div id=\"auto\" class=\"content-section\" style=\"display:none;\">
-                <div class=\"content-header\">
-                  <h2>Auto Workflow</h2>
-                  <p>Complete automated workflow: monitor article lists → extract all articles → get full content.</p>
-                </div>
-                
-                <div class=\"function-card\">
-                  <h3>Complete Automation</h3>
-                  <p>One-click comprehensive extraction: monitor article list → extract all articles → get full content for each article.</p>
-                  
-                  <div class=\"form-group\">
-                    <label for=\"auto-url\">Article List URL</label>
-                    <input type=\"text\" id=\"auto-url\" placeholder=\"Enter article list URL\" value=\"https://column.etnetchina.cn/list/article-latest\">
-                </div>
-                
-                  <div class=\"mode-selection\">
-                    <div class=\"mode-option sd\" onclick=\"selectAutoMode('sd')\">
-                      <input type=\"radio\" name=\"autoMode\" value=\"sd\" id=\"auto-mode-sd\">
-                      <label for=\"auto-mode-sd\">SD</label>
-                      <span class=\"mode-desc\">Structured Data + Patterns</span>
-                    </div>
-                    <div class=\"mode-option llm\" onclick=\"selectAutoMode('llm')\">
-                      <input type=\"radio\" name=\"autoMode\" value=\"llm\" id=\"auto-mode-llm\">
-                      <label for=\"auto-mode-llm\">LLM</label>
-                      <span class=\"mode-desc\">AI Extraction Only</span>
-                    </div>
-                    <div class=\"mode-option auto active\" onclick=\"selectAutoMode('auto')\">
-                      <input type=\"radio\" name=\"autoMode\" value=\"auto\" id=\"auto-mode-auto\" checked>
-                      <label for=\"auto-mode-auto\">AUTO</label>
-                      <span class=\"mode-desc\">Smart Fallback</span>
-                    </div>
-              </div>
+              <!-- Auto Section (Removed) -->
               
-                  <button class=\"btn\" onclick=\"runAuto()\">Run Complete Workflow</button>
-                  <div id=\"auto-result\" class=\"result\" style=\"display:none;\"></div>
-                </div>
-          </div>
-
+              
               <!-- Labs Section -->
               <div id=\"labs\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
@@ -591,17 +549,47 @@ def root():
                 </div>
               </div>
               
-              <!-- Crawler Section -->
-              <div id=\"crawler\" class=\"content-section\" style=\"display:none;\">
-                <div class=\"content-header\">
+              <!-- Crawler Section (inline) -->
+              <div id="crawler" class="content-section" style="display:none;">
+                <div class="content-header">
                   <h2>Article Crawler</h2>
-                  <p>Universal article list crawler with three-choice system and smart fallback strategy.</p>
+                  <p>Provide a list page; we’ll discover articles and extract full content.</p>
                 </div>
                 
-                <div class=\"function-card\">
-                  <h3>Universal Crawler</h3>
-                  <p>Access the dedicated crawler interface with advanced features and comprehensive article extraction.</p>
-                  <button class=\"btn\" onclick=\"window.open('/crawler', '_blank')\">Open Crawler</button>
+                <div class="function-card">
+                  <h3>Run Crawler</h3>
+                  <p>Uses SD → Patterns → LLM fallback for full content.</p>
+                  
+                  <div class="form-group">
+                    <label for="crawler-url">Article List URL</label>
+                    <input type="text" id="crawler-url" placeholder="Enter article list URL" value="https://column.etnetchina.cn/list/article-latest">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="crawler-count">Max Items (1–50)</label>
+                    <input type="number" id="crawler-count" value="50" min="1" max="50">
+                  </div>
+                  
+                  <div class="mode-selection">
+                    <div class="mode-option sd" onclick="selectCrawlerMode('sd')">
+                      <input type="radio" name="crawlerMode" value="sd" id="crawler-mode-sd">
+                      <label for="crawler-mode-sd">SD</label>
+                      <span class="mode-desc">Structured Data + Patterns</span>
+                    </div>
+                    <div class="mode-option llm" onclick="selectCrawlerMode('llm')">
+                      <input type="radio" name="crawlerMode" value="llm" id="crawler-mode-llm">
+                      <label for="crawler-mode-llm">LLM</label>
+                      <span class="mode-desc">AI Extraction Only</span>
+                    </div>
+                    <div class="mode-option auto active" onclick="selectCrawlerMode('auto')">
+                      <input type="radio" name="crawlerMode" value="auto" id="crawler-mode-auto" checked>
+                      <label for="crawler-mode-auto">AUTO</label>
+                      <span class="mode-desc">Smart Fallback</span>
+                    </div>
+                  </div>
+                  
+                  <button class="btn" onclick="runCrawlerInline()">Run Crawler</button>
+                  <div id="crawler-result" class="result" style="display:none;"></div>
                 </div>
               </div>
             </div>
@@ -645,8 +633,8 @@ def root():
               selectMode('extract', mode);
             }
             
-            function selectAutoMode(mode) {
-              selectMode('auto', mode);
+            function selectCrawlerMode(mode) {
+              selectMode('crawler', mode);
             }
             
             function selectMode(section, mode) {
@@ -731,73 +719,34 @@ def root():
               }
             }
             
-            async function runAuto() {
-              const resultDiv = document.getElementById('auto-result');
+            // Auto workflow removed
+            
+            async function runCrawlerInline() {
+              const resultDiv = document.getElementById('crawler-result');
               resultDiv.style.display = 'block';
-              resultDiv.textContent = 'Running complete workflow...';
+              resultDiv.textContent = 'Crawling...';
               resultDiv.className = 'result loading';
-              
               try {
-                const selectedMode = document.querySelector('input[name=\"autoMode\"]:checked').value;
-                
-                // Step 1: Monitor articles
-                const monitorResponse = await fetch('/crawl', {
+                const selectedMode = document.querySelector('input[name=\"crawlerMode\"]:checked').value;
+                const response = await fetch('/crawl', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    url: document.getElementById('auto-url').value,
-                    count: 100,
+                    url: document.getElementById('crawler-url').value,
+                    count: parseInt(document.getElementById('crawler-count').value),
                     crawlMode: selectedMode
                   })
                 });
-                
-                const monitorResult = await monitorResponse.json();
-                if (!monitorResult.success) {
-                  throw new Error('Monitor failed: ' + monitorResult.error);
+                const res = await response.json();
+                if (res.success) {
+                  resultDiv.textContent = JSON.stringify(res, null, 2);
+                  resultDiv.className = 'result success';
+                } else {
+                  resultDiv.textContent = 'Error: ' + res.error;
+                  resultDiv.className = 'result error';
                 }
-                
-                // Step 2: Extract full content for each article
-                const articles = monitorResult.articles;
-                const fullArticles = [];
-                
-                for (let i = 0; i < Math.min(articles.length, 10); i++) { // Limit to 10 for demo
-                  const article = articles[i];
-                  try {
-                    const extractResponse = await fetch('/extract', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        url: article.url,
-                        kind: 'article',
-                        llmMode: 'auto'
-                      })
-                    });
-                    
-                    const extractResult = await extractResponse.json();
-                    if (!extractResult.error) {
-                      fullArticles.push({
-                        title: article.title,
-                        url: article.url,
-                        author: article.author,
-                        published_date: article.published_date,
-                        content: extractResult
-                      });
-                    }
-                  } catch (e) {
-                    console.error('Failed to extract:', article.url, e);
-                  }
-                }
-                
-                resultDiv.textContent = JSON.stringify({
-                  success: true,
-                  monitored_count: articles.length,
-                  extracted_count: fullArticles.length,
-                  articles: fullArticles
-                }, null, 2);
-                resultDiv.className = 'result success';
-                
-              } catch (error) {
-                resultDiv.textContent = 'Error: ' + error.message;
+              } catch (e) {
+                resultDiv.textContent = 'Error: ' + e.message;
                 resultDiv.className = 'result error';
               }
             }
