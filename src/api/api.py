@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, HttpUrl
 from typing import Literal
 import orjson
+import json
 import asyncio
 from datetime import datetime
 from src.core.pipeline import extract
