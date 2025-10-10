@@ -940,6 +940,19 @@ https://httpbin.org/json</textarea>
 
 @app.get("/labs", response_class=HTMLResponse)
 def labs():
+    return HTMLResponse(content="""
+    <html>
+    <head>
+        <title>OmniScrape - Labs</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>ScrapeGraphAI Labs</h1>
+        <p>This page has been integrated into the main interface. Please go back to the <a href="/">main page</a> and use the Advanced section in the sidebar.</p>
+    </body>
+    </html>
+    """)
     return (
         """
         <!DOCTYPE html>
@@ -1949,9 +1962,80 @@ async def monitor_articles(req: MonitorRequest, request: Request):
         if await request.is_disconnected():
             return {"error": "Client disconnected"}
         
-        # For now, return a simple test response to verify the endpoint works
-        # TODO: Implement proper article list extraction without ScrapeGraphAI dependency
+        # For SD mode, implement actual structured data extraction without OpenAI
+        if req.mode == "sd":
+            try:
+                import requests
+                from bs4 import BeautifulSoup
+                import json
+                import re
+                
+                # Fetch the page
+                response = requests.get(str(req.url), timeout=10)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                articles = []
+                
+                # Look for structured data (JSON-LD)
+                json_scripts = soup.find_all('script', type='application/ld+json')
+                for script in json_scripts:
+                    try:
+                        data = json.loads(script.string)
+                        if isinstance(data, list):
+                            for item in data:
+                                if item.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
+                                    articles.append({
+                                        "title": item.get('headline', item.get('name', 'No title')),
+                                        "url": item.get('url', ''),
+                                        "published_date": item.get('datePublished', ''),
+                                        "author": item.get('author', {}).get('name', '') if isinstance(item.get('author'), dict) else str(item.get('author', ''))
+                                    })
+                        elif isinstance(data, dict) and data.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
+                            articles.append({
+                                "title": data.get('headline', data.get('name', 'No title')),
+                                "url": data.get('url', ''),
+                                "published_date": data.get('datePublished', ''),
+                                "author": data.get('author', {}).get('name', '') if isinstance(data.get('author'), dict) else str(data.get('author', ''))
+                            })
+                    except:
+                        continue
+                
+                # If no structured data found, look for common article patterns
+                if not articles:
+                    # Look for article links with common patterns
+                    links = soup.find_all('a', href=True)
+                    for link in links[:20]:  # Limit to first 20 links
+                        href = link.get('href', '')
+                        text = link.get_text(strip=True)
+                        if text and len(text) > 10 and len(text) < 200:
+                            # Check if it looks like an article link
+                            if any(pattern in href.lower() for pattern in ['article', 'post', 'news', 'story']):
+                                articles.append({
+                                    "title": text,
+                                    "url": href if href.startswith('http') else f"{req.url.rstrip('/')}/{href.lstrip('/')}",
+                                    "published_date": "",
+                                    "author": ""
+                                })
+                
+                return {
+                    "success": True,
+                    "url": str(req.url),
+                    "mode": req.mode,
+                    "article_count": len(articles),
+                    "articles": articles[:10],  # Limit to 10 articles
+                    "monitored_at": datetime.now().isoformat(),
+                    "extraction_method": "structured_data"
+                }
+                
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"SD extraction failed: {str(e)}",
+                    "url": str(req.url),
+                    "mode": req.mode
+                }
         
+        # For LLM and AUTO modes, return test data (requires OpenAI API fix)
         return {
             "success": True,
             "url": str(req.url),
@@ -1959,26 +2043,26 @@ async def monitor_articles(req: MonitorRequest, request: Request):
             "article_count": 3,
             "articles": [
                 {
-                    "title": "Test Article 1",
+                    "title": f"Test Article 1 ({req.mode} mode)",
                     "url": "https://example.com/article1",
                     "published_date": "2024-01-01",
                     "author": "Test Author 1"
                 },
                 {
-                    "title": "Test Article 2", 
+                    "title": f"Test Article 2 ({req.mode} mode)", 
                     "url": "https://example.com/article2",
                     "published_date": "2024-01-02",
                     "author": "Test Author 2"
                 },
                 {
-                    "title": "Test Article 3",
+                    "title": f"Test Article 3 ({req.mode} mode)",
                     "url": "https://example.com/article3", 
                     "published_date": "2024-01-03",
                     "author": "Test Author 3"
                 }
             ],
             "monitored_at": datetime.now().isoformat(),
-            "note": "This is a test response. Full implementation requires fixing OpenAI API region restrictions."
+            "note": f"{req.mode.upper()} mode - Full implementation requires OpenAI API region fix" if req.mode != "sd" else "SD mode - Pure structured data extraction"
         }
     except asyncio.CancelledError:
         return {"error": "Request cancelled by client"}
@@ -1996,23 +2080,109 @@ async def do_extract(req: ExtractRequest, request: Request):
         if await request.is_disconnected():
             return {"error": "Client disconnected"}
         
-        # For now, return a test response due to OpenAI API region restrictions
-        # TODO: Implement proper extraction once API issues are resolved
+        # For SD mode (none), implement actual structured data extraction without OpenAI
+        if req.llmMode == "none":
+            try:
+                import requests
+                from bs4 import BeautifulSoup
+                import json
+                
+                # Fetch the page
+                response = requests.get(str(req.url), timeout=10)
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Look for structured data (JSON-LD)
+                json_scripts = soup.find_all('script', type='application/ld+json')
+                for script in json_scripts:
+                    try:
+                        data = json.loads(script.string)
+                        if isinstance(data, list):
+                            for item in data:
+                                if item.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
+                                    return {
+                                        "success": True,
+                                        "url": str(req.url),
+                                        "kind": req.kind,
+                                        "mode": req.llmMode,
+                                        "data": {
+                                            "title": item.get('headline', item.get('name', 'No title')),
+                                            "content": item.get('articleBody', item.get('description', 'No content')),
+                                            "author": item.get('author', {}).get('name', '') if isinstance(item.get('author'), dict) else str(item.get('author', '')),
+                                            "published_date": item.get('datePublished', ''),
+                                            "extraction_method": "structured_data"
+                                        },
+                                        "extracted_at": datetime.now().isoformat()
+                                    }
+                        elif isinstance(data, dict) and data.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
+                            return {
+                                "success": True,
+                                "url": str(req.url),
+                                "kind": req.kind,
+                                "mode": req.llmMode,
+                                "data": {
+                                    "title": data.get('headline', data.get('name', 'No title')),
+                                    "content": data.get('articleBody', data.get('description', 'No content')),
+                                    "author": data.get('author', {}).get('name', '') if isinstance(data.get('author'), dict) else str(data.get('author', '')),
+                                    "published_date": data.get('datePublished', ''),
+                                    "extraction_method": "structured_data"
+                                },
+                                "extracted_at": datetime.now().isoformat()
+                            }
+                    except:
+                        continue
+                
+                # If no structured data found, try basic HTML parsing
+                title = soup.find('title')
+                title_text = title.get_text(strip=True) if title else 'No title'
+                
+                # Look for main content
+                content_selectors = ['article', '.content', '.post-content', '.article-content', 'main']
+                content = ""
+                for selector in content_selectors:
+                    element = soup.select_one(selector)
+                    if element:
+                        content = element.get_text(strip=True)[:1000]  # Limit content
+                        break
+                
+                return {
+                    "success": True,
+                    "url": str(req.url),
+                    "kind": req.kind,
+                    "mode": req.llmMode,
+                    "data": {
+                        "title": title_text,
+                        "content": content or "No content found",
+                        "author": "",
+                        "published_date": "",
+                        "extraction_method": "basic_html"
+                    },
+                    "extracted_at": datetime.now().isoformat()
+                }
+                
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"SD extraction failed: {str(e)}",
+                    "url": str(req.url),
+                    "kind": req.kind,
+                    "mode": req.llmMode
+                }
         
+        # For LLM and AUTO modes, return test data (requires OpenAI API fix)
         return {
             "success": True,
             "url": str(req.url),
             "kind": req.kind,
             "mode": req.llmMode,
             "data": {
-                "title": "Sample Article Title",
-                "content": "This is sample content extracted from the article. The full extraction functionality requires resolving OpenAI API region restrictions.",
+                "title": f"Sample Article Title ({req.llmMode} mode)",
+                "content": f"This is sample content extracted from the article using {req.llmMode.upper()} mode. The full extraction functionality requires resolving OpenAI API region restrictions.",
                 "author": "Sample Author",
                 "published_date": "2024-01-01",
                 "extraction_method": "test_mode"
             },
             "extracted_at": datetime.now().isoformat(),
-            "note": "This is a test response. Full extraction requires fixing OpenAI API region restrictions."
+            "note": f"{req.llmMode.upper()} mode - Full extraction requires fixing OpenAI API region restrictions."
         }
     except asyncio.CancelledError:
         # Handle cancellation
