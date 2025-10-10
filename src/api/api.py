@@ -379,7 +379,7 @@ def root():
           </style>
         </head>
         <body>
-          <button class=\"menu-toggle\" onclick=\"console.log('Menu clicked'); toggleSidebar()\">☰</button>
+          <button class=\"menu-toggle\" onclick=\"toggleSidebar()\">☰</button>
           <div class=\"container\">
             <!-- Sidebar -->
             <div class=\"sidebar\">
@@ -423,22 +423,22 @@ def root():
                 </div>
                 
                 <div class=\"function-grid\">
-                  <div class=\"function-card\" onclick=\"console.log('Monitor card clicked'); showSection('monitor', this)\">
+                  <div class=\"function-card\" onclick=\"showSection('monitor', this)\">
                     <h3>Monitor All Articles</h3>
                     <p>Monitor article list pages and extract ALL articles (not just top 10). Perfect for comprehensive content monitoring and analysis.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"console.log('Extract card clicked'); showSection('extract', this)\">
+                  <div class=\"function-card\" onclick=\"showSection('extract', this)\">
                     <h3>Extract Single Article</h3>
                     <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"console.log('Crawler card clicked'); showSection('crawler', this)\">
+                  <div class=\"function-card\" onclick=\"showSection('crawler', this)\">
                     <h3>Article Crawler</h3>
                     <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"console.log('Labs card clicked'); showSection('labs', this)\">
+                  <div class=\"function-card\" onclick=\"showSection('labs', this)\">
                     <h3>ScrapeGraphAI Labs</h3>
                     <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
                   </div>
@@ -561,8 +561,8 @@ def root():
                     </div>
                     <button class="btn" onclick="runLab('smart')">Run SmartScraper</button>
                     <div id="lab-smart-result" class="result" style="display:none;"></div>
-                  </div>
-
+              </div>
+              
                   <!-- SearchGraph -->
                   <div class="function-card">
                     <h3>SearchGraph</h3>
@@ -649,10 +649,7 @@ https://example.com</textarea>
           </div>
 
           <script>
-            console.log('Script loaded');
-            
             function toggleSidebar() {
-              console.log('toggleSidebar called');
               const sidebar = document.querySelector('.sidebar');
               sidebar.classList.toggle('open');
               // Adjust main content margin when sidebar is toggled on desktop
@@ -667,7 +664,6 @@ https://example.com</textarea>
             }
             
             function showSection(sectionId, clickedElement) {
-              console.log('showSection called:', sectionId);
               // Hide all sections
               document.querySelectorAll('.content-section').forEach(section => {
                 section.style.display = 'none';
