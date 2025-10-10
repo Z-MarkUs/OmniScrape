@@ -17,34 +17,10 @@ class MonitorRequest(BaseModel):
     url: HttpUrl
     mode: Literal["sd", "llm", "auto"] = "auto"
 
-@app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
-async def monitor_articles(req: MonitorRequest, request: Request):
-    try:
-        if await request.is_disconnected():
-            return {"error": "Client disconnected"}
-        
-        # Import the article list extraction function
-        from src.crawlers.article_crawler import crawl_article_list
-        
-        # Extract only article list (metadata only, no full content)
-        articles = crawl_article_list(str(req.url), count=100, mode=req.mode)
-        
-        return {
-            "success": True,
-            "url": str(req.url),
-            "mode": req.mode,
-            "article_count": len(articles),
-            "articles": articles,
-            "monitored_at": datetime.now().isoformat()
-        }
-    except asyncio.CancelledError:
-        return {"error": "Request cancelled by client"}
-    except Exception as e:
-        import traceback
-        return {
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }
+class CrawlRequest(BaseModel):
+    url: HttpUrl
+    count: int = 10
+    crawlMode: Literal["sd", "llm", "auto"] = "auto"
 
 app = FastAPI(
     title="OmniScrape API",
@@ -1934,6 +1910,35 @@ def health():
             "supported_content": ["articles", "products"]
         }
     }
+
+@app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
+async def monitor_articles(req: MonitorRequest, request: Request):
+    try:
+        if await request.is_disconnected():
+            return {"error": "Client disconnected"}
+        
+        # Import the article list extraction function
+        from src.crawlers.article_crawler import crawl_article_list
+        
+        # Extract only article list (metadata only, no full content)
+        articles = crawl_article_list(str(req.url), count=100, mode=req.mode)
+        
+        return {
+            "success": True,
+            "url": str(req.url),
+            "mode": req.mode,
+            "article_count": len(articles),
+            "articles": articles,
+            "monitored_at": datetime.now().isoformat()
+        }
+    except asyncio.CancelledError:
+        return {"error": "Request cancelled by client"}
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @app.post("/extract", tags=["extraction"], summary="Extract Article or Product", description="Extract structured data from articles or products using cascading fallback strategy")
 async def do_extract(req: ExtractRequest, request: Request):
