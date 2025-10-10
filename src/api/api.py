@@ -723,7 +723,7 @@ https://httpbin.org/json</textarea>
               // Remove active class from all options
               sectionElement.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
               // Add active class to selected option
-              const selectedOption = sectionElement.querySelector('[onclick*=\"selectMonitorMode(\'' + mode + '\')\"]');
+              const selectedOption = sectionElement.querySelector('#monitor-mode-' + mode).closest('.mode-option');
               if (selectedOption) {
                 selectedOption.classList.add('active');
                 // Check the radio button
@@ -736,7 +736,7 @@ https://httpbin.org/json</textarea>
               // Remove active class from all options
               sectionElement.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
               // Add active class to selected option
-              const selectedOption = sectionElement.querySelector('[onclick*=\"selectExtractMode(\'' + mode + '\')\"]');
+              const selectedOption = sectionElement.querySelector('#extract-mode-' + mode).closest('.mode-option');
               if (selectedOption) {
                 selectedOption.classList.add('active');
                 // Check the radio button
@@ -749,7 +749,7 @@ https://httpbin.org/json</textarea>
               // Remove active class from all options
               sectionElement.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
               // Add active class to selected option
-              const selectedOption = sectionElement.querySelector('[onclick*=\"selectCrawlerMode(\'' + mode + '\')\"]');
+              const selectedOption = sectionElement.querySelector('#crawler-mode-' + mode).closest('.mode-option');
               if (selectedOption) {
                 selectedOption.classList.add('active');
                 // Check the radio button
