@@ -1712,36 +1712,25 @@ async def do_crawl(req: CrawlRequest, request: Request):
         if req.count < 1 or req.count > 50:
             return {"error": "Count must be between 1 and 50"}
         
-        # For now, return a test response due to OpenAI API region restrictions
-        # TODO: Implement proper crawling once API issues are resolved
-        
-        return {
-            "success": True,
-            "url": str(req.url),
-            "requested_count": req.count,
-            "found_count": 2,
-            "crawlMode": req.crawlMode,
-            "articles": [
-                {
-                    "title": "Sample Crawled Article 1",
-                    "url": "https://example.com/article1",
-                    "content": "This is the full content of the first crawled article. The crawling functionality requires resolving OpenAI API region restrictions.",
-                    "author": "Sample Author 1",
-                    "published_date": "2024-01-01",
-                    "crawled_at": datetime.now().isoformat()
-                },
-                {
-                    "title": "Sample Crawled Article 2",
-                    "url": "https://example.com/article2", 
-                    "content": "This is the full content of the second crawled article. The crawling functionality requires resolving OpenAI API region restrictions.",
-                    "author": "Sample Author 2",
-                    "published_date": "2024-01-02",
-                    "crawled_at": datetime.now().isoformat()
-                }
-            ],
-            "crawled_at": datetime.now().isoformat(),
-            "note": "This is a test response. Full crawling requires fixing OpenAI API region restrictions."
-        }
+        # Use real crawling now that OpenAI API is working
+        try:
+            articles = await crawl_with_full_content(str(req.url), req.count, req.crawlMode)
+            return {
+                "success": True,
+                "url": str(req.url),
+                "requested_count": req.count,
+                "found_count": len(articles),
+                "articles": articles,
+                "crawled_at": articles[0]["crawled_at"] if articles else None
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Crawling failed: {str(e)}",
+                "url": str(req.url),
+                "requested_count": req.count,
+                "crawlMode": req.crawlMode
+            }
         
     except asyncio.CancelledError:
         return {"error": "Request cancelled by client"}
@@ -2035,7 +2024,33 @@ async def monitor_articles(req: MonitorRequest, request: Request):
                     "mode": req.mode
                 }
         
-        # For LLM and AUTO modes, return test data (requires OpenAI API fix)
+        # For LLM and AUTO modes, use real extraction now that OpenAI API is working
+        if req.mode in ["llm", "auto"]:
+            try:
+                # Import the article list extraction function
+                from src.crawlers.article_crawler import crawl_article_list
+                
+                # Extract article list using real functionality
+                articles = crawl_article_list(str(req.url), count=100, mode=req.mode)
+                
+                return {
+                    "success": True,
+                    "url": str(req.url),
+                    "mode": req.mode,
+                    "article_count": len(articles),
+                    "articles": articles[:10],  # Limit to 10 articles
+                    "monitored_at": datetime.now().isoformat(),
+                    "extraction_method": "real_extraction"
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Extraction failed: {str(e)}",
+                    "url": str(req.url),
+                    "mode": req.mode
+                }
+        
+        # This should not be reached, but keeping as fallback
         return {
             "success": True,
             "url": str(req.url),
@@ -2168,7 +2183,30 @@ async def do_extract(req: ExtractRequest, request: Request):
                     "mode": req.llmMode
                 }
         
-        # For LLM and AUTO modes, return test data (requires OpenAI API fix)
+        # For LLM and AUTO modes, use real extraction now that OpenAI API is working
+        if req.llmMode in ["llm", "auto"]:
+            try:
+                # Use the real extraction pipeline
+                result = await extract(str(req.url), req.kind, req.llmMode)
+                
+                return {
+                    "success": True,
+                    "url": str(req.url),
+                    "kind": req.kind,
+                    "mode": req.llmMode,
+                    "data": result,
+                    "extracted_at": datetime.now().isoformat()
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Extraction failed: {str(e)}",
+                    "url": str(req.url),
+                    "kind": req.kind,
+                    "mode": req.llmMode
+                }
+        
+        # This should not be reached, but keeping as fallback
         return {
             "success": True,
             "url": str(req.url),
