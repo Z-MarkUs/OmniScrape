@@ -238,11 +238,17 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         for article in articles:
             article['method'] = 'ai_extraction'
         
-        return articles
+        return {
+            "articles": articles,
+            "token_usage": token_usage
+        }
         
     except Exception as e:
         print(f"AI extraction failed: {e}")
-        return []
+        return {
+            "articles": [],
+            "token_usage": {}
+        }
 
 
 def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[str, Any]:

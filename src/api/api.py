@@ -1762,7 +1762,7 @@ async def labs_smart(request: Request):
             return {"success": False, "error": "URL and prompt are required"}
         
         # Use SmartScraperGraph
-        from .labs_graphs import run_graph_async, run_smart_scraper
+        from src.labs.labs_graphs import run_graph_async, run_smart_scraper
         result = await run_graph_async(run_smart_scraper, url, prompt)
         
         if "error" in result:
@@ -1784,7 +1784,7 @@ async def labs_search(request: Request):
             return {"success": False, "error": "Query and prompt are required"}
         
         # Use SearchGraph (requires Bing API key)
-        from .labs_graphs import run_graph_async, run_search_graph
+        from src.labs.labs_graphs import run_graph_async, run_search_graph
         result = await run_graph_async(run_search_graph, query, count, prompt)
         
         if "error" in result:
@@ -1805,7 +1805,7 @@ async def labs_speech(request: Request):
             return {"success": False, "error": "URL and prompt are required"}
         
         # Use SpeechGraph
-        from .labs_graphs import run_graph_async, run_speech_graph
+        from src.labs.labs_graphs import run_graph_async, run_speech_graph
         result = await run_graph_async(run_speech_graph, url, prompt)
         
         if "error" in result:
@@ -1826,7 +1826,7 @@ async def labs_script(request: Request):
             return {"success": False, "error": "URL and prompt are required"}
         
         # Use ScriptCreatorGraph
-        from .labs_graphs import run_graph_async, run_script_creator
+        from src.labs.labs_graphs import run_graph_async, run_script_creator
         result = await run_graph_async(run_script_creator, url, prompt)
         
         if "error" in result:
@@ -1847,7 +1847,7 @@ async def labs_multi(request: Request):
             return {"success": False, "error": "URLs and prompt are required"}
         
         # Use SmartScraperMultiGraph
-        from .labs_graphs import run_graph_async, run_smart_scraper_multi
+        from src.labs.labs_graphs import run_graph_async, run_smart_scraper_multi
         result = await run_graph_async(run_smart_scraper_multi, urls, prompt)
         
         if "error" in result:
@@ -1868,7 +1868,7 @@ async def labs_script_multi(request: Request):
             return {"success": False, "error": "URLs and prompt are required"}
         
         # Use ScriptCreatorMultiGraph
-        from .labs_graphs import run_graph_async, run_script_creator_multi
+        from src.labs.labs_graphs import run_graph_async, run_script_creator_multi
         result = await run_graph_async(run_script_creator_multi, urls, prompt)
         
         if "error" in result:
