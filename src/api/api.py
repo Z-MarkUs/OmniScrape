@@ -390,19 +390,19 @@ def root():
 
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Navigation</div>
-                <div class=\"nav-item active\" onclick=\"showSection('home')\">Home</div>
+                <div class=\"nav-item active\" onclick=\"showSection('home', this)\">Home</div>
               </div>
 
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Main Functions</div>
-                <div class=\"nav-item\" onclick=\"showSection('monitor')\">Monitor All Articles</div>
-                <div class=\"nav-item\" onclick=\"showSection('extract')\">Extract Single Article</div>
-                <div class=\"nav-item\" onclick=\"showSection('crawler')\">Article Crawler</div>
+                <div class=\"nav-item\" onclick=\"showSection('monitor', this)\">Monitor All Articles</div>
+                <div class=\"nav-item\" onclick=\"showSection('extract', this)\">Extract Single Article</div>
+                <div class=\"nav-item\" onclick=\"showSection('crawler', this)\">Article Crawler</div>
               </div>
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Advanced</div>
-                <div class=\"nav-item\" onclick=\"showSection('labs')\">ScrapeGraphAI Labs</div>
+                <div class=\"nav-item\" onclick=\"showSection('labs', this)\">ScrapeGraphAI Labs</div>
               </div>
               
               <div class=\"nav-section\">
@@ -423,22 +423,22 @@ def root():
                 </div>
                 
                 <div class=\"function-grid\">
-                  <div class=\"function-card\" onclick=\"showSection('monitor')\">
+                  <div class=\"function-card\" onclick=\"showSection('monitor', this)\">
                     <h3>Monitor All Articles</h3>
                     <p>Monitor article list pages and extract ALL articles (not just top 10). Perfect for comprehensive content monitoring and analysis.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"showSection('extract')\">
+                  <div class=\"function-card\" onclick=\"showSection('extract', this)\">
                     <h3>Extract Single Article</h3>
                     <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"showSection('crawler')\">
+                  <div class=\"function-card\" onclick=\"showSection('crawler', this)\">
                     <h3>Article Crawler</h3>
                     <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"showSection('labs')\">
+                  <div class=\"function-card\" onclick=\"showSection('labs', this)\">
                     <h3>ScrapeGraphAI Labs</h3>
                     <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
                   </div>
@@ -654,7 +654,7 @@ https://example.com</textarea>
               sidebar.classList.toggle('open');
             }
             
-            function showSection(sectionId) {
+            function showSection(sectionId, clickedElement) {
               // Hide all sections
               document.querySelectorAll('.content-section').forEach(section => {
                 section.style.display = 'none';
@@ -669,7 +669,9 @@ https://example.com</textarea>
               document.getElementById(sectionId).style.display = 'block';
               
               // Add active class to clicked nav item
-              event.target.classList.add('active');
+              if (clickedElement) {
+                clickedElement.classList.add('active');
+              }
               
               // Close sidebar on mobile after selection
               if (window.innerWidth <= 768) {
@@ -1549,18 +1551,6 @@ def crawler():
           <p style=\"margin-top:16px;\"><a href=\"/\">← Back</a></p>
 
           <script>
-            function selectMode(mode) {
-              // Remove active class from all options
-              document.querySelectorAll('.mode-option').forEach(option => {
-                option.classList.remove('active');
-              });
-              
-              // Add active class to selected option
-              document.querySelector(`[onclick=\"selectMode('${mode}')\"]`).classList.add('active');
-              
-              // Update radio button
-              document.getElementById(`mode-${mode}`).checked = true;
-            }
             
             async function runCrawler() {
               const resultDiv = document.getElementById('crawl-result');
