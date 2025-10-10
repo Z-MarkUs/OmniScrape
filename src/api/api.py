@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, HttpUrl
 from typing import Literal
 import orjson
@@ -320,6 +320,26 @@ def root():
               background: #f0fdf4; 
               border-color: #bbf7d0; 
               color: #166534;
+            }
+            
+            /* Progress Bar Styles */
+            .progress-container {
+              width: 100%;
+              margin: 16px 0;
+            }
+            .progress-bar {
+              width: 0%;
+              height: 8px;
+              background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+              border-radius: 4px;
+              transition: width 0.3s ease;
+              margin-bottom: 8px;
+            }
+            .progress-text {
+              font-size: 14px;
+              color: #64748b;
+              text-align: center;
+              font-weight: 500;
             }
             
             /* Mode Selection */
@@ -794,13 +814,13 @@ https://httpbin.org/json</textarea>
             async function runExtract() {
               const resultDiv = document.getElementById('extract-result');
               resultDiv.style.display = 'block';
-              resultDiv.textContent = 'Extracting article...';
+              resultDiv.innerHTML = '<div class="progress-container"><div class="progress-bar" id="extract-progress-bar"></div><div class="progress-text" id="extract-progress-text">Starting extraction...</div></div>';
               resultDiv.className = 'result loading';
               
               try {
                 const selectedMode = document.querySelector('input[name=\"extractMode\"]:checked').value;
                 
-                const response = await fetch('/extract', {
+                const response = await fetch('/extract-stream', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -810,13 +830,45 @@ https://httpbin.org/json</textarea>
                   })
                 });
                 
-                const result = await response.json();
-                if (result.error) {
-                  resultDiv.textContent = 'Error: ' + result.error;
-                  resultDiv.className = 'result error';
-                } else {
-                  resultDiv.textContent = JSON.stringify(result, null, 2);
-                  resultDiv.className = 'result success';
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  
+                  const chunk = decoder.decode(value);
+                  const lines = chunk.split('\\n');
+                  
+                  for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                      try {
+                        const data = JSON.parse(line.slice(6));
+                        
+                        if (data.type === 'progress') {
+                          const progressBar = document.getElementById('extract-progress-bar');
+                          const progressText = document.getElementById('extract-progress-text');
+                          
+                          if (progressBar && progressText) {
+                            progressBar.style.width = data.progress + '%';
+                            progressText.textContent = data.step + ' (' + data.progress + '%)';
+                          }
+                        } else if (data.type === 'complete') {
+                          resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
+                          resultDiv.className = 'result success';
+                        } else if (data.type === 'error') {
+                          resultDiv.textContent = 'Error: ' + data.message;
+                          resultDiv.className = 'result error';
+                        }
+                      } catch (e) {
+                        console.error('Error parsing SSE data:', e);
+                      }
+                    }
+                  }
                 }
               } catch (error) {
                 resultDiv.textContent = 'Error: ' + error.message;
@@ -829,7 +881,7 @@ https://httpbin.org/json</textarea>
             async function runCrawlerInline() {
               const resultDiv = document.getElementById('crawler-result');
               resultDiv.style.display = 'block';
-              resultDiv.textContent = 'Crawling...';
+              resultDiv.innerHTML = '<div class="progress-container"><div class="progress-bar" id="crawler-progress-bar"></div><div class="progress-text" id="crawler-progress-text">Starting crawl...</div></div>';
               resultDiv.className = 'result loading';
               try {
                 const selectedMode = document.querySelector('input[name=\"crawlerMode\"]:checked').value;
@@ -1701,6 +1753,83 @@ def crawler():
         """
     )
 
+@app.post("/crawl-stream", tags=["extraction"], summary="Crawl Article List with Live Progress", description="Crawl article list with real-time progress updates")
+async def do_crawl_stream(req: CrawlRequest, request: Request):
+    """Crawl with live progress updates using Server-Sent Events"""
+    
+    async def generate_crawl_progress():
+        try:
+            # Check if client disconnected
+            if await request.is_disconnected():
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Client disconnected'})}\n\n"
+                return
+            
+            # Validate count
+            if req.count < 1 or req.count > 50:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Count must be between 1 and 50'})}\n\n"
+                return
+            
+            # Send initial progress
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting article crawl', 'progress': 0})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            # Send progress updates during crawling
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching article list page', 'progress': 20})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            if req.crawlMode == "sd":
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction', 'progress': 40})}\n\n"
+            elif req.crawlMode == "llm":
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction', 'progress': 40})}\n\n"
+            else:
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)', 'progress': 40})}\n\n"
+            
+            await asyncio.sleep(0.1)
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Extracting article URLs', 'progress': 60})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            try:
+                crawl_result = await crawl_with_full_content(str(req.url), req.count, req.crawlMode)
+                articles = crawl_result.get("articles", [])
+                token_usage = crawl_result.get("token_usage", {})
+                
+                yield f"data: {json.dumps({'type': 'progress', 'step': f'Found {len(articles)} articles, processing content', 'progress': 80})}\n\n"
+                await asyncio.sleep(0.1)
+                
+                response = {
+                    "success": True,
+                    "url": str(req.url),
+                    "requested_count": req.count,
+                    "found_count": len(articles),
+                    "articles": articles,
+                    "crawled_at": articles[0]["crawled_at"] if articles else None
+                }
+                
+                # Include token usage if LLM was used
+                if token_usage:
+                    response["token_usage"] = token_usage
+                
+                yield f"data: {json.dumps({'type': 'complete', 'data': response, 'progress': 100})}\n\n"
+                
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'error', 'message': f'Crawling failed: {str(e)}'})}\n\n"
+                    
+        except asyncio.CancelledError:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Request cancelled by client'})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate_crawl_progress(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 @app.post("/crawl", tags=["extraction"], summary="Crawl Article List", description="Crawl article list page and extract full content for each article using cascading fallback strategy")
 async def do_crawl(req: CrawlRequest, request: Request):
     try:
@@ -2104,6 +2233,74 @@ async def monitor_articles(req: MonitorRequest, request: Request):
             "error": str(e),
             "traceback": traceback.format_exc()
         }
+
+@app.post("/extract-stream", tags=["extraction"], summary="Extract Article or Product with Live Progress", description="Extract structured data with real-time progress updates")
+async def do_extract_stream(req: ExtractRequest, request: Request):
+    """Extract with live progress updates using Server-Sent Events"""
+    
+    async def generate_progress():
+        try:
+            # Check if client disconnected
+            if await request.is_disconnected():
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Client disconnected'})}\n\n"
+                return
+            
+            # Send initial progress
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting extraction', 'progress': 0})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            # Send progress updates during extraction
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching page content', 'progress': 20})}\n\n"
+            await asyncio.sleep(0.1)
+            
+            if req.llmMode == "none":
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction', 'progress': 40})}\n\n"
+                await asyncio.sleep(0.1)
+                
+                try:
+                    result = await extract(str(req.url), req.kind, "none")
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing structured data', 'progress': 80})}\n\n"
+                    await asyncio.sleep(0.1)
+                    
+                    yield f"data: {json.dumps({'type': 'complete', 'data': result, 'progress': 100})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'type': 'error', 'message': f'SD extraction failed: {str(e)}'})}\n\n"
+                    
+            elif req.llmMode in ["llm", "auto"]:
+                if req.llmMode == "llm":
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction', 'progress': 40})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)', 'progress': 40})}\n\n"
+                
+                await asyncio.sleep(0.1)
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Initializing AI model', 'progress': 60})}\n\n"
+                await asyncio.sleep(0.1)
+                
+                try:
+                    pipeline_mode = req.llmMode
+                    result = await extract(str(req.url), req.kind, pipeline_mode)
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing AI response', 'progress': 90})}\n\n"
+                    await asyncio.sleep(0.1)
+                    
+                    yield f"data: {json.dumps({'type': 'complete', 'data': result, 'progress': 100})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'type': 'error', 'message': f'Extraction failed: {str(e)}'})}\n\n"
+                    
+        except asyncio.CancelledError:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Extraction cancelled'})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate_progress(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 @app.post("/extract", tags=["extraction"], summary="Extract Article or Product", description="Extract structured data from articles or products using cascading fallback strategy")
 async def do_extract(req: ExtractRequest, request: Request):
