@@ -1714,8 +1714,11 @@ async def do_crawl(req: CrawlRequest, request: Request):
         
         # Use real crawling now that OpenAI API is working
         try:
-            articles = await crawl_with_full_content(str(req.url), req.count, req.crawlMode)
-            return {
+            crawl_result = await crawl_with_full_content(str(req.url), req.count, req.crawlMode)
+            articles = crawl_result.get("articles", [])
+            token_usage = crawl_result.get("token_usage", {})
+            
+            response = {
                 "success": True,
                 "url": str(req.url),
                 "requested_count": req.count,
@@ -1723,6 +1726,12 @@ async def do_crawl(req: CrawlRequest, request: Request):
                 "articles": articles,
                 "crawled_at": articles[0]["crawled_at"] if articles else None
             }
+            
+            # Include token usage if LLM was used
+            if token_usage:
+                response["token_usage"] = token_usage
+            
+            return response
         except Exception as e:
             return {
                 "success": False,
@@ -2031,9 +2040,11 @@ async def monitor_articles(req: MonitorRequest, request: Request):
                 from src.crawlers.article_crawler import crawl_article_list
                 
                 # Extract article list using real functionality
-                articles = crawl_article_list(str(req.url), count=100, mode=req.mode)
+                crawl_result = crawl_article_list(str(req.url), count=100, mode=req.mode)
+                articles = crawl_result.get("articles", [])
+                token_usage = crawl_result.get("token_usage", {})
                 
-                return {
+                response = {
                     "success": True,
                     "url": str(req.url),
                     "mode": req.mode,
@@ -2042,6 +2053,12 @@ async def monitor_articles(req: MonitorRequest, request: Request):
                     "monitored_at": datetime.now().isoformat(),
                     "extraction_method": "real_extraction"
                 }
+                
+                # Include token usage if LLM was used
+                if token_usage:
+                    response["token_usage"] = token_usage
+                
+                return response
             except Exception as e:
                 return {
                     "success": False,

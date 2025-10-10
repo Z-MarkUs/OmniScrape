@@ -215,6 +215,9 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         graph = SmartScraperGraph(prompt=prompt, source=url, config=config)
         result = graph.run()
         
+        # Get token usage
+        token_usage = get_token_usage()
+        
         # Parse the result
         if isinstance(result, str):
             try:
@@ -242,7 +245,7 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         return []
 
 
-def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> List[Dict[str, Any]]:
+def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[str, Any]:
     """
     Universal article list crawler with mode selection
     """
@@ -256,19 +259,30 @@ def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> List[Di
         articles = extract_structured_articles(url)
         if len(articles) >= count:
             print(f"✅ Found {len(articles)} articles via structured data")
-            return articles[:count]
+            return {
+                "articles": articles[:count],
+                "token_usage": {}
+            }
         
         # Step 2: Try Pattern-based extraction
         articles = extract_pattern_articles(url)
         print(f"✅ Found {len(articles)} articles via pattern matching")
-        return articles[:count]
+        return {
+            "articles": articles[:count],
+            "token_usage": {}
+        }
     
     elif mode == "llm":
         # LLM Mode: Only AI extraction
         print("🤖 LLM Mode: Using AI extraction only")
-        articles = ai_extract_articles(url, count)
+        result = ai_extract_articles(url, count)
+        articles = result if isinstance(result, list) else result.get('articles', [])
+        token_usage = result.get('token_usage', {}) if isinstance(result, dict) else {}
         print(f"✅ Found {len(articles)} articles via AI extraction")
-        return articles[:count]
+        return {
+            "articles": articles[:count],
+            "token_usage": token_usage
+        }
     
     else:  # auto mode
         # Auto Mode: Cascading fallback (SD → Pattern → AI)
@@ -279,32 +293,48 @@ def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> List[Di
         articles = extract_structured_articles(url)
         if len(articles) >= count:
             print(f"✅ Found {len(articles)} articles via structured data")
-            return articles[:count]
+            return {
+                "articles": articles[:count],
+                "token_usage": {}
+            }
         
         # Step 2: Try Pattern-based extraction (fast, common patterns)
         print("🔍 Step 2: Trying pattern-based extraction...")
         articles = extract_pattern_articles(url)
         if len(articles) >= count:
             print(f"✅ Found {len(articles)} articles via pattern matching")
-            return articles[:count]
+            return {
+                "articles": articles[:count],
+                "token_usage": {}
+            }
         
         # Step 3: AI fallback (universal, handles any structure)
         print("🤖 Step 3: Using AI-powered extraction...")
-        articles = ai_extract_articles(url, count)
+        result = ai_extract_articles(url, count)
+        articles = result if isinstance(result, list) else result.get('articles', [])
+        token_usage = result.get('token_usage', {}) if isinstance(result, dict) else {}
         print(f"✅ Found {len(articles)} articles via AI extraction")
         
-        return articles[:count]
+        return {
+            "articles": articles[:count],
+            "token_usage": token_usage
+        }
 
 
-async def crawl_with_full_content(url: str, count: int = 10, mode: str = "auto") -> List[Dict[str, Any]]:
+async def crawl_with_full_content(url: str, count: int = 10, mode: str = "auto") -> Dict[str, Any]:
     """
     Crawl article list and get full content for each article
     """
     # Get article list
-    articles = crawl_article_list(url, count, mode)
+    crawl_result = crawl_article_list(url, count, mode)
+    articles = crawl_result.get("articles", [])
+    token_usage = crawl_result.get("token_usage", {})
     
     if not articles:
-        return []
+        return {
+            "articles": [],
+            "token_usage": token_usage
+        }
     
     print(f"📄 Getting full content for {len(articles)} articles...")
     
@@ -345,4 +375,7 @@ async def crawl_with_full_content(url: str, count: int = 10, mode: str = "auto")
                 'crawled_at': datetime.utcnow().isoformat()
             })
     
-    return full_articles
+    return {
+        "articles": full_articles,
+        "token_usage": token_usage
+    }
