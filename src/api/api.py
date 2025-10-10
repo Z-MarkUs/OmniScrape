@@ -323,24 +323,19 @@ def root():
               color: #166534;
             }
             
-            /* Progress Bar Styles */
-            .progress-container {
-              width: 100%;
-              margin: 16px 0;
-            }
-            .progress-bar {
-              width: 0%;
-              height: 8px;
-              background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-              border-radius: 4px;
-              transition: width 0.3s ease;
-              margin-bottom: 8px;
-            }
-            .progress-text {
-              font-size: 14px;
-              color: #64748b;
+            /* Loading Indicator Styles */
+            .loading-indicator {
+              font-size: 16px;
+              color: #3b82f6;
               text-align: center;
+              padding: 20px;
               font-weight: 500;
+              animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.7; }
             }
             
             /* Mode Selection */
@@ -812,10 +807,32 @@ https://httpbin.org/json</textarea>
               }
             }
             
+            // Animated dots function
+            function startAnimatedDots(element) {
+              const baseText = element.textContent;
+              let dotCount = 0;
+              
+              const interval = setInterval(() => {
+                dotCount = (dotCount + 1) % 4;
+                const dots = '.'.repeat(dotCount);
+                element.textContent = baseText + dots;
+              }, 500);
+              
+              // Store interval ID for cleanup
+              element.dataset.intervalId = interval;
+            }
+            
+            function stopAnimatedDots(element) {
+              if (element.dataset.intervalId) {
+                clearInterval(element.dataset.intervalId);
+                delete element.dataset.intervalId;
+              }
+            }
+            
             async function runExtract() {
               const resultDiv = document.getElementById('extract-result');
               resultDiv.style.display = 'block';
-              resultDiv.innerHTML = '<div class="progress-container"><div class="progress-bar" id="extract-progress-bar"></div><div class="progress-text" id="extract-progress-text">Starting extraction...</div></div>';
+              resultDiv.innerHTML = '<div class="loading-indicator" id="extract-loading">Starting extraction...</div>';
               resultDiv.className = 'result loading';
               
               try {
@@ -851,12 +868,11 @@ https://httpbin.org/json</textarea>
                         const data = JSON.parse(line.slice(6));
                         
                         if (data.type === 'progress') {
-                          const progressBar = document.getElementById('extract-progress-bar');
-                          const progressText = document.getElementById('extract-progress-text');
-                          
-                          if (progressBar && progressText) {
-                            progressBar.style.width = data.progress + '%';
-                            progressText.textContent = data.step + ' (' + data.progress + '%)';
+                          const loadingDiv = document.getElementById('extract-loading');
+                          if (loadingDiv) {
+                            loadingDiv.textContent = data.step;
+                            // Start animated dots
+                            startAnimatedDots(loadingDiv);
                           }
                         } else if (data.type === 'complete') {
                           resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
@@ -882,11 +898,11 @@ https://httpbin.org/json</textarea>
             async function runCrawlerInline() {
               const resultDiv = document.getElementById('crawler-result');
               resultDiv.style.display = 'block';
-              resultDiv.innerHTML = '<div class="progress-container"><div class="progress-bar" id="crawler-progress-bar"></div><div class="progress-text" id="crawler-progress-text">Starting crawl...</div></div>';
+              resultDiv.innerHTML = '<div class="loading-indicator" id="crawler-loading">Starting crawl...</div>';
               resultDiv.className = 'result loading';
               try {
                 const selectedMode = document.querySelector('input[name=\"crawlerMode\"]:checked').value;
-                const response = await fetch('/crawl', {
+                const response = await fetch('/crawl-stream', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -895,13 +911,45 @@ https://httpbin.org/json</textarea>
                     crawlMode: selectedMode
                   })
                 });
-                const res = await response.json();
-                if (res.success) {
-                  resultDiv.textContent = JSON.stringify(res, null, 2);
-                  resultDiv.className = 'result success';
-                } else {
-                  resultDiv.textContent = 'Error: ' + res.error;
-                  resultDiv.className = 'result error';
+                
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  
+                  const chunk = decoder.decode(value);
+                  const lines = chunk.split('\\n');
+                  
+                  for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                      try {
+                        const data = JSON.parse(line.slice(6));
+                        
+                        if (data.type === 'progress') {
+                          const loadingDiv = document.getElementById('crawler-loading');
+                          if (loadingDiv) {
+                            loadingDiv.textContent = data.step;
+                            // Start animated dots
+                            startAnimatedDots(loadingDiv);
+                          }
+                        } else if (data.type === 'complete') {
+                          resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
+                          resultDiv.className = 'result success';
+                        } else if (data.type === 'error') {
+                          resultDiv.textContent = 'Error: ' + data.message;
+                          resultDiv.className = 'result error';
+                        }
+                      } catch (e) {
+                        console.error('Error parsing SSE data:', e);
+                      }
+                    }
+                  }
                 }
               } catch (e) {
                 resultDiv.textContent = 'Error: ' + e.message;
@@ -1771,22 +1819,22 @@ async def do_crawl_stream(req: CrawlRequest, request: Request):
                 return
             
             # Send initial progress
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting article crawl', 'progress': 0})}\n\n"
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting article crawl'})}\n\n"
             await asyncio.sleep(0.1)
             
             # Send progress updates during crawling
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching article list page', 'progress': 20})}\n\n"
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching article list page'})}\n\n"
             await asyncio.sleep(0.1)
             
             if req.crawlMode == "sd":
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction', 'progress': 40})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction'})}\n\n"
             elif req.crawlMode == "llm":
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction', 'progress': 40})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction'})}\n\n"
             else:
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)', 'progress': 40})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)'})}\n\n"
             
             await asyncio.sleep(0.1)
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Extracting article URLs', 'progress': 60})}\n\n"
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Extracting article URLs'})}\n\n"
             await asyncio.sleep(0.1)
             
             try:
@@ -1794,7 +1842,7 @@ async def do_crawl_stream(req: CrawlRequest, request: Request):
                 articles = crawl_result.get("articles", [])
                 token_usage = crawl_result.get("token_usage", {})
                 
-                yield f"data: {json.dumps({'type': 'progress', 'step': f'Found {len(articles)} articles, processing content', 'progress': 80})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'step': f'Found {len(articles)} articles, processing content'})}\n\n"
                 await asyncio.sleep(0.1)
                 
                 response = {
@@ -1810,7 +1858,7 @@ async def do_crawl_stream(req: CrawlRequest, request: Request):
                 if token_usage:
                     response["token_usage"] = token_usage
                 
-                yield f"data: {json.dumps({'type': 'complete', 'data': response, 'progress': 100})}\n\n"
+                yield f"data: {json.dumps({'type': 'complete', 'data': response})}\n\n"
                 
             except Exception as e:
                 yield f"data: {json.dumps({'type': 'error', 'message': f'Crawling failed: {str(e)}'})}\n\n"
@@ -2247,43 +2295,43 @@ async def do_extract_stream(req: ExtractRequest, request: Request):
                 return
             
             # Send initial progress
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting extraction', 'progress': 0})}\n\n"
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting extraction'})}\n\n"
             await asyncio.sleep(0.1)
             
             # Send progress updates during extraction
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching page content', 'progress': 20})}\n\n"
+            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching page content'})}\n\n"
             await asyncio.sleep(0.1)
             
             if req.llmMode == "none":
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction', 'progress': 40})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction'})}\n\n"
                 await asyncio.sleep(0.1)
                 
                 try:
                     result = await extract(str(req.url), req.kind, "none")
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing structured data', 'progress': 80})}\n\n"
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing structured data'})}\n\n"
                     await asyncio.sleep(0.1)
                     
-                    yield f"data: {json.dumps({'type': 'complete', 'data': result, 'progress': 100})}\n\n"
+                    yield f"data: {json.dumps({'type': 'complete', 'data': result})}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'message': f'SD extraction failed: {str(e)}'})}\n\n"
                     
             elif req.llmMode in ["llm", "auto"]:
                 if req.llmMode == "llm":
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction', 'progress': 40})}\n\n"
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction'})}\n\n"
                 else:
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)', 'progress': 40})}\n\n"
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)'})}\n\n"
                 
                 await asyncio.sleep(0.1)
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Initializing AI model', 'progress': 60})}\n\n"
+                yield f"data: {json.dumps({'type': 'progress', 'step': 'Initializing AI model'})}\n\n"
                 await asyncio.sleep(0.1)
                 
                 try:
                     pipeline_mode = req.llmMode
                     result = await extract(str(req.url), req.kind, pipeline_mode)
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing AI response', 'progress': 90})}\n\n"
+                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing AI response'})}\n\n"
                     await asyncio.sleep(0.1)
                     
-                    yield f"data: {json.dumps({'type': 'complete', 'data': result, 'progress': 100})}\n\n"
+                    yield f"data: {json.dumps({'type': 'complete', 'data': result})}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'message': f'Extraction failed: {str(e)}'})}\n\n"
                     
