@@ -709,10 +709,10 @@ https://example.com</textarea>
                 option.classList.remove('active');
               });
               
-              const selectedOption = sectionElement.querySelector(`[onclick*=\"select${section.charAt(0).toUpperCase() + section.slice(1)}Mode('${mode}')\"]`);
+              const selectedOption = sectionElement.querySelector('[onclick*=\"select' + section.charAt(0).toUpperCase() + section.slice(1) + 'Mode(\\'' + mode + '\\')\"]');
               if (selectedOption) {
                 selectedOption.classList.add('active');
-                sectionElement.querySelector(`#${section}-mode-${mode}`).checked = true;
+                sectionElement.querySelector('#' + section + '-mode-' + mode).checked = true;
               }
             }
             
@@ -822,7 +822,7 @@ https://example.com</textarea>
                 search: '/labs/search',
                 multi: '/labs/multi'
               };
-              const resultEl = document.getElementById(`lab-${kind}-result`);
+              const resultEl = document.getElementById('lab-' + kind + '-result');
               resultEl.style.display = 'block';
               resultEl.textContent = 'Running...';
               resultEl.className = 'result loading';
