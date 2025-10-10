@@ -385,7 +385,7 @@ def root():
             <div class=\"sidebar\">
               <div class=\"sidebar-header\">
                 <h1>OmniScrape</h1>
-                <p>Universal Web Scraping Platform</p>
+                <p>Advanced Web Scraping Platform</p>
           </div>
 
               <div class=\"nav-section\">
@@ -419,28 +419,28 @@ def root():
               <div id=\"home\" class=\"content-section\">
                 <div class=\"content-header\">
                   <h2>Welcome to OmniScrape</h2>
-                  <p>Universal web scraping platform with intelligent extraction and monitoring capabilities.</p>
+                  <p>Advanced web scraping platform with intelligent content extraction, comprehensive monitoring capabilities, and AI-powered analysis tools for modern data collection needs.</p>
                 </div>
                 
                 <div class=\"function-grid\">
                   <div class=\"function-card\" onclick=\"showSection('monitor', this)\">
                     <h3>Monitor All Articles</h3>
-                    <p>Monitor article list pages and extract ALL articles (not just top 10). Perfect for comprehensive content monitoring and analysis.</p>
+                    <p>Comprehensive article monitoring from list pages. Extracts complete article collections with full metadata including titles, authors, publication dates, and content. Ideal for content analysis, competitive intelligence, and research projects.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('extract', this)\">
                     <h3>Extract Single Article</h3>
-                    <p>Extract full content from individual article URLs. Choose between structured data, LLM, or auto mode for optimal results.</p>
+                    <p>Precision extraction from individual article URLs. Leverages structured data parsing, AI-powered content recognition, and intelligent fallback strategies to ensure maximum accuracy and completeness.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('crawler', this)\">
                     <h3>Article Crawler</h3>
-                    <p>Universal article list crawler with three-choice system. Extract article lists from any page structure with smart fallback strategy.</p>
+                    <p>Intelligent article list crawler with adaptive extraction strategies. Automatically detects page structures and applies optimal extraction methods. Supports any website format with smart content recognition.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('labs', this)\">
                     <h3>ScrapeGraphAI Labs</h3>
-                    <p>Test and experiment with different ScrapeGraphAI graph types: SmartScraper, SearchGraph, SpeechGraph, ScriptCreator, and more.</p>
+                    <p>Advanced experimentation platform for ScrapeGraphAI capabilities. Test SmartScraper, SearchGraph, SpeechGraph, and ScriptCreator graphs with real-time results and comprehensive analysis tools.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"window.open('/docs', '_blank')\">
@@ -454,12 +454,12 @@ def root():
               <div id=\"monitor\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
                   <h2>Monitor All Articles</h2>
-                  <p>Monitor article list pages and extract ALL articles for comprehensive analysis.</p>
+                  <p>Comprehensive article collection and monitoring from list pages. Extract complete article datasets with full metadata, content, and publication information for analysis and research.</p>
                 </div>
                 
                 <div class=\"function-card\">
                   <h3>Article List Monitor</h3>
-                  <p>Provide any article list page URL and get ALL articles (not limited to top 10). Perfect for comprehensive content monitoring.</p>
+                  <p>Intelligent article list processing with comprehensive extraction capabilities. Automatically detects and processes all available articles from list pages, extracting complete metadata and content for thorough analysis.</p>
                   
                   <div class=\"form-group\">
                     <label for=\"monitor-url\">Article List URL</label>
@@ -470,17 +470,17 @@ def root():
                     <div class=\"mode-option sd\" onclick=\"selectMonitorMode('sd')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"sd\" id=\"monitor-mode-sd\">
                       <label for=\"monitor-mode-sd\">SD</label>
-                      <span class=\"mode-desc\">Structured Data + Patterns</span>
+                      <span class=\"mode-desc\">Structured Data + Pattern Recognition</span>
                     </div>
                     <div class=\"mode-option llm\" onclick=\"selectMonitorMode('llm')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"llm\" id=\"monitor-mode-llm\">
                       <label for=\"monitor-mode-llm\">LLM</label>
-                      <span class=\"mode-desc\">AI Extraction Only</span>
+                      <span class=\"mode-desc\">AI-Powered Content Recognition</span>
                     </div>
                     <div class=\"mode-option auto active\" onclick=\"selectMonitorMode('auto')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"auto\" id=\"monitor-mode-auto\" checked>
                       <label for=\"monitor-mode-auto\">AUTO</label>
-                      <span class=\"mode-desc\">Smart Fallback</span>
+                      <span class=\"mode-desc\">Intelligent Cascading Strategy</span>
                     </div>
                   </div>
                   
@@ -493,12 +493,12 @@ def root():
               <div id=\"extract\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
                   <h2>Extract Single Article</h2>
-                  <p>Extract full content from individual article URLs with intelligent extraction methods.</p>
+                  <p>Precision content extraction from individual article URLs. Utilizes advanced parsing techniques, structured data recognition, and AI-powered content analysis for maximum accuracy and completeness.</p>
                 </div>
                 
                 <div class=\"function-card\">
                   <h3>Article Extraction</h3>
-                  <p>Extract full content from a single article URL. Choose the extraction method that best fits your needs.</p>
+                  <p>Advanced single-article content extraction with intelligent parsing capabilities. Supports multiple extraction strategies including structured data parsing, AI-powered content recognition, and hybrid approaches for optimal results.</p>
                   
                   <div class=\"form-group\">
                     <label for=\"extract-url\">Article URL</label>
@@ -517,17 +517,17 @@ def root():
                     <div class=\"mode-option sd\" onclick=\"selectExtractMode('none')\">
                       <input type=\"radio\" name=\"extractMode\" value=\"none\" id=\"extract-mode-none\">
                       <label for=\"extract-mode-none\">SD</label>
-                      <span class=\"mode-desc\">Structured Data Only</span>
+                      <span class=\"mode-desc\">Pure Structured Data Parsing</span>
                     </div>
                     <div class=\"mode-option llm\" onclick=\"selectExtractMode('llm')\">
                       <input type=\"radio\" name=\"extractMode\" value=\"llm\" id=\"extract-mode-llm\">
                       <label for=\"extract-mode-llm\">LLM</label>
-                      <span class=\"mode-desc\">LLM Only</span>
+                      <span class=\"mode-desc\">AI-Powered Extraction</span>
                     </div>
                     <div class=\"mode-option auto active\" onclick=\"selectExtractMode('auto')\">
                       <input type=\"radio\" name=\"extractMode\" value=\"auto\" id=\"extract-mode-auto\" checked>
                       <label for=\"extract-mode-auto\">AUTO</label>
-                      <span class=\"mode-desc\">Smart Fallback</span>
+                      <span class=\"mode-desc\">Intelligent Cascading Strategy</span>
                     </div>
                   </div>
                   
@@ -543,14 +543,14 @@ def root():
               <div id="labs" class="content-section" style="display:none;">
                 <div class="content-header">
                   <h2>ScrapeGraphAI Labs</h2>
-                  <p>Experiment with ScrapeGraphAI graph types. Results appear below each card.</p>
+                  <p>Advanced experimentation platform for ScrapeGraphAI capabilities. Test and explore SmartScraper, SearchGraph, SpeechGraph, and ScriptCreator graphs with real-time results and comprehensive analysis tools.</p>
                 </div>
                 
                 <div class="function-grid">
                   <!-- SmartScraperGraph -->
                   <div class="function-card">
                     <h3>SmartScraperGraph</h3>
-                    <p>Single-page extraction with a prompt.</p>
+                    <p>Intelligent single-page content extraction with custom prompts. Leverages AI-powered content recognition to extract specific data points from web pages based on natural language instructions.</p>
                     <div class="form-group">
                       <label for="lab-smart-url">URL</label>
                       <input type="text" id="lab-smart-url" placeholder="Enter URL" value="https://httpbin.org/html">
@@ -566,7 +566,7 @@ def root():
                   <!-- SearchGraph -->
                   <div class="function-card">
                     <h3>SearchGraph</h3>
-                    <p>Extract from top N search results (requires Bing API key).</p>
+                    <p>Advanced search result processing with AI-powered extraction. Processes multiple search results simultaneously, extracting structured data from top-ranked pages based on custom prompts and requirements.</p>
                     <div class="form-group">
                       <label for="lab-search-query">Query</label>
                       <input type="text" id="lab-search-query" value="artificial intelligence news">
@@ -586,7 +586,7 @@ def root():
                   <!-- SmartScraperMultiGraph -->
                   <div class="function-card">
                     <h3>SmartScraperMultiGraph</h3>
-                    <p>Multi-page extraction with a single prompt.</p>
+                    <p>Multi-page content extraction with unified processing. Efficiently processes multiple URLs simultaneously using a single prompt, ideal for batch content analysis and comparative studies.</p>
                     <div class="form-group">
                       <label for="lab-multi-urls">URLs (one per line)</label>
                       <textarea id="lab-multi-urls" rows="3">https://httpbin.org/html
@@ -606,12 +606,12 @@ https://example.com</textarea>
               <div id="crawler" class="content-section" style="display:none;">
                 <div class="content-header">
                   <h2>Article Crawler</h2>
-                  <p>Provide a list page; we’ll discover articles and extract full content.</p>
+                  <p>Intelligent article list crawler with adaptive extraction strategies. Automatically detects page structures and applies optimal extraction methods for comprehensive article collection from any website format.</p>
                 </div>
                 
                 <div class="function-card">
-                  <h3>Run Crawler</h3>
-                  <p>Uses SD → Patterns → LLM fallback for full content.</p>
+                  <h3>Universal Article Crawler</h3>
+                  <p>Advanced crawler with intelligent extraction strategies. Employs cascading fallback methodology: Structured Data → Pattern Recognition → AI-powered extraction for maximum content recovery and accuracy.</p>
                   
                   <div class="form-group">
                     <label for="crawler-url">Article List URL</label>
@@ -1541,12 +1541,12 @@ def crawler():
               <div class=\"mode-option\" onclick=\"selectMode('sd')\">
                 <input type=\"radio\" name=\"crawlMode\" value=\"sd\" id=\"mode-sd\">
                 <label for=\"mode-sd\">SD</label>
-                <span class=\"mode-desc\">Structured Data + Patterns</span>
+                      <span class=\"mode-desc\">Structured Data + Pattern Recognition</span>
               </div>
               <div class=\"mode-option\" onclick=\"selectMode('llm')\">
                 <input type=\"radio\" name=\"crawlMode\" value=\"llm\" id=\"mode-llm\">
                 <label for=\"mode-llm\">LLM</label>
-                <span class=\"mode-desc\">AI Extraction Only</span>
+                      <span class=\"mode-desc\">AI-Powered Content Recognition</span>
               </div>
               <div class=\"mode-option active\" onclick=\"selectMode('auto')\">
                 <input type=\"radio\" name=\"crawlMode\" value=\"auto\" id=\"mode-auto\" checked>
