@@ -652,6 +652,15 @@ https://example.com</textarea>
             function toggleSidebar() {
               const sidebar = document.querySelector('.sidebar');
               sidebar.classList.toggle('open');
+              // Adjust main content margin when sidebar is toggled on desktop
+              if (window.innerWidth > 768) {
+                const mainContent = document.querySelector('.main-content');
+                if (sidebar.classList.contains('open')) {
+                  mainContent.style.marginLeft = '280px';
+                } else {
+                  mainContent.style.marginLeft = '0';
+                }
+              }
             }
             
             function showSection(sectionId, clickedElement) {
@@ -874,6 +883,12 @@ def labs():
               position: fixed;
               height: 100vh;
               overflow-y: auto;
+              transform: translateX(-100%);
+              transition: transform 0.3s ease;
+              z-index: 1000;
+            }
+            .sidebar.open { 
+              transform: translateX(0); 
             }
             .sidebar-header { 
               padding: 0 24px 24px; 
