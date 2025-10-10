@@ -156,7 +156,7 @@ def _run_scrapegraph(url: str, config: dict):
                         total_tokens = usage.get('total_tokens') or (prompt_tokens + completion_tokens)
 
                         # Feed usage to our tracker
-                        from .llm_wrapper import _tracker
+                        from src.core.llm_wrapper import _tracker
                         _tracker.set_usage({
                             "prompt_tokens": prompt_tokens,
                             "completion_tokens": completion_tokens,
@@ -196,7 +196,7 @@ def _run_scrapegraph(url: str, config: dict):
                     if 'token_usage' in result.llm_output:
                         usage_data = result.llm_output['token_usage']
                         if usage_data:
-                            from .llm_wrapper import _tracker
+                            from src.core.llm_wrapper import _tracker
                             _tracker.set_usage({
                                 "prompt_tokens": usage_data.get('prompt_tokens', 0),
                                 "completion_tokens": usage_data.get('completion_tokens', 0),
@@ -365,7 +365,7 @@ def _run_scrapegraph_product(url: str, config: dict):
                     if 'token_usage' in result.llm_output:
                         usage_data = result.llm_output['token_usage']
                         if usage_data:
-                            from .llm_wrapper import _tracker
+                            from src.core.llm_wrapper import _tracker
                             _tracker.set_usage({
                                 "prompt_tokens": usage_data.get('prompt_tokens', 0),
                                 "completion_tokens": usage_data.get('completion_tokens', 0),
