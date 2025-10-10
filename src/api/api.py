@@ -330,12 +330,16 @@ def root():
               text-align: center;
               padding: 20px;
               font-weight: 500;
-              animation: pulse 2s infinite;
             }
             
-            @keyframes pulse {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.7; }
+            .spinner {
+              animation: spin 1s linear infinite;
+              display: inline-block;
+            }
+            
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
             }
             
             /* Mode Selection */
@@ -576,13 +580,13 @@ def root():
                   <div class="form-group">
                     <label for="smart-url">Target URL</label>
                     <input type="text" id="smart-url" placeholder="Enter URL to scrape" value="https://httpbin.org/html">
-                  </div>
-                  
+              </div>
+              
                   <div class="form-group">
                     <label for="smart-prompt">Extraction Prompt</label>
                     <textarea id="smart-prompt" rows="4" placeholder="Describe what you want to extract...">Extract the main title, content summary, and any key information from this page</textarea>
-                  </div>
-                  
+          </div>
+
                   <button class="btn" onclick="runSmartScraper()">Run SmartScraper</button>
                   <div id="smart-result" class="result" style="display:none;"></div>
                 </div>
@@ -702,7 +706,7 @@ https://httpbin.org/json</textarea>
                 const mainContent = document.querySelector('.main-content');
                 if (sidebar.classList.contains('open')) {
                   mainContent.style.marginLeft = '280px';
-                } else {
+              } else {
                   mainContent.style.marginLeft = '0';
                 }
               }
@@ -807,40 +811,18 @@ https://httpbin.org/json</textarea>
               }
             }
             
-            // Animated dots function
-            function startAnimatedDots(element) {
-              const baseText = element.textContent;
-              let dotCount = 0;
-              
-              const interval = setInterval(() => {
-                dotCount = (dotCount + 1) % 4;
-                const dots = '.'.repeat(dotCount);
-                element.textContent = baseText + dots;
-              }, 500);
-              
-              // Store interval ID for cleanup
-              element.dataset.intervalId = interval;
-            }
-            
-            function stopAnimatedDots(element) {
-              if (element.dataset.intervalId) {
-                clearInterval(element.dataset.intervalId);
-                delete element.dataset.intervalId;
-              }
-            }
-            
             async function runExtract() {
               const resultDiv = document.getElementById('extract-result');
               resultDiv.style.display = 'block';
-              resultDiv.innerHTML = '<div class="loading-indicator" id="extract-loading">Starting extraction...</div>';
+              resultDiv.innerHTML = '<div class="loading-indicator">Extracting article<span class="spinner">...</span></div>';
               resultDiv.className = 'result loading';
               
               try {
                 const selectedMode = document.querySelector('input[name=\"extractMode\"]:checked').value;
                 
                 const response = await fetch('/extract-stream', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  method: 'POST', 
+                  headers: { 'Content-Type': 'application/json' }, 
                   body: JSON.stringify({
                     url: document.getElementById('extract-url').value,
                     kind: document.getElementById('extract-kind').value,
@@ -868,12 +850,7 @@ https://httpbin.org/json</textarea>
                         const data = JSON.parse(line.slice(6));
                         
                         if (data.type === 'progress') {
-                          const loadingDiv = document.getElementById('extract-loading');
-                          if (loadingDiv) {
-                            loadingDiv.textContent = data.step;
-                            // Start animated dots
-                            startAnimatedDots(loadingDiv);
-                          }
+                          // Just keep the static message, no need to update
                         } else if (data.type === 'complete') {
                           resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
                           resultDiv.className = 'result success';
@@ -898,7 +875,7 @@ https://httpbin.org/json</textarea>
             async function runCrawlerInline() {
               const resultDiv = document.getElementById('crawler-result');
               resultDiv.style.display = 'block';
-              resultDiv.innerHTML = '<div class="loading-indicator" id="crawler-loading">Starting crawl...</div>';
+              resultDiv.innerHTML = '<div class="loading-indicator">Crawling articles<span class="spinner">...</span></div>';
               resultDiv.className = 'result loading';
               try {
                 const selectedMode = document.querySelector('input[name=\"crawlerMode\"]:checked').value;
@@ -932,12 +909,7 @@ https://httpbin.org/json</textarea>
                         const data = JSON.parse(line.slice(6));
                         
                         if (data.type === 'progress') {
-                          const loadingDiv = document.getElementById('crawler-loading');
-                          if (loadingDiv) {
-                            loadingDiv.textContent = data.step;
-                            // Start animated dots
-                            startAnimatedDots(loadingDiv);
-                          }
+                          // Just keep the static message, no need to update
                         } else if (data.type === 'complete') {
                           resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
                           resultDiv.className = 'result success';
@@ -1858,7 +1830,7 @@ async def do_crawl_stream(req: CrawlRequest, request: Request):
                 if token_usage:
                     response["token_usage"] = token_usage
                 
-                yield f"data: {json.dumps({'type': 'complete', 'data': response})}\n\n"
+                yield f"data: {json.dumps({'type': 'complete', 'data': response}, default=str)}\n\n"
                 
             except Exception as e:
                 yield f"data: {json.dumps({'type': 'error', 'message': f'Crawling failed: {str(e)}'})}\n\n"
@@ -2311,7 +2283,7 @@ async def do_extract_stream(req: ExtractRequest, request: Request):
                     yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing structured data'})}\n\n"
                     await asyncio.sleep(0.1)
                     
-                    yield f"data: {json.dumps({'type': 'complete', 'data': result})}\n\n"
+                    yield f"data: {json.dumps({'type': 'complete', 'data': result}, default=str)}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'message': f'SD extraction failed: {str(e)}'})}\n\n"
                     
@@ -2331,7 +2303,7 @@ async def do_extract_stream(req: ExtractRequest, request: Request):
                     yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing AI response'})}\n\n"
                     await asyncio.sleep(0.1)
                     
-                    yield f"data: {json.dumps({'type': 'complete', 'data': result})}\n\n"
+                    yield f"data: {json.dumps({'type': 'complete', 'data': result}, default=str)}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'message': f'Extraction failed: {str(e)}'})}\n\n"
                     
