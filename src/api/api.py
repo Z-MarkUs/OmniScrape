@@ -150,7 +150,7 @@ def root():
             .nav-title { 
               font-size: 12px; 
               font-weight: 600; 
-              color: #64748b; 
+              color: #00ff00; 
               text-transform: uppercase; 
               letter-spacing: 0.05em;
               padding: 0 24px 12px;
@@ -220,7 +220,7 @@ def root():
               color: #1e293b;
             }
             .function-card p {
-              color: #64748b;
+              color: #00ff00;
               margin-bottom: 16px;
               line-height: 1.5;
             }
@@ -299,37 +299,42 @@ def root():
             .result { 
               margin-top: 20px; 
               padding: 16px; 
-              background: #f8fafc; 
-              border: 1px solid #e2e8f0; 
+              background: #1a1a1a; 
+              border: 1px solid #333; 
               border-radius: 8px; 
-              font-family: 'Monaco', 'Menlo', monospace; 
+              font-family: 'Monaco', 'Menlo', 'Consolas', monospace; 
               font-size: 13px; 
+              color: #00ff00;
               white-space: pre-wrap; 
-              max-height: 400px; 
+              max-height: 300px; 
               overflow-y: auto;
+              word-wrap: break-word;
+              word-break: break-all;
+              line-height: 1.4;
             }
             .result.loading { 
-              color: #64748b; 
+              color: #00ff00; 
               font-style: italic;
             }
             .result.error { 
-              background: #fef2f2; 
-              border-color: #fecaca; 
-              color: #dc2626;
+              background: #1a1a1a; 
+              border-color: #ff0000; 
+              color: #ff0000;
             }
             .result.success { 
-              background: #f0fdf4; 
-              border-color: #bbf7d0; 
-              color: #166534;
+              background: #1a1a1a; 
+              border-color: #00ff00; 
+              color: #00ff00;
             }
             
             /* Loading Indicator Styles */
             .loading-indicator {
               font-size: 16px;
-              color: #3b82f6;
-              text-align: center;
+              color: #00ff00;
+              text-align: left;
               padding: 20px;
               font-weight: 500;
+              font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
             }
             
             .spinner {
@@ -1094,7 +1099,7 @@ def labs():
             .nav-title { 
               font-size: 12px; 
               font-weight: 600; 
-              color: #64748b; 
+              color: #00ff00; 
               text-transform: uppercase; 
               letter-spacing: 0.05em;
               padding: 0 24px 12px;
@@ -1156,7 +1161,7 @@ def labs():
               color: #1e293b;
             }
             .graph-card p { 
-              color: #64748b; 
+              color: #00ff00; 
               margin-bottom: 20px; 
               line-height: 1.6;
             }
@@ -1212,28 +1217,32 @@ def labs():
             .result { 
               margin-top: 20px; 
               padding: 16px; 
-              background: #f8fafc; 
-              border: 1px solid #e2e8f0; 
+              background: #1a1a1a; 
+              border: 1px solid #333; 
               border-radius: 8px; 
-              font-family: 'Monaco', 'Menlo', monospace; 
+              font-family: 'Monaco', 'Menlo', 'Consolas', monospace; 
               font-size: 13px; 
+              color: #00ff00;
               white-space: pre-wrap; 
-              max-height: 400px; 
+              max-height: 300px; 
               overflow-y: auto;
+              word-wrap: break-word;
+              word-break: break-all;
+              line-height: 1.4;
             }
             .result.loading { 
-              color: #64748b; 
+              color: #00ff00; 
               font-style: italic;
             }
             .result.error { 
-              background: #fef2f2; 
-              border-color: #fecaca; 
-              color: #dc2626;
+              background: #1a1a1a; 
+              border-color: #ff0000; 
+              color: #ff0000;
             }
             .result.success { 
-              background: #f0fdf4; 
-              border-color: #bbf7d0; 
-              color: #166534;
+              background: #1a1a1a; 
+              border-color: #00ff00; 
+              color: #00ff00;
             }
             
             /* Status Indicators */
@@ -1270,7 +1279,7 @@ def labs():
             }
             .welcome-screen p {
               font-size: 18px;
-              color: #64748b;
+              color: #00ff00;
               margin-bottom: 32px;
               max-width: 600px;
               margin-left: auto;
@@ -1297,7 +1306,7 @@ def labs():
             }
             .feature-card p {
               font-size: 14px;
-              color: #64748b;
+              color: #00ff00;
               line-height: 1.5;
             }
           </style>
