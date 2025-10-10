@@ -4,6 +4,7 @@ from pydantic import BaseModel, HttpUrl
 from typing import Literal
 import orjson
 import asyncio
+from datetime import datetime
 from src.core.pipeline import extract
 from src.crawlers.article_crawler import crawl_with_full_content
 
@@ -12,10 +13,38 @@ class ExtractRequest(BaseModel):
     kind: Literal["article", "product"]
     llmMode: Literal["none", "llm", "auto"] = "auto"
 
-class CrawlRequest(BaseModel):
+class MonitorRequest(BaseModel):
     url: HttpUrl
-    count: int = 10
-    crawlMode: Literal["sd", "llm", "auto"] = "auto"
+    mode: Literal["sd", "llm", "auto"] = "auto"
+
+@app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
+async def monitor_articles(req: MonitorRequest, request: Request):
+    try:
+        if await request.is_disconnected():
+            return {"error": "Client disconnected"}
+        
+        # Import the article list extraction function
+        from src.crawlers.article_crawler import crawl_article_list
+        
+        # Extract only article list (metadata only, no full content)
+        articles = crawl_article_list(str(req.url), count=100, mode=req.mode)
+        
+        return {
+            "success": True,
+            "url": str(req.url),
+            "mode": req.mode,
+            "article_count": len(articles),
+            "articles": articles,
+            "monitored_at": datetime.now().isoformat()
+        }
+    except asyncio.CancelledError:
+        return {"error": "Request cancelled by client"}
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 app = FastAPI(
     title="OmniScrape API",
@@ -427,7 +456,7 @@ def root():
                 <div class=\"function-grid\">
                   <div class=\"function-card\" onclick=\"showSection('monitor', this)\">
                     <h3>Monitor All Articles</h3>
-                    <p>Comprehensive article monitoring from list pages. Extracts complete article collections with full metadata including titles, authors, publication dates, and content. Ideal for content analysis, competitive intelligence, and research projects.</p>
+                    <p>Fast article list monitoring and metadata extraction. Scans article list pages to extract article titles, URLs, publication dates, and authors without fetching full content. Perfect for content monitoring and discovery.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('extract', this)\">
@@ -437,7 +466,7 @@ def root():
                   
                   <div class=\"function-card\" onclick=\"showSection('crawler', this)\">
                     <h3>Article Crawler</h3>
-                    <p>Intelligent article list crawler with adaptive extraction strategies. Automatically detects page structures and applies optimal extraction methods. Supports any website format with smart content recognition.</p>
+                    <p>Comprehensive article crawling with full content extraction. First extracts article lists from list pages, then crawls each individual article to retrieve complete content including full text, metadata, and publication details.</p>
                   </div>
                   
                   <div class=\"function-card\" onclick=\"showSection('smartscraper', this)\">
@@ -456,12 +485,12 @@ def root():
               <div id=\"monitor\" class=\"content-section\" style=\"display:none;\">
                 <div class=\"content-header\">
                   <h2>Monitor All Articles</h2>
-                  <p>Comprehensive article collection and monitoring from list pages. Extract complete article datasets with full metadata, content, and publication information for analysis and research.</p>
+                  <p>Fast article list monitoring and metadata extraction. Scans article list pages to extract article titles, URLs, publication dates, and authors without fetching full content. Perfect for content monitoring and discovery.</p>
                 </div>
                 
                 <div class=\"function-card\">
                   <h3>Article List Monitor</h3>
-                  <p>Intelligent article list processing with comprehensive extraction capabilities. Automatically detects and processes all available articles from list pages, extracting complete metadata and content for thorough analysis.</p>
+                  <p>Fast and efficient article list scanning. Extracts article metadata (titles, URLs, dates, authors) from list pages without downloading full content. Ideal for content discovery, monitoring, and quick analysis.</p>
                   
                   <div class=\"form-group\">
                     <label for=\"monitor-url\">Article List URL</label>
@@ -630,12 +659,12 @@ https://httpbin.org/json</textarea>
               <div id="crawler" class="content-section" style="display:none;">
                 <div class="content-header">
                   <h2>Article Crawler</h2>
-                  <p>Intelligent article list crawler with adaptive extraction strategies. Automatically detects page structures and applies optimal extraction methods for comprehensive article collection from any website format.</p>
+                  <p>Comprehensive article crawling with full content extraction. First extracts article lists from list pages, then crawls each individual article to retrieve complete content including full text, metadata, and publication details.</p>
                 </div>
                 
                 <div class="function-card">
                   <h3>Universal Article Crawler</h3>
-                  <p>Advanced crawler with intelligent extraction strategies. Employs cascading fallback methodology: Structured Data → Pattern Recognition → AI-powered extraction for maximum content recovery and accuracy.</p>
+                  <p>Complete article crawling with full content extraction. Extracts article lists from list pages, then individually crawls each article to retrieve full content, metadata, and publication details. Perfect for comprehensive content analysis and research.</p>
                   
                   <div class="form-group">
                     <label for="crawler-url">Article List URL</label>
@@ -744,19 +773,18 @@ https://httpbin.org/json</textarea>
             async function runMonitor() {
               const resultDiv = document.getElementById('monitor-result');
               resultDiv.style.display = 'block';
-              resultDiv.textContent = 'Monitoring articles...';
+              resultDiv.textContent = 'Monitoring article list...';
               resultDiv.className = 'result loading';
               
               try {
                 const selectedMode = document.querySelector('input[name=\"monitorMode\"]:checked').value;
                 
-                const response = await fetch('/crawl', {
+                const response = await fetch('/monitor', {
                   method: 'POST', 
                   headers: { 'Content-Type': 'application/json' }, 
                   body: JSON.stringify({
                     url: document.getElementById('monitor-url').value,
-                    count: 100, // Get all articles
-                    crawlMode: selectedMode
+                    mode: selectedMode
                   })
                 });
                 
