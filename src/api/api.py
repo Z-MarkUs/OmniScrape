@@ -402,7 +402,9 @@ def root():
               
               <div class=\"nav-section\">
                 <div class=\"nav-title\">Advanced</div>
-                <div class=\"nav-item\" onclick=\"showSection('labs', this)\">ScrapeGraphAI Labs</div>
+                <div class=\"nav-item\" onclick=\"showSection('smartscraper', this)\">SmartScraper</div>
+                <div class=\"nav-item\" onclick=\"showSection('searchgraph', this)\">SearchGraph</div>
+                <div class=\"nav-item\" onclick=\"showSection('multigraph', this)\">MultiGraph</div>
               </div>
               
               <div class=\"nav-section\">
@@ -438,7 +440,7 @@ def root():
                     <p>Intelligent article list crawler with adaptive extraction strategies. Automatically detects page structures and applies optimal extraction methods. Supports any website format with smart content recognition.</p>
                   </div>
                   
-                  <div class=\"function-card\" onclick=\"showSection('labs', this)\">
+                  <div class=\"function-card\" onclick=\"showSection('smartscraper', this)\">
                     <h3>ScrapeGraphAI Labs</h3>
                     <p>Advanced experimentation platform for ScrapeGraphAI capabilities. Test SmartScraper, SearchGraph, SpeechGraph, and ScriptCreator graphs with real-time results and comprehensive analysis tools.</p>
                   </div>
@@ -539,66 +541,88 @@ def root():
               <!-- Auto Section (Removed) -->
               
               
-              <!-- Labs Section -->
-              <div id="labs" class="content-section" style="display:none;">
+              <!-- SmartScraper Section -->
+              <div id="smartscraper" class="content-section" style="display:none;">
                 <div class="content-header">
-                  <h2>ScrapeGraphAI Labs</h2>
-                  <p>Advanced experimentation platform for ScrapeGraphAI capabilities. Test and explore SmartScraper, SearchGraph, SpeechGraph, and ScriptCreator graphs with real-time results and comprehensive analysis tools.</p>
+                  <h2>SmartScraper</h2>
+                  <p>Intelligent single-page content extraction with custom prompts. Leverages AI-powered content recognition to extract specific data points from web pages based on natural language instructions.</p>
                 </div>
                 
-                <div class="function-grid">
-                  <!-- SmartScraperGraph -->
-                  <div class="function-card">
-                    <h3>SmartScraperGraph</h3>
-                    <p>Intelligent single-page content extraction with custom prompts. Leverages AI-powered content recognition to extract specific data points from web pages based on natural language instructions.</p>
-                    <div class="form-group">
-                      <label for="lab-smart-url">URL</label>
-                      <input type="text" id="lab-smart-url" placeholder="Enter URL" value="https://httpbin.org/html">
-                    </div>
-                    <div class="form-group">
-                      <label for="lab-smart-prompt">Prompt</label>
-                      <textarea id="lab-smart-prompt" rows="3">Extract the title and main content</textarea>
-                    </div>
-                    <button class="btn" onclick="runLab('smart')">Run SmartScraper</button>
-                    <div id="lab-smart-result" class="result" style="display:none;"></div>
+                <div class="function-card">
+                  <h3>SmartScraperGraph</h3>
+                  <p>Advanced single-page content extraction with AI-powered analysis. Process any web page with custom prompts to extract structured data, specific information, or perform content analysis tasks.</p>
+                  
+                  <div class="form-group">
+                    <label for="smart-url">Target URL</label>
+                    <input type="text" id="smart-url" placeholder="Enter URL to scrape" value="https://httpbin.org/html">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="smart-prompt">Extraction Prompt</label>
+                    <textarea id="smart-prompt" rows="4" placeholder="Describe what you want to extract...">Extract the main title, content summary, and any key information from this page</textarea>
+                  </div>
+                  
+                  <button class="btn" onclick="runSmartScraper()">Run SmartScraper</button>
+                  <div id="smart-result" class="result" style="display:none;"></div>
+                </div>
               </div>
               
-                  <!-- SearchGraph -->
-                  <div class="function-card">
-                    <h3>SearchGraph</h3>
-                    <p>Advanced search result processing with AI-powered extraction. Processes multiple search results simultaneously, extracting structured data from top-ranked pages based on custom prompts and requirements.</p>
-                    <div class="form-group">
-                      <label for="lab-search-query">Query</label>
-                      <input type="text" id="lab-search-query" value="artificial intelligence news">
-                    </div>
-                    <div class="form-group">
-                      <label for="lab-search-count">Results (1–10)</label>
-                      <input type="number" id="lab-search-count" value="3" min="1" max="10">
-                    </div>
-                    <div class="form-group">
-                      <label for="lab-search-prompt">Prompt</label>
-                      <textarea id="lab-search-prompt" rows="3">Extract title, summary, and publication date</textarea>
-                    </div>
-                    <button class="btn" onclick="runLab('search')">Run SearchGraph</button>
-                    <div id="lab-search-result" class="result" style="display:none;"></div>
+              <!-- SearchGraph Section -->
+              <div id="searchgraph" class="content-section" style="display:none;">
+                <div class="content-header">
+                  <h2>SearchGraph</h2>
+                  <p>Advanced search result processing with AI-powered extraction. Processes multiple search results simultaneously, extracting structured data from top-ranked pages based on custom prompts and requirements.</p>
+                </div>
+                
+                <div class="function-card">
+                  <h3>SearchGraph Processing</h3>
+                  <p>Intelligent search result analysis and content extraction. Automatically processes multiple search results to extract relevant information, compare content, and perform comprehensive analysis across multiple sources.</p>
+                  
+                  <div class="form-group">
+                    <label for="search-query">Search Query</label>
+                    <input type="text" id="search-query" placeholder="Enter search query" value="artificial intelligence news">
                   </div>
-
-                  <!-- SmartScraperMultiGraph -->
-                  <div class="function-card">
-                    <h3>SmartScraperMultiGraph</h3>
-                    <p>Multi-page content extraction with unified processing. Efficiently processes multiple URLs simultaneously using a single prompt, ideal for batch content analysis and comparative studies.</p>
-                    <div class="form-group">
-                      <label for="lab-multi-urls">URLs (one per line)</label>
-                      <textarea id="lab-multi-urls" rows="3">https://httpbin.org/html
-https://example.com</textarea>
-                    </div>
-                    <div class="form-group">
-                      <label for="lab-multi-prompt">Prompt</label>
-                      <textarea id="lab-multi-prompt" rows="3">Extract the title and main content</textarea>
-                    </div>
-                    <button class="btn" onclick="runLab('multi')">Run SmartScraperMulti</button>
-                    <div id="lab-multi-result" class="result" style="display:none;"></div>
+                  
+                  <div class="form-group">
+                    <label for="search-count">Number of Results (1-10)</label>
+                    <input type="number" id="search-count" placeholder="Number of results to process" value="3" min="1" max="10">
                   </div>
+                  
+                  <div class="form-group">
+                    <label for="search-prompt">Extraction Prompt</label>
+                    <textarea id="search-prompt" rows="4" placeholder="Describe what to extract from each result...">Extract the title, summary, publication date, and main topics from each search result</textarea>
+                  </div>
+                  
+                  <button class="btn" onclick="runSearchGraph()">Run SearchGraph</button>
+                  <div id="search-result" class="result" style="display:none;"></div>
+                </div>
+              </div>
+              
+              <!-- MultiGraph Section -->
+              <div id="multigraph" class="content-section" style="display:none;">
+                <div class="content-header">
+                  <h2>MultiGraph</h2>
+                  <p>Multi-page content extraction with unified processing. Efficiently processes multiple URLs simultaneously using a single prompt, ideal for batch content analysis and comparative studies.</p>
+                </div>
+                
+                <div class="function-card">
+                  <h3>SmartScraperMultiGraph</h3>
+                  <p>Batch processing for multiple web pages with consistent extraction criteria. Perfect for comparative analysis, content auditing, and large-scale data collection projects.</p>
+                  
+                  <div class="form-group">
+                    <label for="multi-urls">URLs to Process (one per line)</label>
+                    <textarea id="multi-urls" rows="5" placeholder="Enter URLs, one per line...">https://httpbin.org/html
+https://example.com
+https://httpbin.org/json</textarea>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="multi-prompt">Extraction Prompt</label>
+                    <textarea id="multi-prompt" rows="4" placeholder="Describe what to extract from each URL...">Extract the main title, content summary, and key information from each page</textarea>
+                  </div>
+                  
+                  <button class="btn" onclick="runMultiGraph()">Run MultiGraph</button>
+                  <div id="multi-result" class="result" style="display:none;"></div>
                 </div>
               </div>
               
@@ -816,26 +840,68 @@ https://example.com</textarea>
             }
 
             // Labs inline helpers
-            async function runLab(kind) {
-              const endpoints = {
-                smart: '/labs/smart',
-                search: '/labs/search',
-                multi: '/labs/multi'
-              };
-              const resultEl = document.getElementById('lab-' + kind + '-result');
+            async function runSmartScraper() {
+              const resultEl = document.getElementById('smart-result');
               resultEl.style.display = 'block';
-              resultEl.textContent = 'Running...';
+              resultEl.textContent = 'Running SmartScraper...';
               resultEl.className = 'result loading';
               try {
-                let payload = {};
-                if (kind === 'smart') {
-                  payload = { url: document.getElementById('lab-smart-url').value, prompt: document.getElementById('lab-smart-prompt').value };
-                } else if (kind === 'search') {
-                  payload = { query: document.getElementById('lab-search-query').value, count: parseInt(document.getElementById('lab-search-count').value), prompt: document.getElementById('lab-search-prompt').value };
-                } else if (kind === 'multi') {
-                  payload = { urls: document.getElementById('lab-multi-urls').value.split('\\n').filter(u => u.trim()), prompt: document.getElementById('lab-multi-prompt').value };
+                const payload = { 
+                  url: document.getElementById('smart-url').value, 
+                  prompt: document.getElementById('smart-prompt').value 
+                };
+                const res = await fetch('/labs/smart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await res.json();
+                if (json.success) {
+                  resultEl.textContent = JSON.stringify(json.data, null, 2);
+                  resultEl.className = 'result success';
+                } else {
+                  resultEl.textContent = 'Error: ' + json.error;
+                  resultEl.className = 'result error';
                 }
-                const res = await fetch(endpoints[kind], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+              } catch (e) {
+                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.className = 'result error';
+              }
+            }
+
+            async function runSearchGraph() {
+              const resultEl = document.getElementById('search-result');
+              resultEl.style.display = 'block';
+              resultEl.textContent = 'Running SearchGraph...';
+              resultEl.className = 'result loading';
+              try {
+                const payload = { 
+                  query: document.getElementById('search-query').value, 
+                  count: parseInt(document.getElementById('search-count').value), 
+                  prompt: document.getElementById('search-prompt').value 
+                };
+                const res = await fetch('/labs/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await res.json();
+                if (json.success) {
+                  resultEl.textContent = JSON.stringify(json.data, null, 2);
+                  resultEl.className = 'result success';
+                } else {
+                  resultEl.textContent = 'Error: ' + json.error;
+                  resultEl.className = 'result error';
+                }
+              } catch (e) {
+                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.className = 'result error';
+              }
+            }
+
+            async function runMultiGraph() {
+              const resultEl = document.getElementById('multi-result');
+              resultEl.style.display = 'block';
+              resultEl.textContent = 'Running MultiGraph...';
+              resultEl.className = 'result loading';
+              try {
+                const payload = { 
+                  urls: document.getElementById('multi-urls').value.split('\\n').filter(u => u.trim()), 
+                  prompt: document.getElementById('multi-prompt').value 
+                };
+                const res = await fetch('/labs/multi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await res.json();
                 if (json.success) {
                   resultEl.textContent = JSON.stringify(json.data, null, 2);
