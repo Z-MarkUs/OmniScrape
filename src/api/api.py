@@ -2095,85 +2095,20 @@ async def do_extract(req: ExtractRequest, request: Request):
         if await request.is_disconnected():
             return {"error": "Client disconnected"}
         
-        # For SD mode (none), implement actual structured data extraction without OpenAI
+        # For SD mode (none), use the real pipeline with "none" mode
         if req.llmMode == "none":
             try:
-                import requests
-                from bs4 import BeautifulSoup
-                import json
-                
-                # Fetch the page
-                response = requests.get(str(req.url), timeout=10)
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                # Look for structured data (JSON-LD)
-                json_scripts = soup.find_all('script', type='application/ld+json')
-                for script in json_scripts:
-                    try:
-                        data = json.loads(script.string)
-                        if isinstance(data, list):
-                            for item in data:
-                                if item.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
-                                    return {
-                                        "success": True,
-                                        "url": str(req.url),
-                                        "kind": req.kind,
-                                        "mode": req.llmMode,
-                                        "data": {
-                                            "title": item.get('headline', item.get('name', 'No title')),
-                                            "content": item.get('articleBody', item.get('description', 'No content')),
-                                            "author": item.get('author', {}).get('name', '') if isinstance(item.get('author'), dict) else str(item.get('author', '')),
-                                            "published_date": item.get('datePublished', ''),
-                                            "extraction_method": "structured_data"
-                                        },
-                                        "extracted_at": datetime.now().isoformat()
-                                    }
-                        elif isinstance(data, dict) and data.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
-                            return {
-                                "success": True,
-                                "url": str(req.url),
-                                "kind": req.kind,
-                                "mode": req.llmMode,
-                                "data": {
-                                    "title": data.get('headline', data.get('name', 'No title')),
-                                    "content": data.get('articleBody', data.get('description', 'No content')),
-                                    "author": data.get('author', {}).get('name', '') if isinstance(data.get('author'), dict) else str(data.get('author', '')),
-                                    "published_date": data.get('datePublished', ''),
-                                    "extraction_method": "structured_data"
-                                },
-                                "extracted_at": datetime.now().isoformat()
-                            }
-                    except:
-                        continue
-                
-                # If no structured data found, try basic HTML parsing
-                title = soup.find('title')
-                title_text = title.get_text(strip=True) if title else 'No title'
-                
-                # Look for main content
-                content_selectors = ['article', '.content', '.post-content', '.article-content', 'main']
-                content = ""
-                for selector in content_selectors:
-                    element = soup.select_one(selector)
-                    if element:
-                        content = element.get_text(strip=True)[:1000]  # Limit content
-                        break
+                # Use the real extraction pipeline with "none" mode
+                result = await extract(str(req.url), req.kind, "none")
                 
                 return {
                     "success": True,
                     "url": str(req.url),
                     "kind": req.kind,
                     "mode": req.llmMode,
-                    "data": {
-                        "title": title_text,
-                        "content": content or "No content found",
-                        "author": "",
-                        "published_date": "",
-                        "extraction_method": "basic_html"
-                    },
+                    "data": result,
                     "extracted_at": datetime.now().isoformat()
                 }
-                
             except Exception as e:
                 return {
                     "success": False,
@@ -2186,8 +2121,11 @@ async def do_extract(req: ExtractRequest, request: Request):
         # For LLM and AUTO modes, use real extraction now that OpenAI API is working
         if req.llmMode in ["llm", "auto"]:
             try:
+                # Map the API mode to the pipeline mode
+                pipeline_mode = req.llmMode  # "llm" -> "llm", "auto" -> "auto"
+                
                 # Use the real extraction pipeline
-                result = await extract(str(req.url), req.kind, req.llmMode)
+                result = await extract(str(req.url), req.kind, pipeline_mode)
                 
                 return {
                     "success": True,
