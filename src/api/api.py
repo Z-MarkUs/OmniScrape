@@ -833,7 +833,7 @@ https://example.com</textarea>
                 } else if (kind === 'search') {
                   payload = { query: document.getElementById('lab-search-query').value, count: parseInt(document.getElementById('lab-search-count').value), prompt: document.getElementById('lab-search-prompt').value };
                 } else if (kind === 'multi') {
-                  payload = { urls: document.getElementById('lab-multi-urls').value.split('\n').filter(u => u.trim()), prompt: document.getElementById('lab-multi-prompt').value };
+                  payload = { urls: document.getElementById('lab-multi-urls').value.split('\\n').filter(u => u.trim()), prompt: document.getElementById('lab-multi-prompt').value };
                 }
                 const res = await fetch(endpoints[kind], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await res.json();
