@@ -333,13 +333,7 @@ def root():
             }
             
             .spinner {
-              animation: spin 1s linear infinite;
               display: inline-block;
-            }
-            
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
             }
             
             /* Mode Selection */
@@ -811,11 +805,37 @@ https://httpbin.org/json</textarea>
               }
             }
             
+            // Animate dots function
+            function animateDots(elementId) {
+              const element = document.getElementById(elementId);
+              if (!element) return;
+              
+              let dotCount = 1;
+              const interval = setInterval(() => {
+                dotCount = (dotCount % 3) + 1;
+                element.textContent = '.'.repeat(dotCount);
+              }, 500);
+              
+              // Store interval for cleanup
+              element.dataset.intervalId = interval;
+            }
+            
+            function stopDots(elementId) {
+              const element = document.getElementById(elementId);
+              if (element && element.dataset.intervalId) {
+                clearInterval(element.dataset.intervalId);
+                delete element.dataset.intervalId;
+              }
+            }
+            
             async function runExtract() {
               const resultDiv = document.getElementById('extract-result');
               resultDiv.style.display = 'block';
-              resultDiv.innerHTML = '<div class="loading-indicator">Extracting article<span class="spinner">...</span></div>';
+              resultDiv.innerHTML = '<div class="loading-indicator">Extracting article<span id="extract-dots">.</span></div>';
               resultDiv.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('extract-dots');
               
               try {
                 const selectedMode = document.querySelector('input[name=\"extractMode\"]:checked').value;
@@ -875,8 +895,11 @@ https://httpbin.org/json</textarea>
             async function runCrawlerInline() {
               const resultDiv = document.getElementById('crawler-result');
               resultDiv.style.display = 'block';
-              resultDiv.innerHTML = '<div class="loading-indicator">Crawling articles<span class="spinner">...</span></div>';
+              resultDiv.innerHTML = '<div class="loading-indicator">Crawling articles<span id="crawler-dots">.</span></div>';
               resultDiv.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('crawler-dots');
               try {
                 const selectedMode = document.querySelector('input[name=\"crawlerMode\"]:checked').value;
                 const response = await fetch('/crawl-stream', {
