@@ -36,7 +36,8 @@ A sophisticated, multi-layered web scraping service that can extract articles an
    - **Main API**: http://localhost:8000
    - **API Documentation**: http://localhost:8000/docs
    - **Interactive Labs**: http://localhost:8000/labs
-   - **Health Check**: http://localhost:8000/health
+   - **Status Page**: http://localhost:8000/status
+   - **Health JSON**: http://localhost:8000/health.json
 
 ## 📚 Documentation
 
@@ -185,9 +186,9 @@ uvicorn src.api.api:app --host 0.0.0.0 --port 8000 --workers 4
 
 ## 📊 Monitoring
 
-### Health Checks
-- **Endpoint**: `GET /health`
-- **Response**: `{"ok": true}`
+### Health & Status
+- **Status UI**: `GET /status` — OpenAI-like status with RSS incidents
+- **Health JSON**: `GET /health.json` — service checks and system metrics
 
 ### Metrics
 - Response times and throughput

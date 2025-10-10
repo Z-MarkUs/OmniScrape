@@ -246,8 +246,9 @@ langchain_openai.chat_models.ChatOpenAI._generate = patched_generate
 - **Context Preservation**: Request IDs, user agents
 - **Log Aggregation**: Centralized log collection
 
-### Health Monitoring
-- **Health Checks**: System status endpoints
+### Health & Status Monitoring
+- **Status UI**: `/status` (includes OpenAI RSS incidents)
+- **Health JSON**: `/health.json` (local checks and system metrics)
 - **Dependency Checks**: External service status
 - **Performance Monitoring**: Response time tracking
 - **Alert System**: Automated error notifications

@@ -7,6 +7,13 @@ This directory contains comprehensive documentation for the OmniScrape API endpo
 ### Core Extraction API
 
 #### `POST /extract`
+### Streaming Endpoints
+
+#### `GET /extract-stream`
+Server-Sent Events endpoint for real-time extract progress messages.
+
+#### `GET /crawl-stream`
+Server-Sent Events endpoint for real-time crawl progress messages.
 Main extraction endpoint for articles and products.
 
 **Request Body:**
@@ -59,8 +66,11 @@ ScriptCreatorMultiGraph - Multi-page script generation.
 
 ### Utility Endpoints
 
-#### `GET /health`
-Health check endpoint.
+#### `GET /status`
+Status UI page (includes OpenAI RSS incidents).
+
+#### `GET /health.json`
+JSON health with system checks and configuration.
 
 #### `GET /docs`
 Swagger API documentation.
@@ -230,7 +240,7 @@ python src/main.py
 open http://localhost:8000/docs
 
 # Test endpoints
-curl http://localhost:8000/health
+curl http://localhost:8000/health.json
 ```
 
 ### Testing

@@ -150,7 +150,7 @@ def root():
             .nav-title { 
               font-size: 12px; 
               font-weight: 600; 
-              color: #00ff00; 
+              color: #64748b; 
               text-transform: uppercase; 
               letter-spacing: 0.05em;
               padding: 0 24px 12px;
@@ -220,7 +220,7 @@ def root():
               color: #1e293b;
             }
             .function-card p {
-              color: #00ff00;
+              color: #64748b;
               margin-bottom: 16px;
               line-height: 1.5;
             }
@@ -298,43 +298,44 @@ def root():
             /* Results */
             .result { 
               margin-top: 20px; 
-              padding: 16px; 
-              background: #1a1a1a; 
-              border: 1px solid #333; 
+              padding: 0; /* outer container has no padding; inner handles it */
+              background: #000; 
+              border: 1px solid #2b2b2b; 
               border-radius: 8px; 
-              font-family: 'Monaco', 'Menlo', 'Consolas', monospace; 
-              font-size: 13px; 
-              color: #00ff00;
+              height: 300px; /* fixed outer height */
+              overflow: hidden; /* no scroll here; inner handles scroll */
+            }
+            .result-terminal {
+              background: #000;
+              color: #e6e6e6; /* macOS terminal-like white */
+              font-family: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace; 
+              font-size: 12.5px; 
+              line-height: 1.5;
+              padding: 14px 16px; 
+              white-space: pre-wrap; /* wrap long content to avoid horizontal growth */
+              word-break: break-word; /* allow wrapping long tokens */
+              height: 100%; /* fill outer container */
+              overflow-y: auto; /* vertical scroll */
+              overflow-x: hidden; /* prevent horizontal expansion */
+            }
+            .result-terminal pre { 
               white-space: pre-wrap; 
-              max-height: 300px; 
-              overflow-y: auto;
-              word-wrap: break-word;
-              word-break: break-all;
-              line-height: 1.4;
+              word-break: break-word; 
+              margin: 0; 
             }
-            .result.loading { 
-              color: #00ff00; 
-              font-style: italic;
-            }
-            .result.error { 
-              background: #1a1a1a; 
-              border-color: #ff0000; 
-              color: #ff0000;
-            }
-            .result.success { 
-              background: #1a1a1a; 
-              border-color: #00ff00; 
-              color: #00ff00;
-            }
+            .result.loading { }
+            .result.error .result-terminal { color: #ff6b6b; }
+            .result.success .result-terminal { color: #e6e6e6; }
             
             /* Loading Indicator Styles */
             .loading-indicator {
-              font-size: 16px;
-              color: #00ff00;
+              font-size: 14px;
+              color: #e6e6e6; /* white */
               text-align: left;
-              padding: 20px;
+              padding: 14px 16px;
               font-weight: 500;
-              font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+              font-family: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+              background: #000;
             }
             
             .spinner {
@@ -435,7 +436,7 @@ def root():
                 <div class=\"nav-title\">Documentation</div>
                 <a href=\"/docs\" class=\"nav-item\">API Documentation</a>
                 <a href=\"/redoc\" class=\"nav-item\">ReDoc</a>
-                <a href=\"/health\" class=\"nav-item\">Health Check</a>
+                <a href=\"/status\" class=\"nav-item\">Health Check</a>
               </div>
             </div>
             
@@ -877,7 +878,7 @@ https://httpbin.org/json</textarea>
                         if (data.type === 'progress') {
                           // Just keep the static message, no need to update
                         } else if (data.type === 'complete') {
-                          resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
+                          resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(data.data, null, 2) + '</pre></div>';
                           resultDiv.className = 'result success';
                         } else if (data.type === 'error') {
                           resultDiv.textContent = 'Error: ' + data.message;
@@ -939,7 +940,7 @@ https://httpbin.org/json</textarea>
                         if (data.type === 'progress') {
                           // Just keep the static message, no need to update
                         } else if (data.type === 'complete') {
-                          resultDiv.innerHTML = '<pre>' + JSON.stringify(data.data, null, 2) + '</pre>';
+                          resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(data.data, null, 2) + '</pre></div>';
                           resultDiv.className = 'result success';
                         } else if (data.type === 'error') {
                           resultDiv.textContent = 'Error: ' + data.message;
@@ -1216,19 +1217,12 @@ def labs():
             /* Results */
             .result { 
               margin-top: 20px; 
-              padding: 16px; 
-              background: #1a1a1a; 
-              border: 1px solid #333; 
+              padding: 0; 
+              background: #000; 
+              border: 1px solid #2b2b2b; 
               border-radius: 8px; 
-              font-family: 'Monaco', 'Menlo', 'Consolas', monospace; 
-              font-size: 13px; 
-              color: #00ff00;
-              white-space: pre-wrap; 
               max-height: 300px; 
-              overflow-y: auto;
-              word-wrap: break-word;
-              word-break: break-all;
-              line-height: 1.4;
+              overflow: hidden;
             }
             .result.loading { 
               color: #00ff00; 
@@ -1354,7 +1348,7 @@ def labs():
                 <a href=\"/docs\" class=\"nav-item\">
                   <span class=\"icon\">📖</span>API Docs
                 </a>
-                <a href=\"/health\" class=\"nav-item\">
+                <a href=\"/status\" class=\"nav-item\">
                   <span class=\"icon\">❤️</span>Health Check
                 </a>
               </div>
@@ -2060,7 +2054,68 @@ async def labs_script_multi(request: Request):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/health", tags=["health"], summary="Health Check", description="Comprehensive health check including service status, dependencies, and system metrics")
+@app.get("/status", tags=["health"], summary="Service Status", description="UI status page with OpenAI RSS integration and local checks")
+def status_page():
+    # Simple HTML status similar to OpenAI/incident style
+    return HTMLResponse(
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset=\"utf-8\" />
+          <title>OmniScrape Status</title>
+          <style>
+            body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
+            .wrap{max-width:900px;margin:40px auto;padding:0 16px}
+            .card{background:#0b1220;border:1px solid #192038;border-radius:12px;padding:20px;margin-bottom:16px}
+            h1{font-size:24px;margin:0 0 8px}
+            .ok{color:#22c55e}
+            .warn{color:#f59e0b}
+            .bad{color:#ef4444}
+            .row{display:flex;justify-content:space-between;align-items:center}
+            .rss{font-size:13px;color:#93a4b7}
+            .feed{white-space:pre-wrap;font-family:Menlo,Monaco,Consolas,monospace;font-size:12px;color:#cbd5e1}
+          </style>
+          <script>
+            async function loadStatus(){
+              const res = await fetch('/health.json');
+              const data = await res.json();
+              const el = document.getElementById('local-status');
+              el.textContent = data.status === 'healthy' ? 'All systems operational' : 'Degraded';
+              el.className = data.status === 'healthy' ? 'ok' : 'warn';
+            }
+            async function loadOpenAI(){
+              try{
+                const res = await fetch('/status/openai');
+                const txt = await res.text();
+                document.getElementById('openai-feed').textContent = txt;
+              }catch(e){
+                document.getElementById('openai-feed').textContent = 'Unable to load OpenAI status.';
+              }
+            }
+            window.onload = ()=>{loadStatus();loadOpenAI();}
+          </script>
+        </head>
+        <body>
+          <div class=\"wrap\">
+            <div class=\"card\">
+              <div class=\"row\">
+                <h1>OmniScrape Status</h1>
+                <div id=\"local-status\" class=\"ok\">Loading…</div>
+              </div>
+              <div class=\"rss\">This page summarizes local checks and OpenAI platform status.</div>
+            </div>
+            <div class=\"card\">
+              <div class=\"row\"><h1>OpenAI Platform</h1><div class=\"rss\">Source: status.openai.com RSS</div></div>
+              <pre id=\"openai-feed\" class=\"feed\">Loading OpenAI status…</pre>
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+    )
+
+@app.get("/health.json", tags=["health"], summary="Health JSON", description="JSON health suitable for status page")
 def health(): 
     import os
     import time
@@ -2135,6 +2190,25 @@ def health():
             "supported_content": ["articles", "products"]
         }
     }
+
+@app.get("/status/openai", tags=["health"], summary="OpenAI RSS summary")
+def status_openai():
+    # Fetch and summarize latest few items from OpenAI status RSS/Atom
+    try:
+        import urllib.request
+        import xml.etree.ElementTree as ET
+        rss_url = "https://status.openai.com/feed.rss"
+        with urllib.request.urlopen(rss_url, timeout=5) as r:
+            content = r.read()
+        root = ET.fromstring(content)
+        items = []
+        for item in root.findall('.//item')[:3]:
+            title = (item.findtext('title') or '').strip()
+            pub = (item.findtext('pubDate') or '').strip()
+            items.append(f"- {title}  ({pub})")
+        return HTMLResponse("\n".join(items) if items else "No recent incidents.")
+    except Exception as e:
+        return HTMLResponse(f"Error loading RSS: {e}")
 
 @app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
 async def monitor_articles(req: MonitorRequest, request: Request):

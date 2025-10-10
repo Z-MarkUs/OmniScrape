@@ -48,7 +48,9 @@ Welcome to the OmniScrape documentation! This directory contains comprehensive d
 - **Main Project README**: [../README.md](../README.md)
 - **API Reference**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Interactive Labs**: [http://localhost:8000/labs](http://localhost:8000/labs)
-- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+ - **Status UI**: [http://localhost:8000/status](http://localhost:8000/status)
+ - **Health JSON**: [http://localhost:8000/health.json](http://localhost:8000/health.json)
+ - **Status & Health Guide**: [./status.md](./status.md)
 
 ## 🤝 Contributing
 
