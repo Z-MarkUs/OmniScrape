@@ -782,8 +782,11 @@ https://httpbin.org/json</textarea>
             async function runMonitor() {
               const resultDiv = document.getElementById('monitor-result');
               resultDiv.style.display = 'block';
-              resultDiv.textContent = 'Monitoring article list...';
+              resultDiv.innerHTML = '<div class="loading-indicator">Monitoring articles<span id="monitor-dots">.</span></div>';
               resultDiv.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('monitor-dots');
               
               try {
                 const selectedMode = document.querySelector('input[name=\"monitorMode\"]:checked').value;
@@ -798,14 +801,16 @@ https://httpbin.org/json</textarea>
                 });
                 
                 const result = await response.json();
+                stopDots('monitor-dots');
                 if (result.success) {
-                  resultDiv.textContent = JSON.stringify(result, null, 2);
+                  resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(result, null, 2) + '</pre></div>';
                   resultDiv.className = 'result success';
                 } else {
                   resultDiv.textContent = 'Error: ' + result.error;
                   resultDiv.className = 'result error';
                 }
               } catch (error) {
+                stopDots('monitor-dots');
                 resultDiv.textContent = 'Error: ' + error.message;
                 resultDiv.className = 'result error';
               }
@@ -1765,8 +1770,11 @@ def crawler():
             async function runCrawler() {
               const resultDiv = document.getElementById('crawl-result');
               resultDiv.style.display = 'block';
-              resultDiv.textContent = 'Crawling articles...';
+              resultDiv.innerHTML = '<div class="loading-indicator">Crawling articles<span id="crawl-dots">.</span></div>';
               resultDiv.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('crawl-dots');
               
               try {
                 const selectedMode = document.querySelector('input[name=\"crawlMode\"]:checked').value;
@@ -1782,14 +1790,16 @@ def crawler():
                 });
                 
                 const result = await response.json();
+                stopDots('crawl-dots');
                 if (result.success) {
-                  resultDiv.textContent = JSON.stringify(result, null, 2);
-                  resultDiv.className = 'result';
+                  resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(result, null, 2) + '</pre></div>';
+                  resultDiv.className = 'result success';
                 } else {
                   resultDiv.textContent = 'Error: ' + result.error;
                   resultDiv.className = 'result error';
                 }
               } catch (error) {
+                stopDots('crawl-dots');
                 resultDiv.textContent = 'Error: ' + error.message;
                 resultDiv.className = 'result error';
               }
