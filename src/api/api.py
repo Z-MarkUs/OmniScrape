@@ -806,12 +806,12 @@ https://httpbin.org/json</textarea>
                   resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(result, null, 2) + '</pre></div>';
                   resultDiv.className = 'result success';
                 } else {
-                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(result.error, null, 2) + '</pre></div>';
                   resultDiv.className = 'result error';
                 }
               } catch (error) {
                 stopDots('monitor-dots');
-                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(error.message, null, 2) + '</pre></div>';
                 resultDiv.className = 'result error';
               }
             }
@@ -886,7 +886,7 @@ https://httpbin.org/json</textarea>
                           resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(data.data, null, 2) + '</pre></div>';
                           resultDiv.className = 'result success';
                         } else if (data.type === 'error') {
-                          resultDiv.textContent = 'Error: ' + data.message;
+                          resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(data.message, null, 2) + '</pre></div>';
                           resultDiv.className = 'result error';
                         }
                       } catch (e) {
@@ -896,7 +896,7 @@ https://httpbin.org/json</textarea>
                   }
                 }
               } catch (error) {
-                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(error.message, null, 2) + '</pre></div>';
                 resultDiv.className = 'result error';
               }
             }
@@ -948,7 +948,7 @@ https://httpbin.org/json</textarea>
                           resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(data.data, null, 2) + '</pre></div>';
                           resultDiv.className = 'result success';
                         } else if (data.type === 'error') {
-                          resultDiv.textContent = 'Error: ' + data.message;
+                          resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(data.message, null, 2) + '</pre></div>';
                           resultDiv.className = 'result error';
                         }
                       } catch (e) {
@@ -958,7 +958,7 @@ https://httpbin.org/json</textarea>
                   }
                 }
               } catch (e) {
-                resultDiv.textContent = 'Error: ' + e.message;
+                resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(e.message, null, 2) + '</pre></div>';
                 resultDiv.className = 'result error';
               }
             }
@@ -1662,16 +1662,16 @@ https://httpbin.org/json</textarea>
                 const result = await response.json();
                 
                 if (result.success) {
-                  resultDiv.textContent = JSON.stringify(result.data, null, 2);
+                  resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(result.data, null, 2) + '</pre></div>';
                   resultDiv.className = 'result success';
                   statusIndicator.className = 'status-indicator ready';
                 } else {
-                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(result.error, null, 2) + '</pre></div>';
                   resultDiv.className = 'result error';
                   statusIndicator.className = 'status-indicator error';
                 }
               } catch (error) {
-                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(error.message, null, 2) + '</pre></div>';
                 resultDiv.className = 'result error';
                 statusIndicator.className = 'status-indicator error';
               } finally {
@@ -1813,12 +1813,12 @@ def crawler():
                   resultDiv.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(result, null, 2) + '</pre></div>';
                   resultDiv.className = 'result success';
                 } else {
-                  resultDiv.textContent = 'Error: ' + result.error;
+                  resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(result.error, null, 2) + '</pre></div>';
                   resultDiv.className = 'result error';
                 }
               } catch (error) {
                 stopDots('crawl-dots');
-                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(error.message, null, 2) + '</pre></div>';
                 resultDiv.className = 'result error';
               }
             }
