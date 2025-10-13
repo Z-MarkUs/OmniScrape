@@ -124,21 +124,25 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
         
         # Common patterns for article lists
         patterns = [
-            # Pattern 1: Article cards with links
+            # Pattern 1: Chinese financial news site specific patterns
+            {'selector': 'a[href*="/article/"], a[href*="/news/"], a[href*="/blog/"]', 'title': 'text', 'link': 'self'},
+            # Pattern 2: Links with Chinese text content
+            {'selector': 'a', 'title': 'text', 'link': 'self'},
+            # Pattern 3: Article cards with links
             {'selector': 'article', 'title': 'h1, h2, h3, h4', 'link': 'a'},
-            # Pattern 2: List items with links
+            # Pattern 4: List items with links
             {'selector': 'li', 'title': 'a', 'link': 'a'},
-            # Pattern 3: Div containers with article links
+            # Pattern 5: Div containers with article links
             {'selector': '.article, .post, .news-item', 'title': 'a, h1, h2, h3', 'link': 'a'},
-            # Pattern 4: Table rows with article links
+            # Pattern 6: Table rows with article links
             {'selector': 'tr', 'title': 'a, td', 'link': 'a'},
-            # Pattern 5: Chinese website patterns
+            # Pattern 7: Chinese website patterns
             {'selector': 'div[class*="article"], div[class*="news"], div[class*="item"]', 'title': 'a, h1, h2, h3, h4', 'link': 'a'},
-            # Pattern 6: Generic divs with links (broader pattern)
+            # Pattern 8: Generic divs with links (broader pattern)
             {'selector': 'div', 'title': 'a', 'link': 'a'},
-            # Pattern 7: Paragraphs with links
+            # Pattern 9: Paragraphs with links
             {'selector': 'p', 'title': 'a', 'link': 'a'},
-            # Pattern 8: Span elements with links
+            # Pattern 10: Span elements with links
             {'selector': 'span', 'title': 'a', 'link': 'a'},
         ]
         
@@ -147,18 +151,24 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
             print(f"🔍 Pattern {i+1} ({pattern['selector']}): Found {len(containers)} containers")
             
             for container in containers:
-                # Find title element
-                title_elem = container.select_one(pattern['title'])
-                if not title_elem:
-                    continue
-                
-                # Find link element
-                link_elem = container.select_one(pattern['link'])
-                if not link_elem or not link_elem.get('href'):
-                    continue
-                
-                title = title_elem.get_text(strip=True)
-                url = link_elem.get('href')
+                # Handle different pattern types
+                if pattern['title'] == 'text' and pattern['link'] == 'self':
+                    # Direct link pattern - container is the link itself
+                    title = container.get_text(strip=True)
+                    url = container.get('href')
+                else:
+                    # Container pattern - find title and link within container
+                    title_elem = container.select_one(pattern['title'])
+                    if not title_elem:
+                        continue
+                    
+                    # Find link element
+                    link_elem = container.select_one(pattern['link'])
+                    if not link_elem or not link_elem.get('href'):
+                        continue
+                    
+                    title = title_elem.get_text(strip=True)
+                    url = link_elem.get('href')
                 
                 # Make URL absolute
                 if url and not url.startswith('http'):
@@ -170,7 +180,15 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
                     continue
                 
                 # Skip if URL doesn't look like an article URL
-                if any(skip in url.lower() for skip in ['javascript:', 'mailto:', '#', 'void(0)']):
+                if any(skip in url.lower() for skip in ['javascript:', 'mailto:', '#', 'void(0)', 'void(', 'tel:', 'sms:']):
+                    continue
+                
+                # Skip navigation and footer links
+                if any(skip in title.lower() for skip in ['home', 'about', 'contact', 'privacy', 'terms', 'login', 'register', 'search', 'menu', 'nav']):
+                    continue
+                
+                # Skip if title is just numbers or very short
+                if title.isdigit() or len(title) < 3:
                     continue
                 
                 # Try to find author and date in the container
