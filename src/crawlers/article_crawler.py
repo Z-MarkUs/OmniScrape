@@ -30,6 +30,8 @@ def extract_structured_articles(url: str) -> List[Dict[str, Any]]:
         
         # Try JSON-LD structured data
         json_scripts = soup.find_all('script', type='application/ld+json')
+        print(f"📊 Found {len(json_scripts)} JSON-LD scripts")
+        
         for script in json_scripts:
             try:
                 data = json.loads(script.string)
@@ -63,6 +65,8 @@ def extract_structured_articles(url: str) -> List[Dict[str, Any]]:
         
         # Try Microdata
         microdata_items = soup.find_all(attrs={'itemtype': re.compile(r'.*Article.*')})
+        print(f"📊 Found {len(microdata_items)} microdata items")
+        
         for item in microdata_items:
             title_elem = item.find(attrs={'itemprop': 'headline'}) or item.find(attrs={'itemprop': 'name'})
             url_elem = item.find('a', href=True) or item.find(attrs={'itemprop': 'url'})
@@ -84,6 +88,23 @@ def extract_structured_articles(url: str) -> List[Dict[str, Any]]:
                     'method': 'microdata'
                 })
         
+        # Try OpenGraph meta tags
+        og_articles = soup.find_all('meta', property='og:title')
+        print(f"📊 Found {len(og_articles)} OpenGraph title tags")
+        
+        for meta in og_articles:
+            title = meta.get('content', '').strip()
+            if title and len(title) > 3:  # Allow shorter titles for Chinese content
+                articles.append({
+                    'title': title,
+                    'url': url,
+                    'author': '',
+                    'published_date': '',
+                    'description': '',
+                    'method': 'opengraph'
+                })
+        
+        print(f"📊 Structured data extraction completed: {len(articles)} articles found")
         return articles
         
     except Exception as e:
@@ -111,10 +132,19 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
             {'selector': '.article, .post, .news-item', 'title': 'a, h1, h2, h3', 'link': 'a'},
             # Pattern 4: Table rows with article links
             {'selector': 'tr', 'title': 'a, td', 'link': 'a'},
+            # Pattern 5: Chinese website patterns
+            {'selector': 'div[class*="article"], div[class*="news"], div[class*="item"]', 'title': 'a, h1, h2, h3, h4', 'link': 'a'},
+            # Pattern 6: Generic divs with links (broader pattern)
+            {'selector': 'div', 'title': 'a', 'link': 'a'},
+            # Pattern 7: Paragraphs with links
+            {'selector': 'p', 'title': 'a', 'link': 'a'},
+            # Pattern 8: Span elements with links
+            {'selector': 'span', 'title': 'a', 'link': 'a'},
         ]
         
-        for pattern in patterns:
+        for i, pattern in enumerate(patterns):
             containers = soup.select(pattern['selector'])
+            print(f"🔍 Pattern {i+1} ({pattern['selector']}): Found {len(containers)} containers")
             
             for container in containers:
                 # Find title element
@@ -135,7 +165,12 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
                     url = urljoin(url, url)
                 
                 # Skip if title is too short or URL is invalid
-                if len(title) < 5 or not url:
+                # For Chinese content, allow shorter titles (3+ characters)
+                if len(title) < 3 or not url:
+                    continue
+                
+                # Skip if URL doesn't look like an article URL
+                if any(skip in url.lower() for skip in ['javascript:', 'mailto:', '#', 'void(0)']):
                     continue
                 
                 # Try to find author and date in the container
@@ -153,8 +188,10 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
             
             # If we found articles with this pattern, use them
             if articles:
+                print(f"✅ Pattern {i+1} found {len(articles)} articles, stopping search")
                 break
         
+        print(f"📊 Pattern-based extraction completed: {len(articles)} articles found")
         return articles
         
     except Exception as e:
