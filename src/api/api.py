@@ -985,12 +985,12 @@ https://httpbin.org/json</textarea>
                   resultEl.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(json.data, null, 2) + '</pre></div>';
                   resultEl.className = 'result success';
                 } else {
-                  resultEl.textContent = 'Error: ' + json.error;
+                  resultEl.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(json.error, null, 2) + '</pre></div>';
                   resultEl.className = 'result error';
                 }
               } catch (e) {
                 stopDots('smart-dots');
-                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(e.message, null, 2) + '</pre></div>';
                 resultEl.className = 'result error';
               }
             }
@@ -1017,12 +1017,12 @@ https://httpbin.org/json</textarea>
                   resultEl.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(json.data, null, 2) + '</pre></div>';
                   resultEl.className = 'result success';
                 } else {
-                  resultEl.textContent = 'Error: ' + json.error;
+                  resultEl.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(json.error, null, 2) + '</pre></div>';
                   resultEl.className = 'result error';
                 }
               } catch (e) {
                 stopDots('search-dots');
-                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(e.message, null, 2) + '</pre></div>';
                 resultEl.className = 'result error';
               }
             }
@@ -1048,12 +1048,12 @@ https://httpbin.org/json</textarea>
                   resultEl.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(json.data, null, 2) + '</pre></div>';
                   resultEl.className = 'result success';
                 } else {
-                  resultEl.textContent = 'Error: ' + json.error;
+                  resultEl.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(json.error, null, 2) + '</pre></div>';
                   resultEl.className = 'result error';
                 }
               } catch (e) {
                 stopDots('multi-dots');
-                resultEl.textContent = 'Error: ' + e.message;
+                resultEl.innerHTML = '<div class="result-terminal"><pre>Error: ' + JSON.stringify(e.message, null, 2) + '</pre></div>';
                 resultEl.className = 'result error';
               }
             }
