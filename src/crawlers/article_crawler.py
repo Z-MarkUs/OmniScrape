@@ -295,39 +295,66 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         from scrapegraphai.graphs import SmartScraperGraph
         
         model = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini")
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        print(f"🤖 Starting AI extraction for URL: {url}")
+        print(f"🔧 Model: {model}")
+        print(f"🔑 API Key: {'Set' if api_key else 'Not set'}")
+        
         config = {
             "llm": {
                 "model": model,
-                "api_key": os.getenv("OPENAI_API_KEY"),
+                "api_key": api_key,
                 "temperature": 0.1
             }
         }
         
+        print(f"🚀 Creating SmartScraperGraph...")
         graph = SmartScraperGraph(prompt=prompt, source=url, config=config)
+        
+        print(f"⚡ Running graph...")
         result = graph.run()
+        
+        print(f"📊 Raw result type: {type(result)}")
+        print(f"📊 Raw result: {str(result)[:200]}...")
         
         # Get token usage
         token_usage = get_token_usage()
+        print(f"💰 Token usage: {token_usage}")
         
         # Parse the result
+        articles = []
         if isinstance(result, str):
             try:
                 articles = json.loads(result)
-            except json.JSONDecodeError:
+                print(f"✅ Successfully parsed JSON: {len(articles)} articles")
+            except json.JSONDecodeError as e:
+                print(f"❌ JSON decode error: {e}")
                 # Try to extract JSON from the result
                 json_match = re.search(r'\[.*\]', result, re.DOTALL)
                 if json_match:
-                    articles = json.loads(json_match.group())
+                    try:
+                        articles = json.loads(json_match.group())
+                        print(f"✅ Extracted JSON from text: {len(articles)} articles")
+                    except json.JSONDecodeError as e2:
+                        print(f"❌ Failed to extract JSON: {e2}")
+                        articles = []
                 else:
+                    print(f"❌ No JSON array found in result")
                     articles = []
         elif isinstance(result, list):
             articles = result
+            print(f"✅ Result is already a list: {len(articles)} articles")
         else:
+            print(f"❌ Unexpected result type: {type(result)}")
             articles = []
         
         # Add method indicator
         for article in articles:
-            article['method'] = 'ai_extraction'
+            if isinstance(article, dict):
+                article['method'] = 'ai_extraction'
+        
+        print(f"🎯 Final articles count: {len(articles)}")
         
         return {
             "articles": articles,
@@ -335,7 +362,9 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         }
         
     except Exception as e:
-        print(f"AI extraction failed: {e}")
+        print(f"❌ AI extraction failed: {e}")
+        import traceback
+        print(f"📋 Traceback: {traceback.format_exc()}")
         return {
             "articles": [],
             "token_usage": {}
