@@ -967,8 +967,12 @@ https://httpbin.org/json</textarea>
             async function runSmartScraper() {
               const resultEl = document.getElementById('smart-result');
               resultEl.style.display = 'block';
-              resultEl.textContent = 'Running SmartScraper...';
+              resultEl.innerHTML = '<div class="loading-indicator">Running SmartScraper<span id="smart-dots">.</span></div>';
               resultEl.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('smart-dots');
+              
               try {
                 const payload = { 
                   url: document.getElementById('smart-url').value, 
@@ -976,14 +980,16 @@ https://httpbin.org/json</textarea>
                 };
                 const res = await fetch('/labs/smart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await res.json();
+                stopDots('smart-dots');
                 if (json.success) {
-                  resultEl.textContent = JSON.stringify(json.data, null, 2);
+                  resultEl.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(json.data, null, 2) + '</pre></div>';
                   resultEl.className = 'result success';
                 } else {
                   resultEl.textContent = 'Error: ' + json.error;
                   resultEl.className = 'result error';
                 }
               } catch (e) {
+                stopDots('smart-dots');
                 resultEl.textContent = 'Error: ' + e.message;
                 resultEl.className = 'result error';
               }
@@ -992,8 +998,12 @@ https://httpbin.org/json</textarea>
             async function runSearchGraph() {
               const resultEl = document.getElementById('search-result');
               resultEl.style.display = 'block';
-              resultEl.textContent = 'Running SearchGraph...';
+              resultEl.innerHTML = '<div class="loading-indicator">Running SearchGraph<span id="search-dots">.</span></div>';
               resultEl.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('search-dots');
+              
               try {
                 const payload = { 
                   query: document.getElementById('search-query').value, 
@@ -1002,14 +1012,16 @@ https://httpbin.org/json</textarea>
                 };
                 const res = await fetch('/labs/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await res.json();
+                stopDots('search-dots');
                 if (json.success) {
-                  resultEl.textContent = JSON.stringify(json.data, null, 2);
+                  resultEl.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(json.data, null, 2) + '</pre></div>';
                   resultEl.className = 'result success';
                 } else {
                   resultEl.textContent = 'Error: ' + json.error;
                   resultEl.className = 'result error';
                 }
               } catch (e) {
+                stopDots('search-dots');
                 resultEl.textContent = 'Error: ' + e.message;
                 resultEl.className = 'result error';
               }
@@ -1018,8 +1030,12 @@ https://httpbin.org/json</textarea>
             async function runMultiGraph() {
               const resultEl = document.getElementById('multi-result');
               resultEl.style.display = 'block';
-              resultEl.textContent = 'Running MultiGraph...';
+              resultEl.innerHTML = '<div class="loading-indicator">Running MultiGraph<span id="multi-dots">.</span></div>';
               resultEl.className = 'result loading';
+              
+              // Start dots animation
+              animateDots('multi-dots');
+              
               try {
                 const payload = { 
                   urls: document.getElementById('multi-urls').value.split('\\n').filter(u => u.trim()), 
@@ -1027,14 +1043,16 @@ https://httpbin.org/json</textarea>
                 };
                 const res = await fetch('/labs/multi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await res.json();
+                stopDots('multi-dots');
                 if (json.success) {
-                  resultEl.textContent = JSON.stringify(json.data, null, 2);
+                  resultEl.innerHTML = '<div class="result-terminal"><pre>' + JSON.stringify(json.data, null, 2) + '</pre></div>';
                   resultEl.className = 'result success';
                 } else {
                   resultEl.textContent = 'Error: ' + json.error;
                   resultEl.className = 'result error';
                 }
               } catch (e) {
+                stopDots('multi-dots');
                 resultEl.textContent = 'Error: ' + e.message;
                 resultEl.className = 'result error';
               }
