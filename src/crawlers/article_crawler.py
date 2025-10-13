@@ -112,9 +112,42 @@ def extract_structured_articles(url: str) -> List[Dict[str, Any]]:
         return []
 
 
+def _is_valid_article(title: str, url: str) -> bool:
+    """
+    Universal validation for article titles and URLs
+    """
+    # Basic validation
+    if not title or not url or len(title) < 3:
+        return False
+    
+    # Skip invalid URLs
+    if any(skip in url.lower() for skip in ['javascript:', 'mailto:', '#', 'void(0)', 'void(', 'tel:', 'sms:']):
+        return False
+    
+    # Skip navigation and footer links (English)
+    nav_words_en = ['home', 'about', 'contact', 'privacy', 'terms', 'login', 'register', 'search', 'menu', 'nav', 'footer', 'header']
+    if any(skip in title.lower() for skip in nav_words_en):
+        return False
+    
+    # Skip navigation and footer links (Chinese)
+    nav_words_cn = ['首页', '关于', '联系', '隐私', '条款', '登录', '注册', '搜索', '菜单', '导航', '页脚', '页头']
+    if any(skip in title for skip in nav_words_cn):
+        return False
+    
+    # Skip if title is just numbers or very short
+    if title.isdigit() or len(title.strip()) < 3:
+        return False
+    
+    # Skip common non-article patterns
+    if title.lower() in ['read more', 'continue reading', 'more', 'less', 'show', 'hide']:
+        return False
+    
+    return True
+
+
 def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
     """
-    Step 2: Extract articles using common HTML patterns
+    Step 2: Extract articles using universal HTML patterns with tiered fallback
     """
     try:
         html = fetch_rendered(url)
@@ -122,91 +155,94 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
         
         articles = []
         
-        # Common patterns for article lists
+        # Universal patterns for article lists - ordered by specificity and reliability
         patterns = [
-            # Pattern 1: Chinese financial news site specific patterns
-            {'selector': 'a[href*="/article/"], a[href*="/news/"], a[href*="/blog/"]', 'title': 'text', 'link': 'self'},
-            # Pattern 2: Links with Chinese text content
-            {'selector': 'a', 'title': 'text', 'link': 'self'},
-            # Pattern 3: Article cards with links
-            {'selector': 'article', 'title': 'h1, h2, h3, h4', 'link': 'a'},
-            # Pattern 4: List items with links
-            {'selector': 'li', 'title': 'a', 'link': 'a'},
-            # Pattern 5: Div containers with article links
-            {'selector': '.article, .post, .news-item', 'title': 'a, h1, h2, h3', 'link': 'a'},
-            # Pattern 6: Table rows with article links
-            {'selector': 'tr', 'title': 'a, td', 'link': 'a'},
-            # Pattern 7: Chinese website patterns
-            {'selector': 'div[class*="article"], div[class*="news"], div[class*="item"]', 'title': 'a, h1, h2, h3, h4', 'link': 'a'},
-            # Pattern 8: Generic divs with links (broader pattern)
-            {'selector': 'div', 'title': 'a', 'link': 'a'},
-            # Pattern 9: Paragraphs with links
-            {'selector': 'p', 'title': 'a', 'link': 'a'},
-            # Pattern 10: Span elements with links
-            {'selector': 'span', 'title': 'a', 'link': 'a'},
+            # Tier 1: Most specific and reliable patterns
+            {'selector': 'article', 'title': 'h1, h2, h3, h4, h5', 'link': 'a', 'tier': 1, 'description': 'Semantic article elements'},
+            {'selector': '[itemtype*="Article"], [itemtype*="NewsArticle"]', 'title': '[itemprop="headline"], [itemprop="name"]', 'link': '[itemprop="url"], a', 'tier': 1, 'description': 'Microdata articles'},
+            
+            # Tier 2: Common CSS class patterns
+            {'selector': '.article, .post, .news-item, .blog-post, .entry', 'title': 'h1, h2, h3, h4, a', 'link': 'a', 'tier': 2, 'description': 'Common article classes'},
+            {'selector': '[class*="article"], [class*="post"], [class*="news"], [class*="blog"]', 'title': 'h1, h2, h3, h4, a', 'link': 'a', 'tier': 2, 'description': 'Article-like classes'},
+            
+            # Tier 3: List-based patterns
+            {'selector': 'li', 'title': 'a, h1, h2, h3, h4', 'link': 'a', 'tier': 3, 'description': 'List items with links'},
+            {'selector': 'ul li, ol li', 'title': 'a', 'link': 'a', 'tier': 3, 'description': 'Nested list items'},
+            
+            # Tier 4: Table-based patterns
+            {'selector': 'tr', 'title': 'a, td', 'link': 'a', 'tier': 4, 'description': 'Table rows with links'},
+            {'selector': 'tbody tr, thead tr', 'title': 'a, td', 'link': 'a', 'tier': 4, 'description': 'Table body/header rows'},
+            
+            # Tier 5: Generic container patterns
+            {'selector': 'div', 'title': 'a, h1, h2, h3, h4', 'link': 'a', 'tier': 5, 'description': 'Generic div containers'},
+            {'selector': 'section', 'title': 'h1, h2, h3, h4, a', 'link': 'a', 'tier': 5, 'description': 'Section elements'},
+            {'selector': 'p', 'title': 'a', 'link': 'a', 'tier': 5, 'description': 'Paragraphs with links'},
+            
+            # Tier 6: Direct link patterns (most generic, lowest priority)
+            {'selector': 'a[href*="/article/"], a[href*="/news/"], a[href*="/blog/"], a[href*="/post/"]', 'title': 'text', 'link': 'self', 'tier': 6, 'description': 'Direct article links'},
+            {'selector': 'a', 'title': 'text', 'link': 'self', 'tier': 6, 'description': 'All links (fallback)'},
         ]
         
-        for i, pattern in enumerate(patterns):
-            containers = soup.select(pattern['selector'])
-            print(f"🔍 Pattern {i+1} ({pattern['selector']}): Found {len(containers)} containers")
+        # Process patterns by tier (most specific first)
+        for tier in range(1, 7):  # Tiers 1-6
+            tier_patterns = [p for p in patterns if p['tier'] == tier]
+            print(f"🔍 Processing Tier {tier} patterns...")
             
-            for container in containers:
-                # Handle different pattern types
-                if pattern['title'] == 'text' and pattern['link'] == 'self':
-                    # Direct link pattern - container is the link itself
-                    title = container.get_text(strip=True)
-                    url = container.get('href')
-                else:
-                    # Container pattern - find title and link within container
-                    title_elem = container.select_one(pattern['title'])
-                    if not title_elem:
+            for i, pattern in enumerate(tier_patterns):
+                containers = soup.select(pattern['selector'])
+                print(f"  📋 {pattern['description']}: Found {len(containers)} containers")
+                
+                tier_articles = []
+                
+                for container in containers:
+                    # Handle different pattern types
+                    if pattern['title'] == 'text' and pattern['link'] == 'self':
+                        # Direct link pattern - container is the link itself
+                        title = container.get_text(strip=True)
+                        url = container.get('href')
+                    else:
+                        # Container pattern - find title and link within container
+                        title_elem = container.select_one(pattern['title'])
+                        if not title_elem:
+                            continue
+                        
+                        # Find link element
+                        link_elem = container.select_one(pattern['link'])
+                        if not link_elem or not link_elem.get('href'):
+                            continue
+                        
+                        title = title_elem.get_text(strip=True)
+                        url = link_elem.get('href')
+                    
+                    # Make URL absolute
+                    if url and not url.startswith('http'):
+                        url = urljoin(url, url)
+                    
+                    # Universal filtering rules
+                    if not _is_valid_article(title, url):
                         continue
                     
-                    # Find link element
-                    link_elem = container.select_one(pattern['link'])
-                    if not link_elem or not link_elem.get('href'):
-                        continue
+                    # Try to find author and date in the container
+                    author_elem = container.select_one('.author, .byline, [class*="author"], [class*="byline"]')
+                    date_elem = container.select_one('.date, .time, [class*="date"], [class*="time"], time')
                     
-                    title = title_elem.get_text(strip=True)
-                    url = link_elem.get('href')
+                    tier_articles.append({
+                        'title': title,
+                        'url': url,
+                        'author': author_elem.get_text(strip=True) if author_elem else '',
+                        'published_date': date_elem.get_text(strip=True) if date_elem else '',
+                        'description': '',
+                        'method': f'pattern_tier_{tier}'
+                    })
                 
-                # Make URL absolute
-                if url and not url.startswith('http'):
-                    url = urljoin(url, url)
-                
-                # Skip if title is too short or URL is invalid
-                # For Chinese content, allow shorter titles (3+ characters)
-                if len(title) < 3 or not url:
-                    continue
-                
-                # Skip if URL doesn't look like an article URL
-                if any(skip in url.lower() for skip in ['javascript:', 'mailto:', '#', 'void(0)', 'void(', 'tel:', 'sms:']):
-                    continue
-                
-                # Skip navigation and footer links
-                if any(skip in title.lower() for skip in ['home', 'about', 'contact', 'privacy', 'terms', 'login', 'register', 'search', 'menu', 'nav']):
-                    continue
-                
-                # Skip if title is just numbers or very short
-                if title.isdigit() or len(title) < 3:
-                    continue
-                
-                # Try to find author and date in the container
-                author_elem = container.select_one('.author, .byline, [class*="author"], [class*="byline"]')
-                date_elem = container.select_one('.date, .time, [class*="date"], [class*="time"], time')
-                
-                articles.append({
-                    'title': title,
-                    'url': url,
-                    'author': author_elem.get_text(strip=True) if author_elem else '',
-                    'published_date': date_elem.get_text(strip=True) if date_elem else '',
-                    'description': '',
-                    'method': 'pattern_based'
-                })
+                # If this pattern found articles, add them
+                if tier_articles:
+                    articles.extend(tier_articles)
+                    print(f"  ✅ Added {len(tier_articles)} articles from {pattern['description']}")
             
-            # If we found articles with this pattern, use them
-            if articles:
-                print(f"✅ Pattern {i+1} found {len(articles)} articles, stopping search")
+            # If we found enough articles in this tier, stop processing lower tiers
+            if len(articles) >= 5:  # Minimum threshold for good results
+                print(f"✅ Tier {tier} found {len(articles)} articles, stopping at tier {tier}")
                 break
         
         print(f"📊 Pattern-based extraction completed: {len(articles)} articles found")
