@@ -2,7 +2,7 @@ from typing import Literal, Dict, Any
 import os
 import time
 import asyncio
-from src.core.fetcher import fetch_rendered
+from src.core.bypass import fetch_rendered
 from src.extractors.extract_structured import extract_structured
 from src.extractors.extract_readable import readable_article
 from src.extractors.extract_patterns import find_prices

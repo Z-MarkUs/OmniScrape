@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Query, Request
+from src.api.routers.status import router as status_router
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, HttpUrl
 from typing import Literal
@@ -6,13 +7,9 @@ import orjson
 import json
 import asyncio
 from datetime import datetime
-from src.core.pipeline import extract
+from src.api.routers.extract import router as extract_router
 from src.crawlers.article_crawler import crawl_with_full_content
-
-class ExtractRequest(BaseModel):
-    url: HttpUrl
-    kind: Literal["article", "product"]
-    llmMode: Literal["none", "llm", "auto"] = "auto"
+from src.core.bypass import fetch_with_bypass
 
 class MonitorRequest(BaseModel):
     url: HttpUrl
@@ -102,6 +99,9 @@ app = FastAPI(
         },
     ]
 )
+
+app.include_router(status_router)
+app.include_router(extract_router)
 
 @app.get("/", response_class=HTMLResponse)
 def root():
@@ -2082,161 +2082,11 @@ async def labs_script_multi(request: Request):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/status", tags=["health"], summary="Service Status", description="UI status page with OpenAI RSS integration and local checks")
-def status_page():
-    # Simple HTML status similar to OpenAI/incident style
-    return HTMLResponse(
-        """
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset=\"utf-8\" />
-          <title>OmniScrape Status</title>
-          <style>
-            body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#e2e8f0;margin:0}
-            .wrap{max-width:900px;margin:40px auto;padding:0 16px}
-            .card{background:#0b1220;border:1px solid #192038;border-radius:12px;padding:20px;margin-bottom:16px}
-            h1{font-size:24px;margin:0 0 8px}
-            .ok{color:#22c55e}
-            .warn{color:#f59e0b}
-            .bad{color:#ef4444}
-            .row{display:flex;justify-content:space-between;align-items:center}
-            .rss{font-size:13px;color:#93a4b7}
-            .feed{white-space:pre-wrap;font-family:Menlo,Monaco,Consolas,monospace;font-size:12px;color:#cbd5e1}
-          </style>
-          <script>
-            async function loadStatus(){
-              const res = await fetch('/health.json');
-              const data = await res.json();
-              const el = document.getElementById('local-status');
-              el.textContent = data.status === 'healthy' ? 'All systems operational' : 'Degraded';
-              el.className = data.status === 'healthy' ? 'ok' : 'warn';
-            }
-            async function loadOpenAI(){
-              try{
-                const res = await fetch('/status/openai');
-                const txt = await res.text();
-                document.getElementById('openai-feed').textContent = txt;
-              }catch(e){
-                document.getElementById('openai-feed').textContent = 'Unable to load OpenAI status.';
-              }
-            }
-            window.onload = ()=>{loadStatus();loadOpenAI();}
-          </script>
-        </head>
-        <body>
-          <div class=\"wrap\">
-            <div class=\"card\">
-              <div class=\"row\">
-                <h1>OmniScrape Status</h1>
-                <div id=\"local-status\" class=\"ok\">Loading…</div>
-              </div>
-              <div class=\"rss\">This page summarizes local checks and OpenAI platform status.</div>
-            </div>
-            <div class=\"card\">
-              <div class=\"row\"><h1>OpenAI Platform</h1><div class=\"rss\">Source: status.openai.com RSS</div></div>
-              <pre id=\"openai-feed\" class=\"feed\">Loading OpenAI status…</pre>
-            </div>
-          </div>
-        </body>
-        </html>
-        """
-    )
+"""/status UI moved to routers.status"""
 
-@app.get("/health.json", tags=["health"], summary="Health JSON", description="JSON health suitable for status page")
-def health(): 
-    import os
-    import time
-    import psutil
-    from datetime import datetime
-    
-    # Basic service status
-    status = "healthy"
-    checks = {}
-    
-    # Check OpenAI API key
-    openai_key = os.getenv("OPENAI_API_KEY")
-    checks["openai_api"] = {
-        "status": "configured" if openai_key else "missing",
-        "message": "OpenAI API key is configured" if openai_key else "OpenAI API key is missing"
-    }
-    
-    # Check Bing Search API key (optional)
-    bing_key = os.getenv("BING_SEARCH_API_KEY")
-    checks["bing_api"] = {
-        "status": "configured" if bing_key else "not_configured",
-        "message": "Bing Search API key is configured" if bing_key else "Bing Search API key not configured (optional)"
-    }
-    
-    # Check model configuration
-    model = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini")
-    checks["model_config"] = {
-        "status": "configured",
-        "message": f"Model configured: {model}"
-    }
-    
-    # System metrics
-    try:
-        process = psutil.Process()
-        checks["system"] = {
-            "status": "healthy",
-            "cpu_percent": process.cpu_percent(),
-            "memory_mb": round(process.memory_info().rss / 1024 / 1024, 2),
-            "uptime_seconds": round(time.time() - process.create_time(), 2)
-        }
-    except Exception as e:
-        checks["system"] = {
-            "status": "error",
-            "message": f"Could not retrieve system metrics: {str(e)}"
-        }
-    
-    # Check if any critical components are missing
-    critical_failed = any(
-        check["status"] in ["missing", "error"] 
-        for name, check in checks.items() 
-        if name in ["openai_api"]
-    )
-    
-    if critical_failed:
-        status = "degraded"
-    
-    return {
-        "status": status,
-        "timestamp": datetime.utcnow().isoformat(),
-        "service": "OmniScrape API",
-        "version": "0.1.0",
-        "checks": checks,
-        "endpoints": {
-            "main_api": "/extract",
-            "labs": "/labs",
-            "docs": "/docs",
-            "redoc": "/redoc"
-        },
-        "features": {
-            "extraction_methods": ["structured_data", "readability", "llm_fallback"],
-            "labs_graphs": ["smart", "search", "speech", "script", "multi", "script-multi"],
-            "supported_content": ["articles", "products"]
-        }
-    }
+# /health.json now provided by status router; legacy route removed
 
-@app.get("/status/openai", tags=["health"], summary="OpenAI RSS summary")
-def status_openai():
-    # Fetch and summarize latest few items from OpenAI status RSS/Atom
-    try:
-        import urllib.request
-        import xml.etree.ElementTree as ET
-        rss_url = "https://status.openai.com/feed.rss"
-        with urllib.request.urlopen(rss_url, timeout=5) as r:
-            content = r.read()
-        root = ET.fromstring(content)
-        items = []
-        for item in root.findall('.//item')[:3]:
-            title = (item.findtext('title') or '').strip()
-            pub = (item.findtext('pubDate') or '').strip()
-            items.append(f"- {title}  ({pub})")
-        return HTMLResponse("\n".join(items) if items else "No recent incidents.")
-    except Exception as e:
-        return HTMLResponse(f"Error loading RSS: {e}")
+"""/status/openai moved to routers.status"""
 
 @app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
 async def monitor_articles(req: MonitorRequest, request: Request):
@@ -2247,14 +2097,21 @@ async def monitor_articles(req: MonitorRequest, request: Request):
         # For SD mode, implement actual structured data extraction without OpenAI
         if req.mode == "sd":
             try:
-                import requests
                 from bs4 import BeautifulSoup
                 import json
                 import re
                 
-                # Fetch the page
-                response = requests.get(str(req.url), timeout=10)
-                soup = BeautifulSoup(response.content, 'html.parser')
+                # Use enhanced bypass instead of requests
+                html = await fetch_with_bypass(str(req.url))
+                if not html:
+                    return {
+                        "success": False,
+                        "error": "Failed to fetch page content",
+                        "url": str(req.url),
+                        "mode": req.mode
+                    }
+                
+                soup = BeautifulSoup(html, 'html.parser')
                 
                 articles = []
                 
@@ -2389,153 +2246,6 @@ async def monitor_articles(req: MonitorRequest, request: Request):
             "traceback": traceback.format_exc()
         }
 
-@app.post("/extract-stream", tags=["extraction"], summary="Extract Article or Product with Live Progress", description="Extract structured data with real-time progress updates")
-async def do_extract_stream(req: ExtractRequest, request: Request):
-    """Extract with live progress updates using Server-Sent Events"""
-    
-    async def generate_progress():
-        try:
-            # Check if client disconnected
-            if await request.is_disconnected():
-                yield f"data: {json.dumps({'type': 'error', 'message': 'Client disconnected'})}\n\n"
-                return
-            
-            # Send initial progress
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Starting extraction'})}\n\n"
-            await asyncio.sleep(0.1)
-            
-            # Send progress updates during extraction
-            yield f"data: {json.dumps({'type': 'progress', 'step': 'Fetching page content'})}\n\n"
-            await asyncio.sleep(0.1)
-            
-            if req.llmMode == "none":
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Structured Data extraction'})}\n\n"
-                await asyncio.sleep(0.1)
-                
-                try:
-                    result = await extract(str(req.url), req.kind, "none")
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing structured data'})}\n\n"
-                    await asyncio.sleep(0.1)
-                    
-                    yield f"data: {json.dumps({'type': 'complete', 'data': result}, default=str)}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({'type': 'error', 'message': f'SD extraction failed: {str(e)}'})}\n\n"
-                    
-            elif req.llmMode in ["llm", "auto"]:
-                if req.llmMode == "llm":
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using LLM extraction'})}\n\n"
-                else:
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Using Auto mode (cascading fallback)'})}\n\n"
-                
-                await asyncio.sleep(0.1)
-                yield f"data: {json.dumps({'type': 'progress', 'step': 'Initializing AI model'})}\n\n"
-                await asyncio.sleep(0.1)
-                
-                try:
-                    pipeline_mode = req.llmMode
-                    result = await extract(str(req.url), req.kind, pipeline_mode)
-                    yield f"data: {json.dumps({'type': 'progress', 'step': 'Processing AI response'})}\n\n"
-                    await asyncio.sleep(0.1)
-                    
-                    yield f"data: {json.dumps({'type': 'complete', 'data': result}, default=str)}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({'type': 'error', 'message': f'Extraction failed: {str(e)}'})}\n\n"
-                    
-        except asyncio.CancelledError:
-            yield f"data: {json.dumps({'type': 'error', 'message': 'Extraction cancelled'})}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-    
-    return StreamingResponse(
-        generate_progress(),
-        media_type="text/plain",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "*",
-        }
-    )
+"""/extract-stream moved to routers.extract"""
 
-@app.post("/extract", tags=["extraction"], summary="Extract Article or Product", description="Extract structured data from articles or products using cascading fallback strategy")
-async def do_extract(req: ExtractRequest, request: Request):
-    try:
-        # Check if client disconnected
-        if await request.is_disconnected():
-            return {"error": "Client disconnected"}
-        
-        # For SD mode (none), use the real pipeline with "none" mode
-        if req.llmMode == "none":
-            try:
-                # Use the real extraction pipeline with "none" mode
-                result = await extract(str(req.url), req.kind, "none")
-                
-                return {
-                    "success": True,
-                    "url": str(req.url),
-                    "kind": req.kind,
-                    "mode": req.llmMode,
-                    "data": result,
-                    "extracted_at": datetime.now().isoformat()
-                }
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": f"SD extraction failed: {str(e)}",
-                    "url": str(req.url),
-                    "kind": req.kind,
-                    "mode": req.llmMode
-                }
-        
-        # For LLM and AUTO modes, use real extraction now that OpenAI API is working
-        if req.llmMode in ["llm", "auto"]:
-            try:
-                # Map the API mode to the pipeline mode
-                pipeline_mode = req.llmMode  # "llm" -> "llm", "auto" -> "auto"
-                
-                # Use the real extraction pipeline
-                result = await extract(str(req.url), req.kind, pipeline_mode)
-                
-                return {
-                    "success": True,
-                    "url": str(req.url),
-                    "kind": req.kind,
-                    "mode": req.llmMode,
-                    "data": result,
-                    "extracted_at": datetime.now().isoformat()
-                }
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": f"Extraction failed: {str(e)}",
-                    "url": str(req.url),
-                    "kind": req.kind,
-                    "mode": req.llmMode
-                }
-        
-        # This should not be reached, but keeping as fallback
-        return {
-            "success": True,
-            "url": str(req.url),
-            "kind": req.kind,
-            "mode": req.llmMode,
-            "data": {
-                "title": f"Sample Article Title ({req.llmMode} mode)",
-                "content": f"This is sample content extracted from the article using {req.llmMode.upper()} mode. The full extraction functionality requires resolving OpenAI API region restrictions.",
-                "author": "Sample Author",
-                "published_date": "2024-01-01",
-                "extraction_method": "test_mode"
-            },
-            "extracted_at": datetime.now().isoformat(),
-            "note": f"{req.llmMode.upper()} mode - Full extraction requires fixing OpenAI API region restrictions."
-        }
-    except asyncio.CancelledError:
-        # Handle cancellation
-        return {"error": "Extraction cancelled", "cancelled": True}
-    except Exception as e:
-        # Surface backend error details to the client
-        import traceback
-        tb = traceback.format_exc()
-        # Limit trace size to avoid huge responses
-        short_tb = tb[-4000:]
-        return JSONResponse(status_code=500, content={"error": str(e), "trace": short_tb})
+"""/extract moved to routers.extract"""
