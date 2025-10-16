@@ -14,6 +14,9 @@ import requests
 from bs4 import BeautifulSoup
 
 RENDER_MS = int(os.getenv("MAX_RENDER_MS", "20000"))
+# Global hard cap per strategy to avoid infinite hangs
+STRATEGY_HARD_TIMEOUT_MS = int(os.getenv("STRATEGY_HARD_TIMEOUT_MS", "12000"))
+LIST_MODE_DOM_THRESHOLD = int(os.getenv("LIST_MODE_DOM_THRESHOLD", "800"))
 
 # Proxy rotation support
 _DOMAIN_PROXY_CACHE: dict[str, str] = {}
@@ -260,6 +263,8 @@ async def fetch_with_bypass(url: str, max_retries: int = 3) -> str:
         _try_playwright_desktop,
         _try_playwright_desktop_relaxed,
         _try_playwright_desktop_with_referer,
+        _try_etnet_mobile_requests,  # ETNet list-friendly requests path
+        _try_jina_reader_proxy,      # Server-side readable proxy
         _try_playwright_in_site_navigation,
         _try_firefox_engine,
         _try_search_engine_navigation,
@@ -271,11 +276,19 @@ async def fetch_with_bypass(url: str, max_retries: int = 3) -> str:
     for attempt in range(max_retries):
         for strategy in strategies:
             try:
-                result = await strategy(url)
-                if result and len(result.strip()) > 1000:
+                start = time.time()
+                # Enforce a strict per-strategy timeout
+                result = await asyncio.wait_for(strategy(url), timeout=STRATEGY_HARD_TIMEOUT_MS / 1000)
+                duration = int((time.time() - start) * 1000)
+                size = len(result) if result else 0
+                print(f"[bypass] {strategy.__name__} took {duration}ms, size={size}")
+                if result and len(result.strip()) > LIST_MODE_DOM_THRESHOLD:
                     return result
+            except asyncio.TimeoutError:
+                print(f"[bypass] {strategy.__name__} timed out after {STRATEGY_HARD_TIMEOUT_MS}ms")
+                continue
             except Exception as e:
-                print(f"Strategy {strategy.__name__} failed: {e}")
+                print(f"[bypass] {strategy.__name__} failed: {e}")
                 continue
         
         if attempt < max_retries - 1:
@@ -711,6 +724,59 @@ async def _try_site_specific_fallback(url: str) -> str:
             await ctx.close()
             return html
     
+    return ""
+
+async def _try_etnet_mobile_requests(url: str) -> str:
+    """ETNet-specific list/mobile requests attempt with referer and mobile UA."""
+    try:
+        host = _host_from_url(url)
+        if "etnetchina.cn" not in host:
+            return ""
+        headers = {
+            "User-Agent": _get_mobile_user_agent(),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Referer": f"https://{host}/",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        }
+        resp = requests.get(url, headers=headers, timeout=12)
+        if resp.status_code == 200 and len(resp.text) > 500:
+            return resp.text
+        # Try homepage then list URL to mimic in-site navigation
+        home = f"https://{host}/"
+        requests.get(home, headers=headers, timeout=8)
+        resp2 = requests.get(url, headers=headers, timeout=12)
+        if resp2.status_code == 200 and len(resp2.text) > 500:
+            return resp2.text
+    except Exception:
+        return ""
+    return ""
+
+async def _try_jina_reader_proxy(url: str) -> str:
+    """Use r.jina.ai readable proxy to fetch page content bypassing JS and some antibot.
+    It returns extracted readable text; acceptable for discovery/content when HTML fails.
+    """
+    try:
+        from urllib.parse import quote
+        proxy_url = f"https://r.jina.ai/http://{_host_from_url(url)}{urlparse(url).path}"
+        # If query present, include it
+        q = urlparse(url).query
+        if q:
+            proxy_url = f"{proxy_url}?{q}"
+        headers = {
+            "User-Agent": _get_random_user_agent(),
+            "Accept": "text/plain, text/html, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Connection": "keep-alive",
+        }
+        resp = requests.get(proxy_url, headers=headers, timeout=12)
+        if resp.status_code == 200 and len(resp.text) > 300:
+            return resp.text
+    except Exception:
+        return ""
     return ""
 
 # Legacy compatibility

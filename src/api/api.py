@@ -8,6 +8,7 @@ import json
 import asyncio
 from datetime import datetime
 from src.api.routers.extract import router as extract_router
+from src.api.routers.monitor import router as monitor_router
 from src.crawlers.article_crawler import crawl_with_full_content
 from src.core.bypass import fetch_with_bypass
 
@@ -102,6 +103,7 @@ app = FastAPI(
 
 app.include_router(status_router)
 app.include_router(extract_router)
+app.include_router(monitor_router)
 
 @app.get("/", response_class=HTMLResponse)
 def root():
@@ -2090,162 +2092,17 @@ async def labs_script_multi(request: Request):
 
 @app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
 async def monitor_articles(req: MonitorRequest, request: Request):
-    try:
-        if await request.is_disconnected():
-            return {"error": "Client disconnected"}
-        
-        # For SD mode, implement actual structured data extraction without OpenAI
-        if req.mode == "sd":
-            try:
-                from bs4 import BeautifulSoup
-                import json
-                import re
-                
-                # Use enhanced bypass instead of requests
-                html = await fetch_with_bypass(str(req.url))
-                if not html:
-                    return {
-                        "success": False,
-                        "error": "Failed to fetch page content",
-                        "url": str(req.url),
-                        "mode": req.mode
-                    }
-                
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                articles = []
-                
-                # Look for structured data (JSON-LD)
-                json_scripts = soup.find_all('script', type='application/ld+json')
-                for script in json_scripts:
-                    try:
-                        data = json.loads(script.string)
-                        if isinstance(data, list):
-                            for item in data:
-                                if item.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
-                                    articles.append({
-                                        "title": item.get('headline', item.get('name', 'No title')),
-                                        "url": item.get('url', ''),
-                                        "published_date": item.get('datePublished', ''),
-                                        "author": item.get('author', {}).get('name', '') if isinstance(item.get('author'), dict) else str(item.get('author', ''))
-                                    })
-                        elif isinstance(data, dict) and data.get('@type') in ['Article', 'NewsArticle', 'BlogPosting']:
-                            articles.append({
-                                "title": data.get('headline', data.get('name', 'No title')),
-                                "url": data.get('url', ''),
-                                "published_date": data.get('datePublished', ''),
-                                "author": data.get('author', {}).get('name', '') if isinstance(data.get('author'), dict) else str(data.get('author', ''))
-                            })
-                    except:
-                        continue
-                
-                # If no structured data found, look for common article patterns
-                if not articles:
-                    # Look for article links with common patterns
-                    links = soup.find_all('a', href=True)
-                    for link in links[:20]:  # Limit to first 20 links
-                        href = link.get('href', '')
-                        text = link.get_text(strip=True)
-                        if text and len(text) > 10 and len(text) < 200:
-                            # Check if it looks like an article link
-                            if any(pattern in href.lower() for pattern in ['article', 'post', 'news', 'story']):
-                                articles.append({
-                                    "title": text,
-                                    "url": href if href.startswith('http') else f"{req.url.rstrip('/')}/{href.lstrip('/')}",
-                                    "published_date": "",
-                                    "author": ""
-                                })
-                
-                return {
-                    "success": True,
-                    "url": str(req.url),
-                    "mode": req.mode,
-                    "article_count": len(articles),
-                    "articles": articles[:10],  # Limit to 10 articles
-                    "monitored_at": datetime.now().isoformat(),
-                    "extraction_method": "structured_data"
-                }
-                
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": f"SD extraction failed: {str(e)}",
-                    "url": str(req.url),
-                    "mode": req.mode
-                }
-        
-        # For LLM and AUTO modes, use real extraction now that OpenAI API is working
-        if req.mode in ["llm", "auto"]:
-            try:
-                # Import the article list extraction function
-                from src.crawlers.article_crawler import crawl_article_list
-                
-                # Extract article list using real functionality
-                crawl_result = crawl_article_list(str(req.url), count=100, mode=req.mode)
-                articles = crawl_result.get("articles", [])
-                token_usage = crawl_result.get("token_usage", {})
-                
-                response = {
-                    "success": True,
-                    "url": str(req.url),
-                    "mode": req.mode,
-                    "article_count": len(articles),
-                    "articles": articles[:10],  # Limit to 10 articles
-                    "monitored_at": datetime.now().isoformat(),
-                    "extraction_method": "real_extraction"
-                }
-                
-                # Include token usage if LLM was used
-                if token_usage:
-                    response["token_usage"] = token_usage
-                
-                return response
-            except Exception as e:
-                return {
-                    "success": False,
-                    "error": f"Extraction failed: {str(e)}",
-                    "url": str(req.url),
-                    "mode": req.mode
-                }
-        
-        # This should not be reached, but keeping as fallback
-        return {
-            "success": True,
-            "url": str(req.url),
-            "mode": req.mode,
-            "article_count": 3,
-            "articles": [
-                {
-                    "title": f"Test Article 1 ({req.mode} mode)",
-                    "url": "https://example.com/article1",
-                    "published_date": "2024-01-01",
-                    "author": "Test Author 1"
-                },
-                {
-                    "title": f"Test Article 2 ({req.mode} mode)", 
-                    "url": "https://example.com/article2",
-                    "published_date": "2024-01-02",
-                    "author": "Test Author 2"
-                },
-                {
-                    "title": f"Test Article 3 ({req.mode} mode)",
-                    "url": "https://example.com/article3", 
-                    "published_date": "2024-01-03",
-                    "author": "Test Author 3"
-                }
-            ],
-            "monitored_at": datetime.now().isoformat(),
-            "note": f"{req.mode.upper()} mode - Full implementation requires OpenAI API region fix" if req.mode != "sd" else "SD mode - Pure structured data extraction"
-        }
-    except asyncio.CancelledError:
-        return {"error": "Request cancelled by client"}
-    except Exception as e:
-        import traceback
-        return {
-            "error": str(e),
-            "traceback": traceback.format_exc()
-        }
+    # moved to routers.monitor
+    return {"success": False, "error": "Legacy /monitor moved to routers.monitor"}
 
-"""/extract-stream moved to routers.extract"""
+@app.post("/extract-stream", tags=["extraction"], summary="Extract Article Content", description="Extract article content using cascading fallback strategy")
+async def extract_article(req: ExtractRequest, request: Request):
+    """Extract article content using cascading fallback strategy"""
+    # This function is now handled by the extract router
+    pass
 
-"""/extract moved to routers.extract"""
+@app.post("/extract", tags=["extraction"], summary="Extract Article Content", description="Extract article content using cascading fallback strategy")
+async def extract_article(req: ExtractRequest, request: Request):
+    """Extract article content using cascading fallback strategy"""
+    # This function is now handled by the extract router
+    pass

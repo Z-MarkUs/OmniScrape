@@ -27,14 +27,18 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
                     article = Article(url=url)
                     data = article.model_dump()
                     data["_method_used"] = "Failed to Load Content"
-                    data["_execution_time"] = int((time.time() - start_time) * 1000)
+                    exec_ms = int((time.time() - start_time) * 1000)
+                    data["_execution_time"] = exec_ms
+                    data["_execution_time_unit"] = "ms"
                     data["_error"] = "Page failed to load or returned empty content"
                     return data
                 else:  # product
                     product = Product(url=url)
                     data = product.model_dump()
                     data["_method_used"] = "Failed to Load Content"
-                    data["_execution_time"] = int((time.time() - start_time) * 1000)
+                    exec_ms = int((time.time() - start_time) * 1000)
+                    data["_execution_time"] = exec_ms
+                    data["_execution_time_unit"] = "ms"
                     data["_error"] = "Page failed to load or returned empty content"
                     return data
             else:
@@ -47,14 +51,18 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
                 article = Article(url=url)
                 data = article.model_dump()
                 data["_method_used"] = "Failed to Load Content"
-                data["_execution_time"] = int((time.time() - start_time) * 1000)
+                exec_ms = int((time.time() - start_time) * 1000)
+                data["_execution_time"] = exec_ms
+                data["_execution_time_unit"] = "ms"
                 data["_error"] = f"Failed to fetch page: {str(e)}"
                 return data
             else:  # product
                 product = Product(url=url)
                 data = product.model_dump()
                 data["_method_used"] = "Failed to Load Content"
-                data["_execution_time"] = int((time.time() - start_time) * 1000)
+                exec_ms = int((time.time() - start_time) * 1000)
+                data["_execution_time"] = exec_ms
+                data["_execution_time_unit"] = "ms"
                 data["_error"] = f"Failed to fetch page: {str(e)}"
                 return data
         else:
@@ -83,7 +91,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
             
             data = article.model_dump()
             data["_method_used"] = "LLM Direct"
-            data["_execution_time"] = int((time.time() - start_time) * 1000)
+            exec_ms = int((time.time() - start_time) * 1000)
+            data["_execution_time"] = exec_ms
+            data["_execution_time_unit"] = "ms"
             
             model_name = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini").lower()
             if token_usage:
@@ -120,7 +130,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
             
             data = article.model_dump()
             data["_method_used"] = "Structured Data + Readability"
-            data["_execution_time"] = int((time.time() - start_time) * 1000)
+            exec_ms = int((time.time() - start_time) * 1000)
+            data["_execution_time"] = exec_ms
+            data["_execution_time_unit"] = "ms"
             return data
             
         else:  # llmMode == "auto"
@@ -149,7 +161,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
             if has_sufficient_data:
                 data = article.model_dump()
                 data["_method_used"] = "Smart Fallback (Structured Data)"
-                data["_execution_time"] = int((time.time() - start_time) * 1000)
+                exec_ms = int((time.time() - start_time) * 1000)
+                data["_execution_time"] = exec_ms
+                data["_execution_time_unit"] = "ms"
                 return data
             else:
                 # Fallback to LLM
@@ -168,7 +182,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
                 
                 data = article.model_dump()
                 data["_method_used"] = "Smart Fallback (LLM)"
-                data["_execution_time"] = int((time.time() - start_time) * 1000)
+                exec_ms = int((time.time() - start_time) * 1000)
+                data["_execution_time"] = exec_ms
+                data["_execution_time_unit"] = "ms"
                 
                 model_name = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini").lower()
                 if token_usage:
@@ -205,7 +221,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
 
             data = product.model_dump()
             data["_method_used"] = "AI-Powered (Direct LLM)"
-            data["_execution_time"] = int((time.time() - start_time) * 1000)
+            exec_ms = int((time.time() - start_time) * 1000)
+            data["_execution_time"] = exec_ms
+            data["_execution_time_unit"] = "ms"
             
             model_name = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini").lower()
             if token_usage:
@@ -245,7 +263,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
             
             data = product.model_dump()
             data["_method_used"] = "Structured Data + Price Detection"
-            data["_execution_time"] = int((time.time() - start_time) * 1000)
+            exec_ms = int((time.time() - start_time) * 1000)
+            data["_execution_time"] = exec_ms
+            data["_execution_time_unit"] = "ms"
             return data
             
         else:  # llmMode == "auto"
@@ -277,7 +297,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
             if has_sufficient_data:
                 data = product.model_dump()
                 data["_method_used"] = "Smart Fallback (Structured Data)"
-                data["_execution_time"] = int((time.time() - start_time) * 1000)
+                exec_ms = int((time.time() - start_time) * 1000)
+                data["_execution_time"] = exec_ms
+                data["_execution_time_unit"] = "ms"
                 return data
             else:
                 # Fallback to LLM
@@ -296,7 +318,9 @@ async def extract(url: str, kind: Literal["article","product"], llmMode: Literal
 
                 data = product.model_dump()
                 data["_method_used"] = "Smart Fallback (LLM)"
-                data["_execution_time"] = int((time.time() - start_time) * 1000)
+                exec_ms = int((time.time() - start_time) * 1000)
+                data["_execution_time"] = exec_ms
+                data["_execution_time_unit"] = "ms"
                 
                 model_name = os.getenv("SCRAPEGRAPH_MODEL", "gpt-4o-mini").lower()
                 if token_usage:

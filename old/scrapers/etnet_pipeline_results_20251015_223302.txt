@@ -1,0 +1,94 @@
+====================================================================================================
+ETNET_PIPELINE SEMANTIC EXTRACTION RESULTS
+====================================================================================================
+Articles Total: 8
+Articles Matched: 6
+Timestamp: 2025-10-15T22:33:02.363884
+====================================================================================================
+
+Article 1:
+Title: 
+URL: http://column.etnetchina.cn/list/article-latest
+Match: True
+Keywords: 股市
+Similarity: 0.348286
+Content Length: 843 characters
+Content:
+loading... 电影《国宝》：血染的风景如今又在舞台上重现2025-10-15 14:16:56 《国宝》（KOKUHO）诉说着多种“凝”的概念：舞台的凝视、角色的凝神、观众的凝聚、家人的凝望，以及血液的凝结。 曾经相爱却在不知不觉间走岔，成长是最无奈的分手原因2025-10-15 13:51:49 相中人曾经是我一位好友T先生的女友。如今点进女生的社交账号，只会找到一大堆美妆照、旅行照、时尚照，而T的踪迹已洗刷得一干二净。 银债需求大，宜加码加年期2025-10-15 13:12:22 最新一批银色债券（第10批，下称银债）上周五（10日）正式发行，令我有点意外的是，今次无论是认购人数，以至认购金额，都打破历来纪录。 金价升穿4200美元，续获大行唱好，金矿股趁回调吸纳？2025-10-15 12:00:16 虽然金价今年已飙升约57%，仍获大行唱好，其中美银上调明年预测至5000美元，金矿股或可趁回调吸纳？ 今年首宗儿童流感死亡，13岁女生染病7天不治2025-10-15 11:10:21 卫生署卫生防护中心公布，一名就读马鞍山东华三院黄鳯翎中学的13岁女生，因感染乙型流感，引发严重并发症，由确诊至病逝，仅仅7日。 恐美帝续恶搞经贸臭战环球股市跌2025-10-15 10:17:30 环球股市于2025年10月13日普见急挫，乃受美帝霸权仍会继续对中国打压围堵封杀恶思劣行，特朗普由关税战扩大至经贸科技军事国防等战，对世界各地肯定有日益恶性的冲击。 特朗普“和平方案”中有多个悬念待解2025-10-14 17:22:30 在成功实现加沙停火之后，哈马斯昨天（13日）将20名被扣押的人质交还给以色列，以色列方面释放了近2000名被关押的巴勒斯坦人。 王菀之 x 朱肇阶：以日常物件唤起充满回忆的旋律2025-10-14 14:44:24 王菀之与朱肇阶于“M+夜不同：夜临梦境”中，以全新编曲、灯光设计、动画及特别音效，演绎一系列与艺术主题相关的音乐作品。
+----------------------------------------------------------------------------------------------------
+
+Article 2:
+Title: 
+URL: http://column.etnetchina.cn/list/article-hot
+Match: True
+Keywords: 科技
+Similarity: 0.328259
+Content Length: 1069 characters
+Content:
+loading... 利物浦三连败，球迷心伤；排阵换人保守，史诺失威2025-10-10 15:09:07 西甲巴萨上星期意外惨败，为塞维利亚先进球的，是阿莱克西斯·桑切斯，实在让人意想不到；但他进球之后的庆祝动作，就让人明白他对足球的热情有多高。 60万人大型研究证实：1种蔬菜每日半碗可减26%患癌风险2025-10-09 10:21:44 台湾放射肿瘤科医生廖志颖分享，引述BMC期刊的研究发现，“一类食物”只要每日习惯进食半碗，就比完全不进食，罹癌风险可降20%至26%。 爱食肉不等于不健康：研究揭动物性蛋白质不增早逝风险2025-10-09 16:46:59 过去10多年，大量研究都指出植物蛋白被誉为更健康选择；植物性饮食除了与降低死亡风险之外，亦降低患上心血管疾病及癌症风险。 伤肝陷阱：研究揭无糖汽水每日1罐脂肪肝风险激增60%2025-10-11 09:13:32 最新研究发现，每日饮用一种标榜“健康”的饮品，竟会使罹患脂肪肝的风险大幅增加60%，同时提高患肝病死亡的机率。 又一场失望的发布会 Meta何时才敢打造自己的赛道？2025-10-09 14:45:18 继Apple后，Meta 9月中亦有新品发布会，无疑又一个令人失望的发布会。失望并非CEO扎克伯格示范Meta Ray-Ban Display出现多次失误，而是到2025年AI年Meta仍然被别人牵着鼻子走。 拆解修昔底德陷阱，中国如何跨越？2025-10-10 14:41:16 在港芝大的同窗叫我开坛讲一讲中美关系会如何发展下去，他们关心这问题是对的，没有其他问题比它更影响世界的前途，甚至人类的存亡。 AI版TikTok来了！Sora 2让每个人都能做电影主角！2025-10-11 10:01:18 你可曾想象，只要输入一段文字指示，即可“召唤”自己或朋友进入电影场景，或者跟动漫人物一起成为影片主角？这正是OpenAI最新力作Sora 2所带来的震撼体验。 经络系统如人体天然生物互联网，如何助大脑提升能量？2025-10-09 17:01:04 马斯克提出将人脑与云端连接的宏伟构想时，这不仅是科技的革命，更是对人类生命形态的重新定义。然而，从中医视角观之，这项看似前沿的科技，实则与传承千年的针灸智慧有着惊人的内在共鸣。 A醇到胜肽，敏感肌适用的最强抗老好物Top 42025-10-13 15:47:22 在科技日新月异的今天，不论是A醇类还是胜肽，早已有针对敏感肌的配方，今期就为大家介绍4款敏感肌适用的抗老好物，一起稳稳地变美。
+----------------------------------------------------------------------------------------------------
+
+Article 3:
+Title: 
+URL: http://column.etnetchina.cn/list/blog-hot
+Match: True
+Keywords: 出口
+Similarity: 0.446695
+Content Length: 325 characters
+Content:
+loading... 汇控拟溢价三成私有化恒生，一代传奇品牌或在港消失2025-10-13 12:08:45 考虑到本次私有化计划溢价较高，而且汇控聘请摩根士丹利等多间投资银行作顾问团队，相信恒生成功被私有化的机会大。 “保护费”狮子大开口，蓝绿皆感吃不消2025-10-14 09:52:37 从美国前总统拜登执政后期开始，美方不断要求中国台湾增加防务预算，特朗普上台后更变本加厉，要求和北大西洋公约组织（NATO）看齐。 扩对美贸盈加强东盟欧盟一带一路贸联2025-10-14 10:02:23 中国制造的商品于2025年9月份的进出口加大上升力度，特别是对东盟及欧盟以及“一带一路”沿线市场的双边贸易稳快增长，几乎完全抹去对美国市场大跌的影响。
+----------------------------------------------------------------------------------------------------
+
+Article 4:
+Title: 
+URL: http://column.etnetchina.cn/list/article-hot-comments
+Match: False
+Similarity: 0.306505
+Content Length: 787 characters
+Content:
+loading... 368731理财／管理 威少看世界 特朗普“和平方案”中有多个悬念待解2025-10-14 17:22:30 肥嘟嘟：内塔不下台，中东无和平 385201时尚艺术 梦呓之上 王菀之 x 朱肇阶：以日常物件唤起充满回忆的旋律2025-10-14 14:44:24 jiayibingding：还是对王菀之以前演的TVB角色有印象 387361时尚艺术 慧眼识车 当下最佳汽车动力，油、电还是插混？2025-10-14 13:56:10 肥嘟嘟：插混最鸡肋，两套系统都要保养 389371健康人生 照顾者手记 由医者父母心到医者同理心，在AI时代重寻仁医的温度2025-10-14 13:14:43 肥嘟嘟：只需要医患平等关系就可以 361211理财／管理 快乐退休 猴擒、肉酸、核突、“舌累”地2025-10-14 09:31:24 立顿奶茶：川普搞得世界乱套了 449321理财／管理 改朝换代Digital 看他如何对太太，我决定用1亿日圆收购他公司2025-10-13 13:05:45 立顿奶茶：比尔盖茨不是离婚了么 441481理财／管理 港是港非 网约车能否成功变量极多2025-10-13 12:52:30 网事如烟：香港这么僵化，也是没想到的 503731理财／管理 智城物语 AI版TikTok来了！Sora 2让每个人都能做电影主角！2025-10-11 10:01:18 麦芽糖001：如果太假的话，就有点搞笑了 539471理财／管理 雷鸣天下 拆解修昔底德陷阱，中国如何跨越？2025-10-10 14:41:16 网事如烟：国际关系的四大陷阱得了解下 583371健康人生 欣欣Super Food 爱食肉不等于不健康：研究揭动物性蛋白质不增早逝风险2025-10-09 16:46:59 麦芽糖001：顿顿只有肉食也挺可怕的
+----------------------------------------------------------------------------------------------------
+
+Article 5:
+Title: 
+URL: http://column.etnetchina.cn/list/blog-hot-comments
+Match: True
+Keywords: 新能源
+Similarity: 0.498584
+Content Length: 45 characters
+Content:
+经济通 提示信息 服务器内部错误，请稍后访问！ 20 秒后跳转至经济通首页 返回经济通首页
+----------------------------------------------------------------------------------------------------
+
+Article 6:
+Title: 
+URL: http://column.etnetchina.cn/list/article-latest-comments
+Match: True
+Keywords: 港股
+Similarity: 0.427100
+Content Length: 2003 characters
+Content:
+Title: 文章最新评论-文章管理中心-经济通中国站 URL Source: http://column.etnetchina.cn/list/article-latest-comments Markdown Content: 文章最新评论-文章管理中心-经济通中国站 =============== [![Image 5](http://img.etnetchina.cn/public/images/common/etnet-logo-big.jpg)](http://www.etnetchina.cn/)[首页](http://www.etnetchina.cn/)│[港股](http://stocks.etnetchina.cn/stocks)│[期货期权](http://futures.etnetchina.cn/futures)│[权证](http://warrants.etnetchina.cn/warrants)│[ETF](http://etf.etnetchina.cn/etf)│[A股](http://ashares.etnetchina.cn/ashares)│[外汇](http://forex.etnetchina.cn/)│[环球基金](http://fund.etnetchina.cn/)│[香港脉搏](http://column.etnetchina.cn/)│[香港好去处](https://www.etnet.com.hk/www/sc/attraction/) 串流版 * [用户登入](https://iq6.etnet.com.hk/webiq/?lang=sc&UIstyle=full) * [产品简介](https://www.etnet.com.hk/www/sc/product/pi_iq_info.php) * [申请服务](https://www.etnet.com.hk/www/sc/product/pi_iq_reg.php) * [新增功能](https://www.etnet.com.hk/www/sc/product/pi_iq_function.php) * [客务支援](https://www.etnet.com.hk/www/sc/product/pi_iq_faq.php) │[中国香港站](https://www.etnet.com.hk/www/tc/home/index.php)│官方微博：[![Image 6: 新浪微博](http://img.etnetchina.cn/public/images/common/head_sina.png)](http://weibo.com/etnetcn) 香港脉搏 www.etnetchina.cn loading... * [香港脉搏首页](http://column.etnetchina.cn/) * [每日专题](http://column.etnetchina.cn/top-EtnetcolA01) [专题](http://column.etnetchina.cn/top-EtnetcolA01-EtnetcolB54) * [财金博客](http://column.etnetchina.cn/class-EtnetcolA03) [陶冬天下](http://column.etnetchina.cn/column-list-EtnetcolB29)[李迅雷](http://column.etnetchina.cn/column-list-EtnetcolB191)[陆言堂](http://column.etnetchina.cn/column-list-EtnetcolB108)[师傅教路](http://column.etnetchina.cn/column-list-EtnetcolB117)[品中资](http://column.etnetchina.cn/column-list-EtnetcolB325)[股林淘金](http://column.etnetchina.cn/column-list-EtnetcolB326)[全球视野](http://column.etnetchina.cn/column-list-EtnetcolB327)[投资心得](http://column.etnetchina.cn/column-list-EtnetcolB328)[权证红盘](http://column.etnetchina.cn/column-list-EtnetcolB330)[思前想后](http://column.etnetchina.cn/column-list-EtnetcolB333)[牛...
+----------------------------------------------------------------------------------------------------
+
+Article 7:
+Title: 
+URL: http://column.etnetchina.cn/list/blog-latest-comments
+Match: True
+Keywords: 新能源
+Similarity: 0.498584
+Content Length: 45 characters
+Content:
+经济通 提示信息 服务器内部错误，请稍后访问！ 20 秒后跳转至经济通首页 返回经济通首页
+----------------------------------------------------------------------------------------------------
+
+Article 8:
+Title: 
+URL: http://column.etnetchina.cn/list/article-latest-p2.htm
+Match: False
+Similarity: 0.317429
+Content Length: 784 characters
+Content:
+loading... 福冈天妇罗过江龙进驻铜锣湾！重现天神街头热闹氛围2025-10-14 14:39:43 “长冈博多天妇罗”最近进驻香港利园三号，便以开放式吧台与原木设计，将屋台的随性升级为精致而轻松的现代日式居酒屋体验。 一年一度的伦敦独立设计师职人巡礼！在古老教堂中寻宝2025-10-14 14:21:23 一年一度的MADE LONDON云集不少欧洲设计师与工艺品牌，当中很大部分并不活跃于网店，这一点就更吸引大家前来实体购物。 电影《她来找我》：安妮·海瑟薇也难救的失焦叙事实验2025-10-14 14:00:49 《她来找我》（She Came to Me）的阵容毫不敷衍，在当年柏林影展开幕，堪称体面。殊不知口碑失利，隔了两年，这才上线流媒体。 中医针灸：“针”启生命之门，见证垂危复苏与哲学启示2025-10-14 13:47:11 我的诊箱里，最宝贵的并非银针，而是那些曾被现代医学判定为“危殆”、甚至已准备拔管的病人，重新睁开双眼，最终步履蹒跚却坚定地走出医院大门的故事。 由医者父母心到医者同理心，在AI时代重寻仁医的温度2025-10-14 13:14:43 作为照顾者，我偶尔也遇过这类“死亡医生”，他们的含糊其词及轻视病人，总叫人揪心。愈发觉得，医生是否具备同理心与人性化关怀，正是AI暂时仍难以取代的能力。 寻秋启示：凉快秋天为何不见？麻香厥菜凉拌四蔬2025-10-14 12:07:58 炎热的夏天走了吗？凉快的秋天，什么时候才会出现？十一月？还是说，冬天会被秋天吞并，不到三个月的光景就会结束？ 澳门当地人饭堂：牛杂全餐、猪扒包、红豆饼、辣豆花2025-10-14 11:19:17 又是街市开餐的时间，这次带大家来下环街市熟食中心，这里可以说是当地人的饭堂，有冷气空调之余，全层有近200个座位，但一到中午时段仍然座无虚席。
+----------------------------------------------------------------------------------------------------
+

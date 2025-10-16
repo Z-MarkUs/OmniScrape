@@ -26,13 +26,14 @@ async def do_extract(req: ExtractRequest, request: Request):
         if req.llmMode == "none":
             try:
                 result = await extract(str(req.url), req.kind, "none")
+                # ensure execution unit exists
+                result.setdefault("_execution_time_unit", "ms")
                 return {
                     "success": True,
                     "url": str(req.url),
                     "kind": req.kind,
                     "mode": req.llmMode,
-                    "data": result,
-                    "extracted_at": datetime.now().isoformat(),
+                    "data": {**result, "extracted_at": datetime.now().isoformat()},
                 }
             except Exception as e:
                 return {
@@ -46,13 +47,14 @@ async def do_extract(req: ExtractRequest, request: Request):
         if req.llmMode in ["llm", "auto"]:
             try:
                 result = await extract(str(req.url), req.kind, req.llmMode)
+                # ensure execution unit exists
+                result.setdefault("_execution_time_unit", "ms")
                 return {
                     "success": True,
                     "url": str(req.url),
                     "kind": req.kind,
                     "mode": req.llmMode,
-                    "data": result,
-                    "extracted_at": datetime.now().isoformat(),
+                    "data": {**result, "extracted_at": datetime.now().isoformat()},
                 }
             except Exception as e:
                 return {
@@ -97,7 +99,9 @@ async def do_extract_stream(req: ExtractRequest, request: Request):
                     yield f"data: {{\"type\": \"progress\", \"step\": \"Processing structured data\"}}\n\n"
                     await asyncio.sleep(0.1)
                     from json import dumps
-                    yield f"data: {dumps({'type':'complete','data':result}, default=str)}\n\n"
+                    result.setdefault("_execution_time_unit", "ms")
+                    payload = {"type":"complete","data":{**result, "extracted_at": datetime.now().isoformat()}}
+                    yield f"data: {dumps(payload, default=str)}\n\n"
                 except Exception as e:
                     from json import dumps
                     yield f"data: {dumps({'type':'error','message':f'SD extraction failed: {str(e)}'})}\n\n"
@@ -109,7 +113,9 @@ async def do_extract_stream(req: ExtractRequest, request: Request):
                     yield f"data: {{\"type\": \"progress\", \"step\": \"Processing AI response\"}}\n\n"
                     await asyncio.sleep(0.1)
                     from json import dumps
-                    yield f"data: {dumps({'type':'complete','data':result}, default=str)}\n\n"
+                    result.setdefault("_execution_time_unit", "ms")
+                    payload = {"type":"complete","data":{**result, "extracted_at": datetime.now().isoformat()}}
+                    yield f"data: {dumps(payload, default=str)}\n\n"
                 except Exception as e:
                     from json import dumps
                     yield f"data: {dumps({'type':'error','message':f'Extraction failed: {str(e)}'})}\n\n"
