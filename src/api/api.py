@@ -495,6 +495,12 @@ def root():
                     <input type=\"text\" id=\"monitor-url\" placeholder=\"Enter article list URL\" value=\"https://column.etnetchina.cn/list/article-latest\">
                   </div>
                   
+                  <div class=\"form-group\">
+                    <label for=\"monitor-max-articles\">Max Articles to Extract</label>
+                    <input type=\"number\" id=\"monitor-max-articles\" placeholder=\"Number of articles\" value=\"10\" min=\"1\" max=\"100\">
+                    <small>Maximum number of articles to extract (1-100, default: 10)</small>
+                  </div>
+                  
                   <div class=\"mode-selection\">
                     <div class=\"mode-option sd\" onclick=\"selectMonitorMode('sd')\">
                       <input type=\"radio\" name=\"monitorMode\" value=\"sd\" id=\"monitor-mode-sd\">
@@ -798,7 +804,8 @@ https://httpbin.org/json</textarea>
                   headers: { 'Content-Type': 'application/json' }, 
                   body: JSON.stringify({
                     url: document.getElementById('monitor-url').value,
-                    mode: selectedMode
+                    mode: selectedMode,
+                    max_articles: parseInt(document.getElementById('monitor-max-articles').value) || 10
                   })
                 });
                 
@@ -1220,6 +1227,13 @@ def labs():
             .form-group textarea { 
               resize: vertical; 
               min-height: 80px;
+            }
+            .form-group small {
+              display: block;
+              margin-top: 4px;
+              font-size: 12px;
+              color: #6b7280;
+              font-style: italic;
             }
             
             /* Buttons */
@@ -2090,19 +2104,4 @@ async def labs_script_multi(request: Request):
 
 """/status/openai moved to routers.status"""
 
-@app.post("/monitor", tags=["extraction"], summary="Monitor Article List", description="Extract article list metadata without fetching full content")
-async def monitor_articles(req: MonitorRequest, request: Request):
-    # moved to routers.monitor
-    return {"success": False, "error": "Legacy /monitor moved to routers.monitor"}
-
-@app.post("/extract-stream", tags=["extraction"], summary="Extract Article Content", description="Extract article content using cascading fallback strategy")
-async def extract_article(req: ExtractRequest, request: Request):
-    """Extract article content using cascading fallback strategy"""
-    # This function is now handled by the extract router
-    pass
-
-@app.post("/extract", tags=["extraction"], summary="Extract Article Content", description="Extract article content using cascading fallback strategy")
-async def extract_article(req: ExtractRequest, request: Request):
-    """Extract article content using cascading fallback strategy"""
-    # This function is now handled by the extract router
-    pass
+# Legacy endpoints moved to routers - these are now handled by the respective routers

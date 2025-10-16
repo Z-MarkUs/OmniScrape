@@ -13,7 +13,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 import requests
 from bs4 import BeautifulSoup
 
-RENDER_MS = int(os.getenv("MAX_RENDER_MS", "20000"))
+RENDER_MS = int(os.getenv("MAX_RENDER_MS", "60000"))  # Increased to 60 seconds for RPA/human simulation
 
 # Proxy rotation support
 _DOMAIN_PROXY_CACHE: dict[str, str] = {}
@@ -169,7 +169,7 @@ async def _browser():
 async def _simulate_human_behavior(page):
     """Enhanced human behavior simulation"""
     try:
-        await page.wait_for_load_state("networkidle", timeout=15000)
+        await page.wait_for_load_state("networkidle", timeout=45000)  # Increased to 45 seconds for RPA
         await page.wait_for_timeout(random.randint(2500, 5500))
         
         # More realistic mouse movements
@@ -658,7 +658,7 @@ async def _try_requests_fallback(url: str) -> str:
             "Upgrade-Insecure-Requests": "1"
         }
         
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=30)  # Increased to 30 seconds
         response.raise_for_status()
         return response.text
     except Exception:

@@ -11,8 +11,13 @@ Usage:
     python main.py --port 8080       # Start server on port 8080
 """
 
+import os
+from dotenv import load_dotenv
 import uvicorn
 from src.api.api import app
+
+# Load environment variables from .env file
+load_dotenv()
 
 if __name__ == "__main__":
     uvicorn.run(

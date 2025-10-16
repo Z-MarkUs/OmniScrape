@@ -17,13 +17,13 @@ from src.extractors.extract_scrapegraph import scrapegraph_article
 from src.core.llm_wrapper import get_token_usage, clear_token_usage
 
 
-def extract_structured_articles(url: str) -> List[Dict[str, Any]]:
+async def extract_structured_articles(url: str) -> List[Dict[str, Any]]:
     """
     Step 1: Extract articles using structured data (JSON-LD, Microdata, OpenGraph)
     """
     try:
         # Fetch the page
-        html = fetch_rendered(url)
+        html = await fetch_rendered(url)
         soup = BeautifulSoup(html, 'html.parser')
         
         articles = []
@@ -145,12 +145,12 @@ def _is_valid_article(title: str, url: str) -> bool:
     return True
 
 
-def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
+async def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
     """
     Step 2: Extract articles using universal HTML patterns with tiered fallback
     """
     try:
-        html = fetch_rendered(url)
+        html = await fetch_rendered(url)
         soup = BeautifulSoup(html, 'html.parser')
         
         articles = []
@@ -216,7 +216,7 @@ def extract_pattern_articles(url: str) -> List[Dict[str, Any]]:
                     
                     # Make URL absolute
                     if url and not url.startswith('http'):
-                        url = urljoin(url, url)
+                        url = urljoin(base_url, url)
                     
                     # Universal filtering rules
                     if not _is_valid_article(title, url):
@@ -313,7 +313,10 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         graph = SmartScraperGraph(prompt=prompt, source=url, config=config)
         
         print(f"⚡ Running graph...")
-        result = graph.run()
+        # Use thread executor to avoid asyncio event loop conflict
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            result = executor.submit(graph.run).result()
         
         print(f"📊 Raw result type: {type(result)}")
         print(f"📊 Raw result: {str(result)[:200]}...")
@@ -345,6 +348,14 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         elif isinstance(result, list):
             articles = result
             print(f"✅ Result is already a list: {len(articles)} articles")
+        elif isinstance(result, dict):
+            # Handle ScrapeGraphAI dict result with 'content' key
+            if 'content' in result and isinstance(result['content'], list):
+                articles = result['content']
+                print(f"✅ Extracted articles from dict content: {len(articles)} articles")
+            else:
+                print(f"❌ Dict result doesn't contain 'content' list: {result}")
+                articles = []
         else:
             print(f"❌ Unexpected result type: {type(result)}")
             articles = []
@@ -371,18 +382,18 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         }
 
 
-def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[str, Any]:
+async def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[str, Any]:
     """
     Universal article list crawler with mode selection
     """
-    print(f"🕷️ Crawling article list: {url} (mode: {mode})")
+    print(f"🕷️ Crawling article list: {url} (mode: {mode}, count: {count})")
     
     if mode == "sd":
         # SD Mode: Only structured data + pattern matching
         print("📊 SD Mode: Using structured data and pattern matching only")
         
         # Step 1: Try Structured Data
-        articles = extract_structured_articles(url)
+        articles = await extract_structured_articles(url)
         if len(articles) >= count:
             print(f"✅ Found {len(articles)} articles via structured data")
             return {
@@ -391,7 +402,7 @@ def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[st
             }
         
         # Step 2: Try Pattern-based extraction
-        articles = extract_pattern_articles(url)
+        articles = await extract_pattern_articles(url)
         print(f"✅ Found {len(articles)} articles via pattern matching")
         return {
             "articles": articles[:count],
@@ -416,7 +427,7 @@ def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[st
         
         # Step 1: Try Structured Data (fastest, most reliable)
         print("📊 Step 1: Trying structured data extraction...")
-        articles = extract_structured_articles(url)
+        articles = await extract_structured_articles(url)
         if len(articles) >= count:
             print(f"✅ Found {len(articles)} articles via structured data")
             return {
@@ -426,13 +437,17 @@ def crawl_article_list(url: str, count: int = 10, mode: str = "auto") -> Dict[st
         
         # Step 2: Try Pattern-based extraction (fast, common patterns)
         print("🔍 Step 2: Trying pattern-based extraction...")
-        articles = extract_pattern_articles(url)
-        if len(articles) >= count:
-            print(f"✅ Found {len(articles)} articles via pattern matching")
+        articles = await extract_pattern_articles(url)
+        
+        # Force the condition to work correctly - if we have any articles, use them
+        if len(articles) > 0:
+            print(f"✅ Found {len(articles)} articles via pattern matching, stopping here (need {count})")
             return {
                 "articles": articles[:count],
                 "token_usage": {}
             }
+        else:
+            print(f"⚠️ Pattern matching found 0 articles, continuing to LLM fallback")
         
         # Step 3: AI fallback (universal, handles any structure)
         print("🤖 Step 3: Using AI-powered extraction...")
