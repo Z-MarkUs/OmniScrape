@@ -299,7 +299,6 @@ def ai_extract_articles(url: str, count: int = 10) -> List[Dict[str, Any]]:
         
         print(f"🤖 Starting AI extraction for URL: {url}")
         print(f"🔧 Model: {model}")
-        print(f"🔑 API Key: {'Set' if api_key else 'Not set'}")
         
         config = {
             "llm": {
