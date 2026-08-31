@@ -273,6 +273,42 @@ async def test_api_key_authentication_supports_header_and_bearer() -> None:
     assert header.status_code == bearer.status_code == 200
 
 
+def test_openapi_advertises_both_configured_authentication_transports() -> None:
+    app = create_app(Settings(api_key="correct-key"), service=StubService())
+
+    @app.get("/extension")
+    async def extension() -> dict[str, bool]:
+        return {"ok": True}
+
+    schema = app.openapi()
+
+    schemes = schema["components"]["securitySchemes"]
+    assert schemes["ApiKeyHeader"] == {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "OmniScrape API key supplied directly as a header.",
+    }
+    assert schemes["BearerAuth"] == {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The same OmniScrape API key supplied as a Bearer token.",
+    }
+    accepted = [{"ApiKeyHeader": []}, {"BearerAuth": []}]
+    assert schema["paths"]["/v1/extract"]["post"]["security"] == accepted
+    assert schema["paths"]["/v1/extract/stream"]["post"]["security"] == accepted
+    assert "security" not in schema["paths"]["/health"]["get"]
+    assert "/extension" in schema["paths"]
+
+
+def test_openapi_omits_authentication_when_service_is_open() -> None:
+    schema = create_app(Settings(api_key=None), service=StubService()).openapi()
+
+    assert "securitySchemes" not in schema["components"]
+    assert "security" not in schema["paths"]["/v1/extract"]["post"]
+    assert "security" not in schema["paths"]["/v1/extract/stream"]["post"]
+
+
 @pytest.mark.asyncio
 async def test_non_ascii_header_bytes_fail_authentication_without_server_error() -> None:
     service = StubService()
@@ -579,6 +615,7 @@ async def test_body_reader_capacity_bounds_slow_unknown_post_paths() -> None:
 
     assert second_receive_calls == 0
     assert second_sent[0]["status"] == 503
+    assert (b"retry-after", b"1") in second_sent[0]["headers"]
     assert b'"code":"service_busy"' in second_sent[1]["body"]
     assert first_sent[0]["status"] == 204
 
@@ -693,6 +730,7 @@ async def test_queue_timeout_returns_busy_error() -> None:
         app.state.extraction_slots.release()
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "service_busy"
+    assert response.headers["Retry-After"] == "1"
 
 
 @pytest.mark.asyncio

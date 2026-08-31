@@ -24,6 +24,22 @@ outbound-request security, async resource limits, typed boundaries, provider iso
 API authentication, streaming progress, reproducible tests and benchmarks, container
 hardening, and portable project skills for coding agents.
 
+## Engineering proof
+
+| Signal | Inspectable evidence |
+| --- | --- |
+| Supported runtime | The [CI workflow](https://github.com/Z-MarkUs/OmniScrape/actions/workflows/ci.yml) runs offline tests on every Python version from 3.10 through 3.13 plus a separate loopback-only real-Chromium regression gate. |
+| Quality and security gates | [Verification](#verification) enforces at least 90% combined statement-and-branch coverage alongside Ruff, strict mypy, Bandit, dependency auditing, and [CodeQL](https://github.com/Z-MarkUs/OmniScrape/actions/workflows/codeql.yml). |
+| Distribution checks | CI validates the wheel and source archive, installs each exact artifact in a fresh environment, and smoke-tests the non-root container with a read-only root filesystem. |
+| Release integrity | The [latest release](https://github.com/Z-MarkUs/OmniScrape/releases/latest) is immutable and ships checksums plus signed SLSA build provenance; the [verification commands](#release-integrity) are public and reproducible. |
+| Agent contract | MCP publishes enumerated inputs, a discriminated success/error schema, and safe tool hints; the [Codex and Claude Code project skills](#project-skills-for-codex-and-claude-code) are synchronized byte-for-byte and checked by CI. |
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Z-MarkUs/OmniScrape/main/docs/assets/omniscrape-result.png" alt="OmniScrape deterministic extraction form and typed JSON result for example.com" width="100%">
+  <br>
+  <sub>Credential-free deterministic extraction of IANA's example.com in the bundled console; timings vary by network.</sub>
+</p>
+
 > **Use responsibly.** Extract only content you are authorized to access. Respect site
 > terms, robots directives, access controls, privacy, copyright, rate limits, and
 > applicable law. OmniScrape does not include CAPTCHA, paywall, authentication, or
@@ -103,7 +119,7 @@ CLI command, and repository name remain `omniscrape` / OmniScrape.
 Install the latest immutable release directly from GitHub:
 
 ```bash
-python -m pip install https://github.com/Z-MarkUs/OmniScrape/releases/download/v0.2.1/omniscrape_zmarkus-0.2.1-py3-none-any.whl
+python -m pip install https://github.com/Z-MarkUs/OmniScrape/releases/download/v0.2.2/omniscrape_zmarkus-0.2.2-py3-none-any.whl
 ```
 
 For an editable source checkout instead:
@@ -183,6 +199,7 @@ caller-owned unless `owns_client=True` explicitly transfers ownership.
 
 ```bash
 python -m omniscrape --help
+python -m omniscrape --version
 python -m omniscrape extract "$TARGET_URL" --kind product --mode auto --render --compact
 python -m omniscrape serve --host 127.0.0.1 --port 8000
 python -m omniscrape mcp
@@ -197,8 +214,6 @@ python -m omniscrape serve --host 127.0.0.1 --port 8000
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000) for the responsive extraction
 console, or call the versioned endpoint:
 
-![OmniScrape web console](https://raw.githubusercontent.com/Z-MarkUs/OmniScrape/main/docs/assets/omniscrape-console.png)
-
 ```bash
 curl --request POST http://127.0.0.1:8000/v1/extract \
   --header "Content-Type: application/json" \
@@ -206,7 +221,9 @@ curl --request POST http://127.0.0.1:8000/v1/extract \
 ```
 
 Set `OMNISCRAPE_API_KEY` to require either `X-API-Key` or a Bearer token on
-extraction routes. The request `mode` field is optional and defaults to
+extraction routes. When authentication is configured, OpenAPI advertises both
+alternatives so the generated `/docs` console can authorize requests accurately.
+The request `mode` field is optional and defaults to
 `deterministic`. The request `render` field returns `403 rendering_disabled` unless
 `OMNISCRAPE_ENABLE_API_RENDERING=true`; installation of the browser extra alone does not
 enable API rendering. Health remains available at `GET /health` and distinguishes the
@@ -266,9 +283,11 @@ python -m omniscrape mcp
 ```
 
 The server advertises one focused tool, `extract`, with `url`, `kind`, `mode`,
-and `render` arguments. Its schema defaults `mode` to `deterministic`; agent
-integrations can explicitly select `auto` or `llm` only when provider-backed
-processing was authorized.
+and `render` arguments. Its schema enumerates supported kinds and modes, returns
+the shared discriminated success/error contract without an extra wrapper, and marks
+the operation read-only, non-destructive, and idempotent. The default mode remains
+`deterministic`; agent integrations can explicitly select `auto` or `llm` only when
+provider-backed processing was authorized.
 
 ## Result contract
 
@@ -351,9 +370,10 @@ runs controlled, loopback-only real-Chromium regressions when the browser test e
 available. Ruff, strict mypy, Bandit, dependency audits, skill validation, and
 wheel/source-archive validation are separate blocking gates.
 
-CI repeats linting, strict type checking, branch-coverage enforcement, package validation,
-fresh-environment installs of the exact wheel and source archive, dependency auditing,
-static security analysis, and a production container build across supported Python versions.
+CI repeats the offline suite and branch-coverage gate on every supported Python version
+from 3.10 through 3.13. Separate Python 3.12 jobs enforce linting, strict type checking,
+package validation, fresh-environment installs of the exact wheel and source archive,
+dependency auditing, static security analysis, and the production container build.
 
 ### Release integrity
 
@@ -367,11 +387,11 @@ asset and adds a separate release attestation.
 After downloading an artifact, verify its provenance with GitHub CLI:
 
 ```bash
-gh attestation verify omniscrape_zmarkus-0.2.1-py3-none-any.whl \
+gh attestation verify omniscrape_zmarkus-0.2.2-py3-none-any.whl \
   --repo Z-MarkUs/OmniScrape \
-  --source-ref refs/tags/v0.2.1 \
+  --source-ref refs/tags/v0.2.2 \
   --signer-workflow Z-MarkUs/OmniScrape/.github/workflows/ci.yml
-gh release verify v0.2.1 --repo Z-MarkUs/OmniScrape
+gh release verify v0.2.2 --repo Z-MarkUs/OmniScrape
 ```
 
 The complete maintainer process is documented in
