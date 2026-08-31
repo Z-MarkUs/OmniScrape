@@ -27,10 +27,21 @@ jobs:
       - run: python -m pip install --upgrade pip
       - name: Install quality tools and the minimum supported MCP SDK
         run: python -m pip install -e ".[dev,browser,llm,mcp]" "mcp==1.28.1"
-      - run: python -m ruff check src tests benchmarks scripts
-      - run: python -m ruff format --check src tests benchmarks scripts
-      - run: python -m mypy src/omniscrape
+      - run: python -m ruff check src tests benchmarks evaluation scripts
+      - run: python -m ruff format --check src tests benchmarks evaluation scripts
+      - run: python -m mypy src/omniscrape evaluation
       - run: python scripts/sync_agent_skills.py --check
+      - name: Offline extraction-quality regression gate
+        env:
+          SOURCE_DATE_EPOCH: "1788220800"
+        run: >-
+          python -m evaluation.run --check
+          --output build/evaluation-scorecard.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: evaluation-scorecard-${{ github.run_attempt }}
+          path: build/evaluation-scorecard.json
+          if-no-files-found: error
       - name: Exercise the real MCP SDK contract
         run: python -m pytest tests/test_mcp_sdk.py --no-cov
 
@@ -128,6 +139,9 @@ jobs:
                       "RELEASING.md",
                       ".env.example",
                       "benchmarks/run.py",
+                      "evaluation/run.py",
+                      "evaluation/gold.json",
+                      "evaluation/results/latest.json",
                       "docs/assets/omniscrape-hero.svg",
                       "scripts/sync_agent_skills.py",
                       "tests/conftest.py",

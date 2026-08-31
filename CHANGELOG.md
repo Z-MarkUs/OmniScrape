@@ -5,6 +5,40 @@ All notable changes to OmniScrape are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-01
+
+### Added
+
+- Added a deterministic, provider-free extraction-quality evaluation over 14 original
+  synthetic article and product cases, with explicit gold fields, fixture digests,
+  per-field failures, null handling, and a checked-in machine-readable scorecard.
+- Added `OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS`, an optional exact target-host policy that
+  is enforced before DNS resolution, after HTTP redirects, and throughout browser
+  navigation. Entries may be normalized hostnames or exact `host:port` authorities.
+- Added a fail-closed release-note generator that publishes the exact tagged version
+  section from `CHANGELOG.md` alongside checksum, provenance, and release-verification
+  commands.
+
+### Changed
+
+- Browser rendering through the HTTP API now requires both the explicit rendering
+  switch and a non-empty outbound target allowlist; CLI, Python, and MCP callers retain
+  their existing opt-in rendering behavior unless they configure the optional policy.
+- GitHub Actions now enforces full-commit SHA pinning at repository level in addition
+  to the existing pinned workflow definitions.
+- Strengthened checked-in benchmark validation to recompute fixture and extractor-output
+  digests instead of checking the package version alone.
+
+### Fixed
+
+- Removed an exact leading heading element—including headings with nested inline
+  markup—from Readability article text, preventing the page headline from being
+  duplicated inside the normalized `Article.text` body without dropping matching body
+  paragraphs.
+- Hardened the outbound allowlist boundary by rejecting empty ports, using consistent
+  non-transitional IDNA hostname normalization, requiring policy-aware injected
+  renderers, and monitoring late Chromium main-frame navigation through context shutdown.
+
 ## [0.2.2] - 2026-09-01
 
 ### Added
@@ -98,7 +132,8 @@ All notable changes to OmniScrape are documented here. This project follows
   and `/labs*` routes. Migrate health checks to `/health` and extraction clients
   to `/v1/extract` or `/v1/extract/stream`.
 
-[Unreleased]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Z-MarkUs/OmniScrape/releases/tag/v0.2.0

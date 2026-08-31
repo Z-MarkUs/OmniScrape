@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "corpus": {
+    "name": "omniscrape-synthetic-extraction-v1",
+    "description": "Original synthetic pages covering deterministic article and product extraction.",
+    "license": "MIT",
+    "source_policy": "Authored for this repository; no third-party page text or markup is included."
+  },
+  "cases": [
+    {
+      "id": "article_jsonld_full",
+      "fixture": "article-jsonld-full.html",
+      "url": "https://journal.example.test/energy/tidal-battery-trial",
+      "kind": "article",
+      "tags": ["json-ld", "full", "relative-image"],
+      "expected": {
+        "title": "Island Grid Begins Tidal Battery Trial",
+        "author": "Mira Sol",
+        "date_published": "2026-02-14T07:45:00Z",
+        "text": "Engineers connected a tidal generator to a neighborhood battery before sunrise. The twelve-week trial will publish open performance notes for local schools.",
+        "description": "A coastal cooperative is testing stored tidal power.",
+        "images": ["https://journal.example.test/media/tidal-trial.jpg"]
+      }
+    },
+    {
+      "id": "article_microdata",
+      "fixture": "article-microdata.html",
+      "url": "https://journal.example.test/community/seed-library",
+      "kind": "article",
+      "tags": ["microdata", "full"],
+      "expected": {
+        "title": "Rooftop Seed Library Opens",
+        "author": "Noah Imani",
+        "date_published": "2026-03-02",
+        "text": "Volunteers catalogued sixty varieties in weatherproof drawers. Borrowers return seeds from their strongest plants after harvest.",
+        "description": "Neighbors can borrow seeds adapted to small balconies.",
+        "images": ["https://journal.example.test/images/seed-drawers.webp"]
+      }
+    },
+    {
+      "id": "article_opengraph",
+      "fixture": "article-opengraph.html",
+      "url": "https://journal.example.test/transit/night-ferry",
+      "kind": "article",
+      "tags": ["opengraph", "metadata", "absolute-image"],
+      "expected": {
+        "title": "Night Ferry Adds Quiet Cabin",
+        "author": "Elena Park",
+        "date_published": "2026-04-19T21:10:00+09:00",
+        "text": "The redesigned cabin uses warm floor lighting and fabric wall panels. Announcements are delivered through seat displays except during emergencies.",
+        "description": "A low-light cabin gives overnight passengers a calmer crossing.",
+        "images": ["https://assets.example.test/ferry/quiet-cabin.png"]
+      }
+    },
+    {
+      "id": "article_malformed_jsonld",
+      "fixture": "article-malformed-jsonld.html",
+      "url": "https://journal.example.test/climate/canal-sensors",
+      "kind": "article",
+      "tags": ["malformed-json-ld", "metadata-fallback"],
+      "expected": {
+        "title": "Canal Sensors Map Summer Heat",
+        "author": "Priya Mensah",
+        "date_published": "2026-06-08",
+        "text": "Students anchored compact sensors beside bridges and public gardens. The readings will help planners choose locations for shade and fountains.",
+        "description": "Floating sensors record block-level water temperatures.",
+        "images": ["https://journal.example.test/sensors/canal-node.jpg"]
+      }
+    },
+    {
+      "id": "article_conflicting_markup",
+      "fixture": "article-conflicting-markup.html",
+      "url": "https://journal.example.test/circular/repair-map",
+      "kind": "article",
+      "tags": ["json-ld", "conflicting-metadata", "multiple-authors"],
+      "expected": {
+        "title": "Repair Cafe Publishes Tool Map",
+        "author": "Samira Ko, Luis Okafor",
+        "date_published": "2026-07-11",
+        "text": "The map lists shared drills, sewing machines, and diagnostic meters by neighborhood. Maintainers can post availability without exposing a home address.",
+        "description": "A community directory helps residents find rarely used tools.",
+        "images": ["https://journal.example.test/tool-map/cover.svg"]
+      }
+    },
+    {
+      "id": "article_missing_optional",
+      "fixture": "article-missing-optional.html",
+      "url": "https://journal.example.test/briefs/library-courtyard",
+      "kind": "article",
+      "tags": ["heuristic", "missing-optional-fields"],
+      "expected": {
+        "title": "Library Courtyard Reopens",
+        "author": null,
+        "date_published": null,
+        "text": "New benches surround the restored rain garden beside the reading room. The courtyard remains open until sunset and requires no reservation.",
+        "description": null,
+        "images": []
+      }
+    },
+    {
+      "id": "article_unicode_multilingual",
+      "fixture": "article-unicode-multilingual.html",
+      "url": "https://journal.example.test/hk/rooftop-bees",
+      "kind": "article",
+      "tags": ["json-ld-graph", "multilingual", "unicode", "emoji"],
+      "expected": {
+        "title": "社區天台花園迎來第一批蜜蜂 🐝",
+        "author": "陳美玲",
+        "date_published": "2026-08-23T10:00:00+08:00",
+        "text": "義工在清晨安置了三個本地蜂箱。 訪客可用粵語、English 或日本語閱讀安全指引。",
+        "description": "多語言導賞介紹城市授粉計劃。",
+        "images": ["https://journal.example.test/%E7%9B%B8%E7%89%87/%E8%9C%9C%E8%9C%82-%E5%A4%A9%E5%8F%B0.jpg"]
+      }
+    },
+    {
+      "id": "product_jsonld_full",
+      "fixture": "product-jsonld-full.html",
+      "url": "https://shop.example.test/tools/pocket-weather-dial",
+      "kind": "product",
+      "tags": ["json-ld", "full", "image-list"],
+      "expected": {
+        "name": "Pocket Weather Dial",
+        "price": "38.50",
+        "currency": "USD",
+        "sku": "PWD-41-SAGE",
+        "description": "A pocket-sized mechanical dial for comparing air pressure trends.",
+        "images": [
+          "https://shop.example.test/catalog/weather-dial-front.png",
+          "https://shop.example.test/catalog/weather-dial-back.png"
+        ]
+      }
+    },
+    {
+      "id": "product_microdata",
+      "fixture": "product-microdata.html",
+      "url": "https://shop.example.test/home/foldaway-plant-stand",
+      "kind": "product",
+      "tags": ["microdata", "full"],
+      "expected": {
+        "name": "Foldaway Plant Stand",
+        "price": "72.00",
+        "currency": "EUR",
+        "sku": "FPS-OAK-72",
+        "description": "An oiled-oak stand that folds flat between seasons.",
+        "images": ["https://shop.example.test/products/foldaway-stand.webp"]
+      }
+    },
+    {
+      "id": "product_opengraph",
+      "fixture": "product-opengraph.html",
+      "url": "https://shop.example.test/kitchen/modular-tea-tray",
+      "kind": "product",
+      "tags": ["opengraph", "product-metadata"],
+      "expected": {
+        "name": "Modular Tea Tray",
+        "price": "129.00",
+        "currency": "HKD",
+        "sku": "MTT-129-BLK",
+        "description": "Interlocking trays keep cups steady on narrow tables.",
+        "images": ["https://shop.example.test/shop/modular-tea-tray.jpg"]
+      }
+    },
+    {
+      "id": "product_malformed_jsonld",
+      "fixture": "product-malformed-jsonld.html",
+      "url": "https://shop.example.test/lighting/solar-thread-lantern",
+      "kind": "product",
+      "tags": ["malformed-json-ld", "metadata-fallback"],
+      "expected": {
+        "name": "Solar Thread Lantern",
+        "price": "24.95",
+        "currency": "GBP",
+        "sku": "STL-2495-YEL",
+        "description": "A soft lantern woven around a replaceable solar core.",
+        "images": ["https://img.example.test/lantern/solar-thread.png"]
+      }
+    },
+    {
+      "id": "product_conflicting_markup",
+      "fixture": "product-conflicting-markup.html",
+      "url": "https://shop.example.test/workspace/recycled-felt-pinboard",
+      "kind": "product",
+      "tags": ["json-ld-graph", "conflicting-metadata", "offer-list"],
+      "expected": {
+        "name": "Recycled Felt Pinboard",
+        "price": "64.00",
+        "currency": "CAD",
+        "sku": "RFP-60-MOSS",
+        "description": "A quiet pinboard pressed from recovered textile fibers.",
+        "images": ["https://shop.example.test/goods/felt-pinboard.png"]
+      }
+    },
+    {
+      "id": "product_missing_optional",
+      "fixture": "product-missing-optional.html",
+      "url": "https://shop.example.test/desk/ceramic-cable-pebble",
+      "kind": "product",
+      "tags": ["heuristic", "missing-optional-fields"],
+      "expected": {
+        "name": "Ceramic Cable Pebble",
+        "price": "18.00",
+        "currency": null,
+        "sku": null,
+        "description": null,
+        "images": []
+      }
+    },
+    {
+      "id": "product_unicode_multilingual",
+      "fixture": "product-unicode-multilingual.html",
+      "url": "https://shop.example.test/stationery/lumiere-notebook",
+      "kind": "product",
+      "tags": ["json-ld", "multilingual", "unicode", "emoji"],
+      "expected": {
+        "name": "手仕事ノート «Lumière» ✨",
+        "price": "1,480",
+        "currency": "JPY",
+        "sku": "光-NB-07",
+        "description": "再生紙と藍染めの糸を使ったノート。Caféでのスケッチにも適しています。",
+        "images": ["https://shop.example.test/%E5%95%86%E5%93%81%E7%94%BB%E5%83%8F/%E8%97%8D%E8%89%B2%E3%83%8E%E3%83%BC%E3%83%88.png"]
+      }
+    }
+  ]
+}

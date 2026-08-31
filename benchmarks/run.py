@@ -25,6 +25,7 @@ DIRECT_DEPENDENCIES = (
     "beautifulsoup4",
     "fastapi",
     "httpx",
+    "idna",
     "lxml",
     "pydantic",
     "readability-lxml",

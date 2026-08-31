@@ -229,7 +229,13 @@ async def test_full_renderer_caps_history_expanded_document_url(monkeypatch: Any
         addresses=(ipaddress.ip_address("127.0.0.1"),),
     )
 
-    async def trusted_validation(_url: str, _resolver: Any) -> ValidatedURL:
+    async def trusted_validation(
+        _url: str,
+        _resolver: Any,
+        *,
+        allowed_hosts: tuple[str, ...] | None = None,
+    ) -> ValidatedURL:
+        assert allowed_hosts is None
         return validated
 
     monkeypatch.setattr("omniscrape.fetcher.validate_url_async", trusted_validation)

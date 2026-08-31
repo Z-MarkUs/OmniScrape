@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from benchmarks.run import run as run_benchmark
 from omniscrape import __version__
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,8 +17,13 @@ def test_checked_in_benchmark_matches_current_package_version() -> None:
     payload = json.loads(
         (ROOT / "benchmarks" / "results" / "latest.json").read_text(encoding="utf-8")
     )
+    recomputed = run_benchmark(iterations=1, warmup=1)
 
     assert payload["omniscrape_version"] == __version__
+    assert payload["fixture_sha256"] == recomputed["fixture_sha256"]
+    assert [(case["name"], case["result_digest"]) for case in payload["cases"]] == [
+        (case["name"], case["result_digest"]) for case in recomputed["cases"]
+    ]
 
 
 def test_benchmark_runner_writes_machine_readable_results(tmp_path: Path) -> None:

@@ -70,7 +70,7 @@ python -m omniscrape mcp
 - Request JSON: `{"url":"...","kind":"article|product","mode":"deterministic|auto|llm","render":false}`
 - Omitting `mode` defaults to `deterministic`; `auto` and `llm` must be selected explicitly.
 - Legacy request field `llmMode` remains accepted for compatibility.
-- The API rejects `render: true` with `403 rendering_disabled` unless `OMNISCRAPE_ENABLE_API_RENDERING=true`. Enable it only for trusted, authorized targets in an externally CPU- and memory-limited browser deployment; keep `OMNISCRAPE_MAX_RENDER_CONCURRENCY` at `1` or `2`.
+- The API rejects `render: true` with `403 rendering_disabled` unless `OMNISCRAPE_ENABLE_API_RENDERING=true`. That switch also requires a non-empty `OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS` list of exact hostnames or exact `host:port` authorities. Enable it only for trusted, authorized targets in an externally CPU- and memory-limited browser deployment; keep `OMNISCRAPE_MAX_RENDER_CONCURRENCY` at `1` or `2`.
 - Health reports policy separately from readiness: `renderer_enabled=false` always means `renderer_available=false` and skips the browser probe.
 - When server authentication is configured, send `X-API-Key` or a Bearer token. Never place the value in tracked examples.
 - The streaming route emits named server-sent events with JSON payloads and terminates with `complete` or `error`; clients must handle both terminal events and disconnects.
@@ -108,7 +108,7 @@ Use `create_app(...)` for ASGI embedding and lazy `create_mcp_server(...)` for p
 
 Launch the stdio server with `python -m omniscrape mcp`. It exposes `extract` with arguments `url: str`, `kind: article|product = article`, `mode: deterministic|auto|llm = deterministic`, and `render: bool = false`. Inspect the connected server's advertised schema before relying on it, pass only an authorized URL, and do not silently escalate to `auto`, `llm`, or rendering.
 
-Relevant environment configuration uses the `OMNISCRAPE_` prefix. `OMNISCRAPE_API_KEY` protects the HTTP service; `OPENAI_API_KEY` and `OMNISCRAPE_OPENAI_MODEL` enable the OpenAI adapter. Use `Settings.from_env()` rather than reading environment variables throughout the code. Never add an allow-private-network bypass; keep loopback and private-address blocking in the URL policy.
+Relevant environment configuration uses the `OMNISCRAPE_` prefix. `OMNISCRAPE_API_KEY` protects the HTTP service; `OMNISCRAPE_ALLOWED_HOSTS` validates its inbound Host header; and the separate optional `OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS` policy exact-matches extraction targets before DNS and after redirects. Bracket an IPv6 authority when adding a port; an unbracketed IPv6 literal is a host-only entry. `OPENAI_API_KEY` and `OMNISCRAPE_OPENAI_MODEL` enable the OpenAI adapter. Use `Settings.from_env()` rather than reading environment variables throughout the code. Never add wildcards, suffix matching, or an allow-private-network bypass; keep loopback and private-address blocking in the URL policy.
 
 ## Development workflow
 
@@ -126,15 +126,30 @@ For ordinary changes, run the checks that cover the touched surface and finish w
 
 ```bash
 python -m pytest -m "not live" -q
-python -m ruff check src tests benchmarks
-python -m ruff format --check src tests benchmarks
-python -m mypy src/omniscrape
+python -m ruff check src tests benchmarks evaluation scripts
+python -m ruff format --check src tests benchmarks evaluation scripts
+python -m mypy src/omniscrape evaluation
+python -m evaluation.run --check --output build/evaluation-scorecard.json
 python -m build
 ```
 
 Use `make check` when the repository's Make target maps to the same gate. Run tests marked `live` only with explicit live-target authorization; absence of credentials or network is not a reason to weaken or skip offline coverage.
 
 For a behavioral claim, name the test that proves it and report the exact command and result. A passing narrow unit test does not prove all transports or extraction modes.
+
+## Evaluating extraction quality
+
+Run the checked-in, provider-free synthetic corpus and its regression policy:
+
+```bash
+python -m evaluation.run --check --output build/evaluation-scorecard.json
+```
+
+Treat present-field exact match, expected-field completeness, expected-absence accuracy,
+and whole-case pass rate as separate measures. Inspect their numerators, denominators,
+per-field failures, fixture digests, and environment metadata before making a claim.
+Never tune gold labels to mirror current output, silently relax thresholds, or describe
+this small original synthetic corpus as representative of open-web accuracy.
 
 ## Benchmarking and performance claims
 
@@ -162,9 +177,10 @@ Never move a published tag, replace a published asset, bypass release automation
 or upload to PyPI or another registry without explicit maintainer authorization.
 Tag CI must create provenance for its exact verified distributions. The default-branch
 release workflow must then validate protected-main ancestry plus artifact names and
-metadata, generate checksums, and publish the immutable GitHub release without executing
-tag-controlled code. Verify the public release and both distributions against the
-tag-build provenance before reporting success.
+metadata, generate checksums, derive meaningful notes from the exact tagged changelog
+section, and publish the immutable GitHub release without executing tag-controlled code.
+Verify the public release and both distributions against the tag-build provenance before
+reporting success.
 
 ## Keep the portable skill synchronized
 

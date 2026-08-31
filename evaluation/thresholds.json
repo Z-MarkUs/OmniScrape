@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "rationale": "Frozen from the observed corpus-v1 baseline after correcting headline duplication on 2026-09-01. Floors equal that baseline because this 14-case corpus is small enough that losing one correct field or case is material.",
+  "observed_baseline": {
+    "present_field_exact_match": 1.0,
+    "expected_field_completeness": 1.0,
+    "expected_absence_accuracy": 1.0,
+    "case_pass_rate": 1.0,
+    "extraction_errors": 0
+  },
+  "minimums": {
+    "present_field_exact_match": 1.0,
+    "expected_field_completeness": 1.0,
+    "expected_absence_accuracy": 1.0,
+    "case_pass_rate": 1.0
+  },
+  "maximums": {
+    "extraction_errors": 0
+  }
+}

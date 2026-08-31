@@ -16,4 +16,7 @@ security suite starts a local Chromium instance against a loopback-only fixture 
 to verify browser policy; CI runs that controlled exception in its own job.
 The source distribution includes this complete offline suite, `conftest.py`, all
 synthetic fixtures, and the benchmark runner used by its regression test so the
-suite can run after unpacking the archive.
+suite can run after unpacking the archive. The separate `evaluation/` corpus adds
+14 original synthetic article/product cases, explicit gold labels, frozen
+thresholds, and a machine-readable scorecard; run it with
+`python -m evaluation.run --check --output build/evaluation-scorecard.json`.

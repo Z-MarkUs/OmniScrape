@@ -19,6 +19,7 @@ from omniscrape.errors import URLSafetyError
 from omniscrape.models import Article, ExtractionMetadata, ExtractionResult
 
 URL = "https://news.example.test/story"
+OUTBOUND_POLICY = ("news.example.test",)
 
 
 def extraction_result(mode: str = "deterministic") -> ExtractionResult:
@@ -224,7 +225,13 @@ async def test_enabled_renderer_health_reports_runtime_readiness(monkeypatch: An
         return True
 
     monkeypatch.setattr("omniscrape.api.renderer_available", ready)
-    app = create_app(Settings(enable_api_rendering=True), service=StubService())
+    app = create_app(
+        Settings(
+            enable_api_rendering=True,
+            outbound_allowed_hosts=OUTBOUND_POLICY,
+        ),
+        service=StubService(),
+    )
     async with app_client(app) as client:
         response = await client.get("/health")
 
@@ -240,7 +247,13 @@ async def test_enabled_renderer_health_reports_unavailable_runtime(monkeypatch: 
         return False
 
     monkeypatch.setattr("omniscrape.api.renderer_available", unavailable)
-    app = create_app(Settings(enable_api_rendering=True), service=StubService())
+    app = create_app(
+        Settings(
+            enable_api_rendering=True,
+            outbound_allowed_hosts=OUTBOUND_POLICY,
+        ),
+        service=StubService(),
+    )
     async with app_client(app) as client:
         response = await client.get("/health")
 
@@ -421,12 +434,86 @@ async def test_api_rendering_is_rejected_before_admission_by_default(route: str)
 @pytest.mark.asyncio
 async def test_api_rendering_can_be_explicitly_enabled() -> None:
     service = StubService()
-    app = create_app(Settings(enable_api_rendering=True), service=service)
+    app = create_app(
+        Settings(
+            enable_api_rendering=True,
+            outbound_allowed_hosts=OUTBOUND_POLICY,
+        ),
+        service=service,
+    )
     async with app_client(app) as client:
         response = await client.post("/v1/extract", json={"url": URL, "render": True})
 
     assert response.status_code == 200
     assert service.calls[0]["render"] is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("render", [False, True])
+async def test_api_outbound_allowlist_denial_has_stable_public_error(
+    render: bool,
+) -> None:
+    service = StubService()
+    app = create_app(
+        Settings(
+            enable_api_rendering=True,
+            outbound_allowed_hosts=("allowed.example.test",),
+        ),
+        service=service,
+    )
+    async with app_client(app) as client:
+        response = await client.post(
+            "/v1/extract",
+            json={"url": URL, "render": render},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "unsafe_url"
+    assert response.json()["error"]["message"] == (
+        "The URL is not permitted by the outbound network policy."
+    )
+    assert "news.example.test" not in response.text
+    assert service.calls == []
+
+
+@pytest.mark.asyncio
+async def test_api_outbound_allowlist_uses_the_same_nontransitional_idna() -> None:
+    service = StubService()
+    app = create_app(
+        Settings(outbound_allowed_hosts=("faß.de",)),
+        service=service,
+    )
+    async with app_client(app) as client:
+        allowed = await client.post(
+            "/v1/extract",
+            json={"url": "https://faß.de/story"},
+        )
+        denied = await client.post(
+            "/v1/extract",
+            json={"url": "https://fass.de/story"},
+        )
+
+    assert allowed.status_code == 200
+    assert service.calls[0]["url"] == "https://xn--fa-hia.de/story"
+    assert denied.status_code == 400
+    assert denied.json()["error"]["code"] == "unsafe_url"
+
+
+@pytest.mark.asyncio
+async def test_stream_outbound_allowlist_denial_is_a_stable_terminal_event() -> None:
+    service = StubService()
+    app = create_app(
+        Settings(outbound_allowed_hosts=("allowed.example.test",)),
+        service=service,
+    )
+    async with app_client(app) as client:
+        response = await client.post("/v1/extract/stream", json={"url": URL})
+
+    assert response.status_code == 200
+    assert "event: error\n" in response.text
+    assert '"code":"unsafe_url"' in response.text
+    assert "news.example.test" not in response.text
+    assert service.calls == []
 
 
 @pytest.mark.asyncio

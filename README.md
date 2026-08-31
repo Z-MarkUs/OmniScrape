@@ -21,8 +21,9 @@ OpenAI Responses adapter fills incomplete fields in explicitly selected AI modes
 
 This repository is deliberately built as more than a scraping script. It demonstrates
 outbound-request security, async resource limits, typed boundaries, provider isolation,
-API authentication, streaming progress, reproducible tests and benchmarks, container
-hardening, and portable project skills for coding agents.
+API authentication, streaming progress, reproducible tests, an inspectable
+extraction-quality scorecard, fixture-backed benchmarks, container hardening, and
+portable project skills for coding agents.
 
 ## Engineering proof
 
@@ -30,6 +31,7 @@ hardening, and portable project skills for coding agents.
 | --- | --- |
 | Supported runtime | The [CI workflow](https://github.com/Z-MarkUs/OmniScrape/actions/workflows/ci.yml) runs offline tests on every Python version from 3.10 through 3.13 plus a separate loopback-only real-Chromium regression gate. |
 | Quality and security gates | [Verification](#verification) enforces at least 90% combined statement-and-branch coverage alongside Ruff, strict mypy, Bandit, dependency auditing, and [CodeQL](https://github.com/Z-MarkUs/OmniScrape/actions/workflows/codeql.yml). |
+| Extraction quality | The [synthetic evaluation](#reproducible-extraction-quality-evaluation) currently records 76/76 exact gold-present fields, 8/8 correct expected-absent slots, and 14/14 all-fields-exact cases, with explicit denominators, fixture digests, and failures—and no browser, network, or model provider. |
 | Distribution checks | CI validates the wheel and source archive, installs each exact artifact in a fresh environment, and smoke-tests the non-root container with a read-only root filesystem. |
 | Release integrity | The [latest release](https://github.com/Z-MarkUs/OmniScrape/releases/latest) is immutable and ships checksums plus signed SLSA build provenance; the [verification commands](#release-integrity) are public and reproducible. |
 | Agent contract | MCP publishes enumerated inputs, a discriminated success/error schema, and safe tool hints; the [Codex and Claude Code project skills](#project-skills-for-codex-and-claude-code) are synchronized byte-for-byte and checked by CI. |
@@ -50,7 +52,7 @@ hardening, and portable project skills for coding agents.
 | Design goal | Implementation |
 | --- | --- |
 | Useful without a paid model | Deterministic JSON-LD, microdata, metadata, readability, and heuristic extraction |
-| Safe outbound networking | HTTP(S)-only policy, credential rejection, DNS/IP checks, redirect revalidation, peer checks, byte caps, and timeouts |
+| Safe outbound networking | HTTP(S)-only policy, optional exact target allowlist, credential rejection, DNS/IP checks, redirect revalidation, peer checks, byte caps, and timeouts |
 | Controlled AI escalation | Separate `deterministic`, `auto`, and `llm` modes; validated structured output; real provider usage only |
 | One contract everywhere | The same Pydantic models power the Python library, CLI, FastAPI service, SSE stream, web UI, and MCP tool |
 | Production-minded operation | Optional API-key auth, bounded concurrency, safe error responses, non-root container, health checks, and CI security gates |
@@ -60,7 +62,7 @@ hardening, and portable project skills for coding agents.
 
 ```mermaid
 flowchart LR
-    U["Authorized URL"] --> G["URL policy<br/>scheme · DNS · IP"]
+    U["Authorized URL"] --> G["URL policy<br/>scheme · allowlist · DNS · IP"]
     G --> F["Bounded fetch<br/>redirects · bytes · timeouts"]
     F -->|optional| B["Playwright render"]
     F --> D["Deterministic extractors"]
@@ -93,7 +95,8 @@ CDN-dependent application may extract better through its server-rendered HTML.
 
 Browser rendering executes target-controlled JavaScript. The HTTP API therefore rejects
 `render: true` by default. Enable it with `OMNISCRAPE_ENABLE_API_RENDERING=true` only for
-trusted, explicitly authorized targets and keep the default
+trusted, explicitly authorized targets, and set a non-empty exact target policy in
+`OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS`. Keep the default
 `OMNISCRAPE_MAX_RENDER_CONCURRENCY=2` (the strict supported values are `1` and `2`).
 The CLI, Python API, and MCP renderer remain explicit caller choices and are not enabled
 by this HTTP-specific switch.
@@ -119,7 +122,7 @@ CLI command, and repository name remain `omniscrape` / OmniScrape.
 Install the latest immutable release directly from GitHub:
 
 ```bash
-python -m pip install https://github.com/Z-MarkUs/OmniScrape/releases/download/v0.2.2/omniscrape_zmarkus-0.2.2-py3-none-any.whl
+python -m pip install https://github.com/Z-MarkUs/OmniScrape/releases/download/v0.3.0/omniscrape_zmarkus-0.3.0-py3-none-any.whl
 ```
 
 For an editable source checkout instead:
@@ -226,8 +229,20 @@ alternatives so the generated `/docs` console can authorize requests accurately.
 The request `mode` field is optional and defaults to
 `deterministic`. The request `render` field returns `403 rendering_disabled` unless
 `OMNISCRAPE_ENABLE_API_RENDERING=true`; installation of the browser extra alone does not
-enable API rendering. Health remains available at `GET /health` and distinguishes the
-renderer policy (`renderer_enabled`) from runtime readiness (`renderer_available`).
+enable API rendering. Enabling that switch also requires a non-empty
+`OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS` list. It accepts comma-separated exact normalized
+hostnames or exact `host:port` authorities—never wildcards or suffix patterns—and is
+checked before DNS resolution, after redirects, and during browser navigation. When the
+setting is omitted, CLI, Python, and MCP retain the existing public-address safety policy
+without an additional target allowlist. Health remains available at `GET /health` and
+distinguishes the renderer policy (`renderer_enabled`) from runtime readiness
+(`renderer_available`).
+
+Hostname comparison uses non-transitional IDNA normalization, so visually similar but
+distinct domains do not collapse into one policy entry. An explicitly empty or invalid
+port is rejected instead of widening an authority to every HTTP(S) port. Write an IPv6
+authority with a port as `[address]:port`; an unbracketed IPv6 literal denotes only the
+host.
 
 | Route | Purpose |
 | --- | --- |
@@ -330,8 +345,8 @@ OmniScrape treats a URL as untrusted input and fetched HTML as untrusted data.
 
 | Threat | Control |
 | --- | --- |
-| SSRF through literal IPs or DNS | Reject loopback, private, link-local, reserved, multicast, and non-global destinations |
-| SSRF through redirects or rebinding | Revalidate every redirect, connect HTTP directly to a validated IP while preserving Host/SNI, and pin Chromium's same-origin hostname |
+| SSRF through literal IPs or DNS | Optionally require an exact target hostname before DNS, then reject loopback, private, link-local, reserved, multicast, and non-global destinations |
+| SSRF through redirects or rebinding | Reapply the target allowlist and URL policy on every redirect, connect HTTP directly to a validated IP while preserving Host/SNI, and pin Chromium's same-origin hostname |
 | Credential smuggling | Reject URLs containing user information |
 | Resource exhaustion | Bound request-body/connect/read/render/queue time, redirect and request counts, deterministic markup structure, aggregate renderer transfer bytes, final DOM size, image count, and concurrent work; require external CPU/memory/process quotas for browser deployments |
 | Accidental provider use | Deterministic default, explicit modes, optional dependency, and visible provider metadata |
@@ -351,9 +366,10 @@ All ordinary tests are fixture-backed and avoid paid services and arbitrary live
 python -m pip install -e ".[dev]"
 
 python -m pytest -m "not live"
-python -m ruff check src tests benchmarks
-python -m ruff format --check src tests benchmarks
-python -m mypy src/omniscrape
+python -m ruff check src tests benchmarks evaluation scripts
+python -m ruff format --check src tests benchmarks evaluation scripts
+python -m mypy src/omniscrape evaluation
+python -m evaluation.run --check --output build/evaluation-scorecard.json
 python -m bandit -q -r src/omniscrape
 python -m pip_audit --skip-editable
 python -m build
@@ -371,9 +387,10 @@ available. Ruff, strict mypy, Bandit, dependency audits, skill validation, and
 wheel/source-archive validation are separate blocking gates.
 
 CI repeats the offline suite and branch-coverage gate on every supported Python version
-from 3.10 through 3.13. Separate Python 3.12 jobs enforce linting, strict type checking,
-package validation, fresh-environment installs of the exact wheel and source archive,
-dependency auditing, static security analysis, and the production container build.
+from 3.10 through 3.13. Separate Python 3.12 jobs enforce the checked-in
+extraction-quality thresholds, linting, strict type checking, package validation,
+fresh-environment installs of the exact wheel and source archive, dependency auditing,
+static security analysis, and the production container build.
 
 ### Release integrity
 
@@ -387,15 +404,51 @@ asset and adds a separate release attestation.
 After downloading an artifact, verify its provenance with GitHub CLI:
 
 ```bash
-gh attestation verify omniscrape_zmarkus-0.2.2-py3-none-any.whl \
+gh attestation verify omniscrape_zmarkus-0.3.0-py3-none-any.whl \
   --repo Z-MarkUs/OmniScrape \
-  --source-ref refs/tags/v0.2.2 \
+  --source-ref refs/tags/v0.3.0 \
   --signer-workflow Z-MarkUs/OmniScrape/.github/workflows/ci.yml
-gh release verify v0.2.2 --repo Z-MarkUs/OmniScrape
+gh release verify v0.3.0 --repo Z-MarkUs/OmniScrape
 ```
 
 The complete maintainer process is documented in
 [RELEASING.md](https://github.com/Z-MarkUs/OmniScrape/blob/main/RELEASING.md).
+
+## Reproducible extraction-quality evaluation
+
+The bundled evaluator runs deterministic parsing over 14 original, MIT-licensed
+synthetic pages: seven article cases and seven product cases covering JSON-LD,
+microdata, Open Graph/product metadata, malformed and conflicting markup, explicit
+missing fields, and multilingual Unicode. It performs no fetch, browser launch, provider
+call, or LLM call.
+
+```bash
+python -m evaluation.run --check --output build/evaluation-scorecard.json
+```
+
+The frozen corpus-v1 baseline is 76/76 exact gold-present fields, 76/76 expected
+fields present, 8/8 expected-absent slots correctly absent, 14/14 all-fields-exact
+cases, and zero extraction errors.
+
+The scorecard separates correctness from completeness:
+
+- **Present-field exact match** is normalized exact matches divided by all gold-present
+  fields.
+- **Expected-field completeness** is non-null predictions divided by all gold-present
+  fields; a wrong non-null value counts as present but not correct.
+- **Expected-absence accuracy** is correctly absent values divided by all
+  expected-absent slots (JSON `null` values or empty image lists). Extraction errors
+  receive no absence credit.
+- **Case pass rate** requires all six evaluated fields in a case to match exactly.
+
+Normalization uses Unicode NFKC plus collapsed whitespace, remains case-sensitive, and
+compares image lists in order. The checked-in
+[gold manifest](https://github.com/Z-MarkUs/OmniScrape/blob/main/evaluation/gold.json),
+[threshold policy](https://github.com/Z-MarkUs/OmniScrape/blob/main/evaluation/thresholds.json),
+and [latest scorecard](https://github.com/Z-MarkUs/OmniScrape/blob/main/evaluation/results/latest.json)
+expose every numerator, denominator, environment version, fixture digest, prediction,
+and failure. These scores are a regression signal for this small synthetic corpus—not a
+claim about accuracy on the open web.
 
 ## Reproducible benchmark
 
@@ -441,6 +494,7 @@ Codex-specific UI metadata stays under `.agents`; only portable files are mirror
 ├── .github/                     # CI, release automation, and dependency updates
 ├── benchmarks/                  # fixture-backed benchmark and JSON results
 ├── docs/assets/                 # repository visuals
+├── evaluation/                  # original synthetic quality corpus and scorecard
 ├── RELEASING.md                 # immutable, attested release process
 ├── scripts/                     # skill synchronization
 ├── src/omniscrape/

@@ -37,6 +37,7 @@ from .models import (
     jsonable,
 )
 from .pipeline import OmniScrape
+from .security import enforce_outbound_target
 
 logger = logging.getLogger(__name__)
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,80}$")
@@ -530,6 +531,7 @@ def create_app(
     ) -> ExtractionResult:
         if payload.render and not resolved.enable_api_rendering:
             raise RenderingDisabledError()
+        enforce_outbound_target(str(payload.url), resolved.outbound_allowed_hosts)
         await admission.acquire(timeout=resolved.queue_timeout_seconds)
         try:
             return await scraper.extract(

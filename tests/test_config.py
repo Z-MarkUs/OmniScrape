@@ -11,6 +11,7 @@ def test_defaults_are_stable_for_empty_mapping() -> None:
     settings = Settings.from_env({})
     assert settings.api_key is None
     assert settings.allowed_hosts is None
+    assert settings.outbound_allowed_hosts is None
     assert settings.enable_api_rendering is False
     assert settings.openai_api_key is None
     assert settings.openai_model
@@ -26,10 +27,20 @@ def test_defaults_are_stable_for_empty_mapping() -> None:
     assert settings.auto_llm_threshold == 0.72
 
 
+def test_new_outbound_policy_does_not_shift_existing_positional_settings() -> None:
+    settings = Settings(None, None, False, None, "positional-model")
+    assert settings.enable_api_rendering is False
+    assert settings.openai_model == "positional-model"
+    assert settings.outbound_allowed_hosts is None
+
+
 def test_valid_values_are_parsed_without_mutating_input() -> None:
     values = {
         "OMNISCRAPE_API_KEY": "service-key",
         "OMNISCRAPE_ALLOWED_HOSTS": "api.example.test,api.example.test:8443",
+        "OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS": (
+            "NEWS.Example.Test.,news.example.test,render.example.test:8443"
+        ),
         "OMNISCRAPE_ENABLE_API_RENDERING": "true",
         "OPENAI_API_KEY": "provider-key",
         "OMNISCRAPE_OPENAI_MODEL": "fixture-model",
@@ -54,6 +65,10 @@ def test_valid_values_are_parsed_without_mutating_input() -> None:
 
     assert settings.api_key == "service-key"
     assert settings.allowed_hosts == ("api.example.test", "api.example.test:8443")
+    assert settings.outbound_allowed_hosts == (
+        "news.example.test",
+        "render.example.test:8443",
+    )
     assert settings.enable_api_rendering is True
     assert settings.openai_api_key == "provider-key"
     assert settings.openai_model == "fixture-model"
@@ -221,6 +236,8 @@ def test_allowed_hosts_rejects_wildcards() -> None:
         "user@api.example",
         "api.example?query=yes",
         "api.example#fragment",
+        "api.example:",
+        "[2001:db8::1]:",
     ),
 )
 def test_allowed_hosts_reject_malformed_authorities_at_load_time(authority: str) -> None:
@@ -233,3 +250,67 @@ def test_allowed_hosts_are_normalized_and_deduplicated() -> None:
         {"OMNISCRAPE_ALLOWED_HOSTS": "API.Example.,api.example,[2001:db8::1]:8443"}
     )
     assert settings.allowed_hosts == ("api.example", "[2001:db8::1]:8443")
+
+
+def test_outbound_allowed_hosts_are_normalized_and_deduplicated() -> None:
+    settings = Settings.from_env(
+        {
+            "OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS": (
+                "EXAMPLE.com.,example.com,xn--fsqu00a.test,例子.test,"
+                "example.com:8443,[2606:4700:4700::1111]:443"
+            )
+        }
+    )
+    assert settings.outbound_allowed_hosts == (
+        "example.com",
+        "xn--fsqu00a.test",
+        "example.com:8443",
+        "[2606:4700:4700::1111]:443",
+    )
+
+
+@pytest.mark.parametrize(
+    "authority",
+    (
+        "*",
+        "*.example.test",
+        "example.test/path",
+        "user@example.test",
+        "example.test:notaport",
+        "example.test:",
+        "[2606:4700:4700::1111]:",
+        "example.test?query=yes",
+    ),
+)
+def test_outbound_allowed_hosts_reject_malformed_or_wildcard_entries(
+    authority: str,
+) -> None:
+    with pytest.raises(ValueError, match="OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS"):
+        Settings.from_env({"OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS": authority})
+
+
+def test_direct_outbound_allowed_hosts_are_normalized() -> None:
+    settings = Settings(outbound_allowed_hosts=("EXAMPLE.test.", "example.test:8443"))
+    assert settings.outbound_allowed_hosts == ("example.test", "example.test:8443")
+
+
+def test_outbound_allowed_hosts_use_nontransitional_idna() -> None:
+    settings = Settings(outbound_allowed_hosts=("faß.de", "xn--fa-hia.de"))
+    assert settings.outbound_allowed_hosts == ("xn--fa-hia.de",)
+
+
+def test_api_rendering_requires_non_empty_outbound_allowlist() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"OMNISCRAPE_ENABLE_API_RENDERING.*OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS",
+    ):
+        Settings(enable_api_rendering=True, outbound_allowed_hosts=None)
+
+    with pytest.raises(ValueError, match="OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS"):
+        Settings(enable_api_rendering=True, outbound_allowed_hosts=())
+
+
+def test_outbound_allowlist_does_not_change_default_non_api_policy() -> None:
+    settings = Settings.from_env({})
+    assert settings.enable_api_rendering is False
+    assert settings.outbound_allowed_hosts is None

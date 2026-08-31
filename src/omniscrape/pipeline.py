@@ -227,6 +227,7 @@ class OmniScrape:
                     max_render_nodes=settings.max_render_nodes,
                     max_inflight_tasks=settings.max_concurrency,
                     max_render_concurrency=settings.max_render_concurrency,
+                    outbound_allowed_hosts=settings.outbound_allowed_hosts,
                 )
             )
         if provider is None and settings.openai_api_key:

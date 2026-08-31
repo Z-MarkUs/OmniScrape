@@ -31,11 +31,19 @@ from Git history.
 
 Browser rendering executes JavaScript supplied by the target page. The HTTP API
 keeps it disabled by default; setting `OMNISCRAPE_ENABLE_API_RENDERING=true` is an
-operator decision, not a consequence of installing Playwright. Enable it only for
-trusted, explicitly authorized target domains and authenticated, rate-limited callers.
-`OMNISCRAPE_ALLOWED_HOSTS` protects the inbound HTTP Host header; it is not an
-outbound target allowlist. Rendering arbitrary hostile third-party pages is outside the
-supported deployment model.
+operator decision, not a consequence of installing Playwright. Enabling it also
+requires a non-empty `OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS` policy containing exact,
+normalized target hostnames or `host:port` authorities. That policy is checked before
+DNS resolution, on HTTP redirects, and during browser navigation; it uses no wildcard
+or suffix matching. `OMNISCRAPE_ALLOWED_HOSTS` remains a separate defense for the
+inbound HTTP Host header. Enable rendering only for trusted, explicitly authorized
+targets and authenticated, rate-limited callers. Rendering arbitrary hostile
+third-party pages is outside the supported deployment model.
+
+Code that injects a custom renderer while an outbound allowlist is configured must expose
+the identical normalized `outbound_allowed_hosts` policy and enforce it for every
+renderer-owned request. OmniScrape rejects policy-unaware or mismatched renderers before
+calling them; injected implementations remain trusted code at the network boundary.
 
 URL validation, same-origin routing, request/byte/DOM caps, timeouts, and
 `OMNISCRAPE_MAX_RENDER_CONCURRENCY` reduce risk but do not make hostile JavaScript

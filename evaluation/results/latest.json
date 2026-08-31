@@ -1,0 +1,1232 @@
+{
+  "cases": [
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-jsonld-full.html",
+      "fixture_sha256": "d0d5f6fc054c14cdb6fe8ceaa12d93ed313d6b9e6cc16f2ba445e8f1b38f3a3d",
+      "id": "article_jsonld_full",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": "Mira Sol",
+        "date_published": "2026-02-14T07:45:00Z",
+        "description": "A coastal cooperative is testing stored tidal power.",
+        "images": [
+          "https://journal.example.test/media/tidal-trial.jpg"
+        ],
+        "text": "Engineers connected a tidal generator to a neighborhood battery before sunrise.\n\nThe twelve-week trial will publish open performance notes for local schools.",
+        "title": "Island Grid Begins Tidal Battery Trial"
+      },
+      "sources": [
+        "json-ld",
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "json-ld",
+        "full",
+        "relative-image"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-microdata.html",
+      "fixture_sha256": "3b02be62c4273205108f0eafacd216ab1ecfa9a1dd8ab71d30ca07e9a849e402",
+      "id": "article_microdata",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": "Noah Imani",
+        "date_published": "2026-03-02",
+        "description": "Neighbors can borrow seeds adapted to small balconies.",
+        "images": [
+          "https://journal.example.test/images/seed-drawers.webp"
+        ],
+        "text": "Volunteers catalogued sixty varieties in weatherproof drawers.\n\nBorrowers return seeds from their strongest plants after harvest.",
+        "title": "Rooftop Seed Library Opens"
+      },
+      "sources": [
+        "microdata",
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "microdata",
+        "full"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-opengraph.html",
+      "fixture_sha256": "2aa3f1c2310906629d9f61234a936a0174bb1e1de2641d0c54879c0d6b8075b2",
+      "id": "article_opengraph",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": "Elena Park",
+        "date_published": "2026-04-19T21:10:00+09:00",
+        "description": "A low-light cabin gives overnight passengers a calmer crossing.",
+        "images": [
+          "https://assets.example.test/ferry/quiet-cabin.png"
+        ],
+        "text": "The redesigned cabin uses warm floor lighting and fabric wall panels.\n\nAnnouncements are delivered through seat displays except during emergencies.",
+        "title": "Night Ferry Adds Quiet Cabin"
+      },
+      "sources": [
+        "metadata",
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "opengraph",
+        "metadata",
+        "absolute-image"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-malformed-jsonld.html",
+      "fixture_sha256": "988e004f823ba954412c306c75277595e5d124db0b81fd6cfa6f0b33dcb5cc49",
+      "id": "article_malformed_jsonld",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": "Priya Mensah",
+        "date_published": "2026-06-08",
+        "description": "Floating sensors record block-level water temperatures.",
+        "images": [
+          "https://journal.example.test/sensors/canal-node.jpg"
+        ],
+        "text": "Students anchored compact sensors beside bridges and public gardens.\n\nThe readings will help planners choose locations for shade and fountains.",
+        "title": "Canal Sensors Map Summer Heat"
+      },
+      "sources": [
+        "metadata",
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "malformed-json-ld",
+        "metadata-fallback"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-conflicting-markup.html",
+      "fixture_sha256": "de19fe992d5d4cb9c51d67a4cc556214d6d20885d5ad96fe5ae94bcd5ba214f9",
+      "id": "article_conflicting_markup",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": "Samira Ko, Luis Okafor",
+        "date_published": "2026-07-11",
+        "description": "A community directory helps residents find rarely used tools.",
+        "images": [
+          "https://journal.example.test/tool-map/cover.svg"
+        ],
+        "text": "The map lists shared drills, sewing machines, and diagnostic meters by neighborhood.\n\nMaintainers can post availability without exposing a home address.",
+        "title": "Repair Cafe Publishes Tool Map"
+      },
+      "sources": [
+        "json-ld",
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "json-ld",
+        "conflicting-metadata",
+        "multiple-authors"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-missing-optional.html",
+      "fixture_sha256": "eb99147747b347e9d015699e9498615fafd1fecf21435f8ad287fb85f2be91ad",
+      "id": "article_missing_optional",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 4,
+          "numerator": 4,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 2,
+          "numerator": 2,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 2,
+          "numerator": 2,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": null,
+        "date_published": null,
+        "description": null,
+        "images": [],
+        "text": "New benches surround the restored rain garden beside the reading room.\n\nThe courtyard remains open until sunset and requires no reservation.",
+        "title": "Library Courtyard Reopens"
+      },
+      "sources": [
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "heuristic",
+        "missing-optional-fields"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "article-unicode-multilingual.html",
+      "fixture_sha256": "2857cf1e5f1d03f5582f347a9a6ae062657ad98046e8327dbb98868f20ec11aa",
+      "id": "article_unicode_multilingual",
+      "kind": "article",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "author": "陳美玲",
+        "date_published": "2026-08-23T10:00:00+08:00",
+        "description": "多語言導賞介紹城市授粉計劃。",
+        "images": [
+          "https://journal.example.test/%E7%9B%B8%E7%89%87/%E8%9C%9C%E8%9C%82-%E5%A4%A9%E5%8F%B0.jpg"
+        ],
+        "text": "義工在清晨安置了三個本地蜂箱。\n\n訪客可用粵語、English 或日本語閱讀安全指引。",
+        "title": "社區天台花園迎來第一批蜜蜂 🐝"
+      },
+      "sources": [
+        "json-ld",
+        "readability",
+        "heuristic"
+      ],
+      "tags": [
+        "json-ld-graph",
+        "multilingual",
+        "unicode",
+        "emoji"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-jsonld-full.html",
+      "fixture_sha256": "24a8ea971cb80ab5d19390fece49bdbf02ff6a6f501f5f143e90862de1483061",
+      "id": "product_jsonld_full",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": "USD",
+        "description": "A pocket-sized mechanical dial for comparing air pressure trends.",
+        "images": [
+          "https://shop.example.test/catalog/weather-dial-front.png",
+          "https://shop.example.test/catalog/weather-dial-back.png"
+        ],
+        "name": "Pocket Weather Dial",
+        "price": "38.50",
+        "sku": "PWD-41-SAGE"
+      },
+      "sources": [
+        "json-ld",
+        "heuristic"
+      ],
+      "tags": [
+        "json-ld",
+        "full",
+        "image-list"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-microdata.html",
+      "fixture_sha256": "ac90944defe30191758d43262908e63dfbcdc696963f018e96b4e86c06c19b05",
+      "id": "product_microdata",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": "EUR",
+        "description": "An oiled-oak stand that folds flat between seasons.",
+        "images": [
+          "https://shop.example.test/products/foldaway-stand.webp"
+        ],
+        "name": "Foldaway Plant Stand",
+        "price": "72.00",
+        "sku": "FPS-OAK-72"
+      },
+      "sources": [
+        "microdata",
+        "heuristic"
+      ],
+      "tags": [
+        "microdata",
+        "full"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-opengraph.html",
+      "fixture_sha256": "aff4e349724e498e0d76e57eccdf2cb408f67e552e9464471ef9340d3dd03f00",
+      "id": "product_opengraph",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": "HKD",
+        "description": "Interlocking trays keep cups steady on narrow tables.",
+        "images": [
+          "https://shop.example.test/shop/modular-tea-tray.jpg"
+        ],
+        "name": "Modular Tea Tray",
+        "price": "129.00",
+        "sku": "MTT-129-BLK"
+      },
+      "sources": [
+        "metadata",
+        "heuristic"
+      ],
+      "tags": [
+        "opengraph",
+        "product-metadata"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-malformed-jsonld.html",
+      "fixture_sha256": "42ae8547bd11615158d5f3ceca53ad94c8616a76300ac2790c2b0a7040463678",
+      "id": "product_malformed_jsonld",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": "GBP",
+        "description": "A soft lantern woven around a replaceable solar core.",
+        "images": [
+          "https://img.example.test/lantern/solar-thread.png"
+        ],
+        "name": "Solar Thread Lantern",
+        "price": "24.95",
+        "sku": "STL-2495-YEL"
+      },
+      "sources": [
+        "metadata",
+        "heuristic"
+      ],
+      "tags": [
+        "malformed-json-ld",
+        "metadata-fallback"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-conflicting-markup.html",
+      "fixture_sha256": "be5dce950ea64c441062220b8ef8e8acc90013f0a8f5ca2f3619f80b96c62cf5",
+      "id": "product_conflicting_markup",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": "CAD",
+        "description": "A quiet pinboard pressed from recovered textile fibers.",
+        "images": [
+          "https://shop.example.test/goods/felt-pinboard.png"
+        ],
+        "name": "Recycled Felt Pinboard",
+        "price": "64.00",
+        "sku": "RFP-60-MOSS"
+      },
+      "sources": [
+        "json-ld",
+        "heuristic"
+      ],
+      "tags": [
+        "json-ld-graph",
+        "conflicting-metadata",
+        "offer-list"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-missing-optional.html",
+      "fixture_sha256": "c1fe66a289ef13f20f229b5c94e9980d89305bd1b25bac3f308afbca29288a97",
+      "id": "product_missing_optional",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 4,
+          "numerator": 4,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 2,
+          "numerator": 2,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 2,
+          "numerator": 2,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": null,
+        "description": null,
+        "images": [],
+        "name": "Ceramic Cable Pebble",
+        "price": "18.00",
+        "sku": null
+      },
+      "sources": [
+        "heuristic"
+      ],
+      "tags": [
+        "heuristic",
+        "missing-optional-fields"
+      ],
+      "warnings": []
+    },
+    {
+      "extraction_error": null,
+      "failures": [],
+      "fixture": "product-unicode-multilingual.html",
+      "fixture_sha256": "2c55503a179ccf9c4d0ad7cd1e98cc131a2b1549f37f9805ab90ee87cfc01a9a",
+      "id": "product_unicode_multilingual",
+      "kind": "product",
+      "metrics": {
+        "all_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "passed": true,
+      "prediction": {
+        "currency": "JPY",
+        "description": "再生紙と藍染めの糸を使ったノート。Caféでのスケッチにも適しています。",
+        "images": [
+          "https://shop.example.test/%E5%95%86%E5%93%81%E7%94%BB%E5%83%8F/%E8%97%8D%E8%89%B2%E3%83%8E%E3%83%BC%E3%83%88.png"
+        ],
+        "name": "手仕事ノート «Lumière» ✨",
+        "price": "1,480",
+        "sku": "光-NB-07"
+      },
+      "sources": [
+        "json-ld",
+        "heuristic"
+      ],
+      "tags": [
+        "json-ld",
+        "multilingual",
+        "unicode",
+        "emoji"
+      ],
+      "warnings": []
+    }
+  ],
+  "environment": {
+    "dependency_versions": {
+      "beautifulsoup4": "4.15.0",
+      "lxml": "6.1.2",
+      "pydantic": "2.13.5",
+      "readability-lxml": "0.9"
+    },
+    "machine": "AMD64",
+    "operating_system": "Windows",
+    "python_implementation": "CPython",
+    "python_version": "3.12.13"
+  },
+  "evaluator_version": "1.0.0",
+  "execution_policy": {
+    "browser": "not-used",
+    "mode": "deterministic",
+    "network": "disabled-by-design",
+    "provider_or_llm": "not-used"
+  },
+  "failures": [],
+  "gate_passed": true,
+  "generated_at": "2026-09-01T00:00:00+00:00",
+  "limitations": [
+    "The corpus is small, balanced, original, and synthetic; it is not a representative sample of the open web.",
+    "Scores describe only this checked-in corpus and must not be presented as real-world extraction accuracy.",
+    "Exact match intentionally gives no partial credit for semantically equivalent wording or reordered image lists.",
+    "The evaluation exercises deterministic extraction only; rendering and provider-assisted modes are out of scope."
+  ],
+  "metric_definitions": {
+    "all_field_exact_match": "All exact field matches divided by all six field slots per case, including expected-absent slots. Reported as a secondary metric only.",
+    "case_pass_rate": "Cases with successful extraction and all six fields exactly matching gold, divided by all manifest cases.",
+    "expected_absence_accuracy": "Expected-absent slots that remain null (or empty image lists), divided by all expected-absent slots. Extraction errors never receive credit for absence.",
+    "expected_field_completeness": "Gold-present fields with any non-null prediction, divided by all gold-present fields. Wrong non-null values count as present but not correct.",
+    "normalization": "Unicode NFKC, then collapse all whitespace runs to one ASCII space; comparison remains case-sensitive. Image lists are ordered and compared exactly.",
+    "present_field_exact_match": "Gold-present fields whose normalized prediction exactly equals gold, divided by all gold-present fields. Expected-absent slots are excluded."
+  },
+  "metrics": {
+    "aggregate": {
+      "all_field_exact_match": {
+        "denominator": 84,
+        "numerator": 84,
+        "rate": 1.0
+      },
+      "expected_absence_accuracy": {
+        "denominator": 8,
+        "numerator": 8,
+        "rate": 1.0
+      },
+      "expected_field_completeness": {
+        "denominator": 76,
+        "numerator": 76,
+        "rate": 1.0
+      },
+      "present_field_exact_match": {
+        "denominator": 76,
+        "numerator": 76,
+        "rate": 1.0
+      },
+      "unexpected_value_count": 0
+    },
+    "by_field": {
+      "article.author": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "article.date_published": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "article.description": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "article.images": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "article.text": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "article.title": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product.currency": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product.description": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product.images": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product.name": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product.price": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 0,
+          "numerator": 0,
+          "rate": null
+        },
+        "expected_field_completeness": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product.sku": {
+        "all_field_exact_match": {
+          "denominator": 7,
+          "numerator": 7,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 1,
+          "numerator": 1,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 6,
+          "numerator": 6,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      }
+    },
+    "by_kind": {
+      "article": {
+        "all_field_exact_match": {
+          "denominator": 42,
+          "numerator": 42,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 4,
+          "numerator": 4,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 38,
+          "numerator": 38,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 38,
+          "numerator": 38,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      },
+      "product": {
+        "all_field_exact_match": {
+          "denominator": 42,
+          "numerator": 42,
+          "rate": 1.0
+        },
+        "expected_absence_accuracy": {
+          "denominator": 4,
+          "numerator": 4,
+          "rate": 1.0
+        },
+        "expected_field_completeness": {
+          "denominator": 38,
+          "numerator": 38,
+          "rate": 1.0
+        },
+        "present_field_exact_match": {
+          "denominator": 38,
+          "numerator": 38,
+          "rate": 1.0
+        },
+        "unexpected_value_count": 0
+      }
+    },
+    "case_pass_rate": {
+      "denominator": 14,
+      "numerator": 14,
+      "rate": 1.0
+    },
+    "extraction_errors": 0,
+    "failed_cases": 0,
+    "passed_cases": 14
+  },
+  "omniscrape_version": "0.3.0",
+  "population": {
+    "case_count": 14,
+    "case_ids": [
+      "article_jsonld_full",
+      "article_microdata",
+      "article_opengraph",
+      "article_malformed_jsonld",
+      "article_conflicting_markup",
+      "article_missing_optional",
+      "article_unicode_multilingual",
+      "product_jsonld_full",
+      "product_microdata",
+      "product_opengraph",
+      "product_malformed_jsonld",
+      "product_conflicting_markup",
+      "product_missing_optional",
+      "product_unicode_multilingual"
+    ],
+    "corpus": {
+      "description": "Original synthetic pages covering deterministic article and product extraction.",
+      "license": "MIT",
+      "name": "omniscrape-synthetic-extraction-v1",
+      "source_policy": "Authored for this repository; no third-party page text or markup is included."
+    },
+    "field_slots_per_case": 6,
+    "fixture_sha256": {
+      "article-conflicting-markup.html": "de19fe992d5d4cb9c51d67a4cc556214d6d20885d5ad96fe5ae94bcd5ba214f9",
+      "article-jsonld-full.html": "d0d5f6fc054c14cdb6fe8ceaa12d93ed313d6b9e6cc16f2ba445e8f1b38f3a3d",
+      "article-malformed-jsonld.html": "988e004f823ba954412c306c75277595e5d124db0b81fd6cfa6f0b33dcb5cc49",
+      "article-microdata.html": "3b02be62c4273205108f0eafacd216ab1ecfa9a1dd8ab71d30ca07e9a849e402",
+      "article-missing-optional.html": "eb99147747b347e9d015699e9498615fafd1fecf21435f8ad287fb85f2be91ad",
+      "article-opengraph.html": "2aa3f1c2310906629d9f61234a936a0174bb1e1de2641d0c54879c0d6b8075b2",
+      "article-unicode-multilingual.html": "2857cf1e5f1d03f5582f347a9a6ae062657ad98046e8327dbb98868f20ec11aa",
+      "product-conflicting-markup.html": "be5dce950ea64c441062220b8ef8e8acc90013f0a8f5ca2f3619f80b96c62cf5",
+      "product-jsonld-full.html": "24a8ea971cb80ab5d19390fece49bdbf02ff6a6f501f5f143e90862de1483061",
+      "product-malformed-jsonld.html": "42ae8547bd11615158d5f3ceca53ad94c8616a76300ac2790c2b0a7040463678",
+      "product-microdata.html": "ac90944defe30191758d43262908e63dfbcdc696963f018e96b4e86c06c19b05",
+      "product-missing-optional.html": "c1fe66a289ef13f20f229b5c94e9980d89305bd1b25bac3f308afbca29288a97",
+      "product-opengraph.html": "aff4e349724e498e0d76e57eccdf2cb408f67e552e9464471ef9340d3dd03f00",
+      "product-unicode-multilingual.html": "2c55503a179ccf9c4d0ad7cd1e98cc131a2b1549f37f9805ab90ee87cfc01a9a"
+    },
+    "kind_counts": {
+      "article": 7,
+      "product": 7
+    },
+    "manifest_sha256": "bff87476f9cf8cb3cd78d881b8596feba194dcab3bbe5c367f5bc6597b3d8cda",
+    "total_field_slots": 84
+  },
+  "schema_version": 1,
+  "threshold_checks": [
+    {
+      "actual": 1.0,
+      "metric": "present_field_exact_match",
+      "operator": ">=",
+      "passed": true,
+      "threshold": 1.0
+    },
+    {
+      "actual": 1.0,
+      "metric": "expected_field_completeness",
+      "operator": ">=",
+      "passed": true,
+      "threshold": 1.0
+    },
+    {
+      "actual": 1.0,
+      "metric": "expected_absence_accuracy",
+      "operator": ">=",
+      "passed": true,
+      "threshold": 1.0
+    },
+    {
+      "actual": 1.0,
+      "metric": "case_pass_rate",
+      "operator": ">=",
+      "passed": true,
+      "threshold": 1.0
+    },
+    {
+      "actual": 0,
+      "metric": "extraction_errors",
+      "operator": "<=",
+      "passed": true,
+      "threshold": 0
+    }
+  ],
+  "threshold_policy": {
+    "maximums": {
+      "extraction_errors": 0
+    },
+    "minimums": {
+      "case_pass_rate": 1.0,
+      "expected_absence_accuracy": 1.0,
+      "expected_field_completeness": 1.0,
+      "present_field_exact_match": 1.0
+    },
+    "observed_baseline": {
+      "case_pass_rate": 1.0,
+      "expected_absence_accuracy": 1.0,
+      "expected_field_completeness": 1.0,
+      "extraction_errors": 0,
+      "present_field_exact_match": 1.0
+    },
+    "rationale": "Frozen from the observed corpus-v1 baseline after correcting headline duplication on 2026-09-01. Floors equal that baseline because this 14-case corpus is small enough that losing one correct field or case is material.",
+    "schema_version": 1
+  },
+  "tool": "omniscrape-offline-quality-evaluator"
+}
