@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from os import environ as process_environ
 from urllib.parse import urlsplit
 
+import idna
+
 from ._tasking import MAX_TASK_CAPACITY
 
 
@@ -114,6 +116,11 @@ def _parse_host_authority(
     if allow_unbracketed_ip:
         with contextlib.suppress(ValueError):
             return str(ipaddress.ip_address(value)), None
+    # ``urlsplit("//example.test:").port`` is ``None`` rather than an error.
+    # Reject an explicitly empty port so a mistaken scoped rule cannot become
+    # an unrestricted hostname-only rule.
+    if value.endswith(":"):
+        raise ValueError("Invalid Host authority.")
     parsed = urlsplit(f"//{value}")
     if (
         parsed.hostname is None
@@ -128,17 +135,27 @@ def _parse_host_authority(
         port = parsed.port
     except ValueError as exc:
         raise ValueError("Invalid Host authority.") from exc
-    host = parsed.hostname.rstrip(".").lower()
-    if not host or host == "*":
+    host = parsed.hostname.rstrip(".")
+    if not host or "*" in host:
         raise ValueError("Invalid Host authority.")
+    return _normalize_hostname(host), port
+
+
+def _normalize_hostname(raw: str) -> str:
+    """Canonicalize an IP literal or DNS hostname consistently everywhere."""
+
+    host = raw.rstrip(".")
+    if not host:
+        raise ValueError("Invalid hostname.")
     try:
-        host = str(ipaddress.ip_address(host))
+        return str(ipaddress.ip_address(host))
     except ValueError:
         try:
-            host = host.encode("idna").decode("ascii")
-        except UnicodeError as exc:
-            raise ValueError("Invalid Host authority.") from exc
-    return host, port
+            # UTS-46 processing with non-transitional IDNA2008 semantics keeps
+            # characters such as German sharp-s distinct from ASCII ``ss``.
+            return idna.encode(host, uts46=True, std3_rules=True).decode("ascii").lower()
+        except (idna.IDNAError, UnicodeError) as exc:
+            raise ValueError("Invalid hostname.") from exc
 
 
 def _format_host_authority(host: str, port: int | None) -> str:
@@ -146,7 +163,9 @@ def _format_host_authority(host: str, port: int | None) -> str:
     return displayed if port is None else f"{displayed}:{port}"
 
 
-def _normalize_host_authorities(values: tuple[str, ...]) -> tuple[str, ...]:
+def _normalize_authorities(
+    values: tuple[str, ...], *, setting_name: str, description: str
+) -> tuple[str, ...]:
     try:
         normalized = (
             _format_host_authority(*_parse_host_authority(item, allow_unbracketed_ip=True))
@@ -154,12 +173,26 @@ def _normalize_host_authorities(values: tuple[str, ...]) -> tuple[str, ...]:
         )
         result = tuple(dict.fromkeys(normalized))
     except ValueError as exc:
-        raise ValueError(
-            "OMNISCRAPE_ALLOWED_HOSTS must contain explicit Host authorities."
-        ) from exc
+        raise ValueError(f"{setting_name} must contain explicit {description}.") from exc
     if not result:
-        raise ValueError("OMNISCRAPE_ALLOWED_HOSTS must contain explicit Host authorities.")
+        raise ValueError(f"{setting_name} must contain explicit {description}.")
     return result
+
+
+def _normalize_host_authorities(values: tuple[str, ...]) -> tuple[str, ...]:
+    return _normalize_authorities(
+        values,
+        setting_name="OMNISCRAPE_ALLOWED_HOSTS",
+        description="Host authorities",
+    )
+
+
+def _normalize_outbound_host_authorities(values: tuple[str, ...]) -> tuple[str, ...]:
+    return _normalize_authorities(
+        values,
+        setting_name="OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS",
+        description="outbound target Host authorities",
+    )
 
 
 def _allowed_hosts(raw: str | None) -> tuple[str, ...] | None:
@@ -167,6 +200,13 @@ def _allowed_hosts(raw: str | None) -> tuple[str, ...] | None:
         return None
     hosts = tuple(item.strip() for item in raw.split(",") if item.strip())
     return _normalize_host_authorities(hosts)
+
+
+def _outbound_allowed_hosts(raw: str | None) -> tuple[str, ...] | None:
+    if raw is None or not raw.strip():
+        return None
+    hosts = tuple(item.strip() for item in raw.split(",") if item.strip())
+    return _normalize_outbound_host_authorities(hosts)
 
 
 @dataclass(frozen=True, slots=True)
@@ -187,12 +227,15 @@ class Settings:
     fetch_timeout_seconds: float = 30.0
     max_response_bytes: int = 2_000_000
     max_redirects: int = 5
-    user_agent: str = "OmniScrape/0.2 (+https://github.com/Z-MarkUs/OmniScrape)"
+    user_agent: str = "OmniScrape/0.3 (+https://github.com/Z-MarkUs/OmniScrape)"
     render_timeout_ms: int = 15_000
     max_render_requests: int = 128
     max_render_nodes: int = 50_000
     provider_timeout_seconds: float = 30.0
     auto_llm_threshold: float = 0.72
+    # Keep new options after the original positional fields for backward
+    # compatibility; callers should still prefer keyword arguments.
+    outbound_allowed_hosts: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.enable_api_rendering, bool):
@@ -243,6 +286,19 @@ class Settings:
             if not isinstance(self.allowed_hosts, tuple):
                 raise ValueError("allowed_hosts must be a tuple of explicit authorities.")
             _normalize_host_authorities(self.allowed_hosts)
+        if self.outbound_allowed_hosts is not None:
+            if not isinstance(self.outbound_allowed_hosts, tuple):
+                raise ValueError("outbound_allowed_hosts must be a tuple of explicit authorities.")
+            object.__setattr__(
+                self,
+                "outbound_allowed_hosts",
+                _normalize_outbound_host_authorities(self.outbound_allowed_hosts),
+            )
+        if self.enable_api_rendering and not self.outbound_allowed_hosts:
+            raise ValueError(
+                "OMNISCRAPE_ENABLE_API_RENDERING requires a non-empty "
+                "OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS policy."
+            )
         if self.api_key is not None and (
             not isinstance(self.api_key, str)
             or not self.api_key
@@ -260,6 +316,9 @@ class Settings:
         return cls(
             api_key=env.get("OMNISCRAPE_API_KEY") or None,
             allowed_hosts=_allowed_hosts(env.get("OMNISCRAPE_ALLOWED_HOSTS")),
+            outbound_allowed_hosts=_outbound_allowed_hosts(
+                env.get("OMNISCRAPE_OUTBOUND_ALLOWED_HOSTS")
+            ),
             enable_api_rendering=_strict_env_bool(
                 "OMNISCRAPE_ENABLE_API_RENDERING",
                 env.get("OMNISCRAPE_ENABLE_API_RENDERING"),
@@ -299,7 +358,7 @@ class Settings:
             ),
             user_agent=env.get(
                 "OMNISCRAPE_USER_AGENT",
-                "OmniScrape/0.2 (+https://github.com/Z-MarkUs/OmniScrape)",
+                "OmniScrape/0.3 (+https://github.com/Z-MarkUs/OmniScrape)",
             ),
             render_timeout_ms=_positive_int(
                 env.get("OMNISCRAPE_RENDER_TIMEOUT_MS"),

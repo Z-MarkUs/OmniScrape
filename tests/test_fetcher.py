@@ -51,11 +51,19 @@ def public_resolver(_host: str, _port: int) -> Iterable[Any]:
         ("max_render_nodes", "many"),
         ("max_inflight_tasks", 33),
         ("max_render_concurrency", 3),
+        ("outbound_allowed_hosts", ["example.test"]),
     ],
 )
 def test_fetcher_config_rejects_invalid_direct_resource_limits(field: str, value: Any) -> None:
     with pytest.raises(ValueError):
         FetcherConfig(**{field: value})  # type: ignore[arg-type]
+
+
+def test_fetcher_config_normalizes_outbound_allowed_hosts() -> None:
+    config = FetcherConfig(
+        outbound_allowed_hosts=("EXAMPLE.test.", "example.test", "example.test:8443")
+    )
+    assert config.outbound_allowed_hosts == ("example.test", "example.test:8443")
 
 
 @pytest.mark.asyncio
@@ -142,6 +150,96 @@ async def test_redirect_target_is_revalidated_before_second_request() -> None:
             await fetcher.fetch("https://safe.example.test/start")
 
     assert seen == [f"https://{PUBLIC_IP}/start"]
+
+
+@pytest.mark.asyncio
+async def test_initial_outbound_allowlist_denial_happens_before_dns_or_transport() -> None:
+    resolver_calls = 0
+    transport_calls = 0
+
+    def resolver(_host: str, _port: int) -> list[str]:
+        nonlocal resolver_calls
+        resolver_calls += 1
+        return [PUBLIC_IP]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal transport_calls
+        transport_calls += 1
+        return httpx.Response(200, request=request)
+
+    config = FetcherConfig(outbound_allowed_hosts=("allowed.example.test",))
+    async with AsyncFetcher(
+        config,
+        transport=httpx.MockTransport(handler),
+        resolver=resolver,
+    ) as fetcher:
+        with pytest.raises(URLSafetyError, match="allowlist"):
+            await fetcher.fetch("https://denied.example.test/")
+
+    assert resolver_calls == 0
+    assert transport_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_http_redirect_denial_happens_before_target_dns_or_second_request() -> None:
+    resolved_hosts: list[str] = []
+    seen: list[str] = []
+
+    def resolver(host: str, _port: int) -> list[str]:
+        resolved_hosts.append(host)
+        return [PUBLIC_IP]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request.headers["host"])
+        return httpx.Response(
+            302,
+            headers={"location": "https://denied.example.test/final"},
+            request=request,
+        )
+
+    config = FetcherConfig(outbound_allowed_hosts=("allowed.example.test",))
+    async with AsyncFetcher(
+        config,
+        transport=httpx.MockTransport(handler),
+        resolver=resolver,
+    ) as fetcher:
+        with pytest.raises(URLSafetyError, match="allowlist"):
+            await fetcher.fetch("https://allowed.example.test/start")
+
+    assert resolved_hosts and set(resolved_hosts) == {"allowed.example.test"}
+    assert seen == ["allowed.example.test"]
+
+
+@pytest.mark.asyncio
+async def test_http_redirect_to_second_exactly_allowed_host_is_permitted() -> None:
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        host = request.headers["host"]
+        seen.append(host)
+        if host == "first.example.test":
+            return httpx.Response(
+                302,
+                headers={"location": "https://second.example.test/final"},
+                request=request,
+            )
+        return httpx.Response(
+            200,
+            headers={"content-type": "text/html"},
+            text="<h1>Allowed redirect</h1>",
+            request=request,
+        )
+
+    config = FetcherConfig(outbound_allowed_hosts=("first.example.test", "second.example.test"))
+    async with AsyncFetcher(
+        config,
+        transport=httpx.MockTransport(handler),
+        resolver=public_resolver,
+    ) as fetcher:
+        result = await fetcher.fetch("https://first.example.test/start")
+
+    assert seen == ["first.example.test", "second.example.test"]
+    assert str(result.final_url) == "https://second.example.test/final"
 
 
 @pytest.mark.asyncio
@@ -267,6 +365,56 @@ async def test_falsey_injected_renderer_is_preserved() -> None:
         renderer=renderer,
     ) as fetcher:
         result = await fetcher.fetch("https://render.example.test/", render=True)
+
+    assert result.rendered is True
+    assert renderer.calls == 1
+
+
+def test_policy_unaware_custom_renderer_is_rejected_before_use() -> None:
+    class PolicyUnawareRenderer:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def fetch(self, url: str) -> FetchResult:
+            self.calls += 1
+            raise AssertionError(f"renderer must not receive {url}")
+
+    renderer = PolicyUnawareRenderer()
+    config = FetcherConfig(outbound_allowed_hosts=("allowed.example.test",))
+
+    with pytest.raises(ValueError, match="must advertise the identical normalized policy"):
+        AsyncFetcher(config, renderer=renderer)
+
+    assert renderer.calls == 0
+
+
+@pytest.mark.asyncio
+async def test_policy_capable_custom_renderer_is_accepted_and_rechecked() -> None:
+    class PolicyCapableRenderer:
+        def __init__(self) -> None:
+            self.outbound_allowed_hosts = ("allowed.example.test",)
+            self.calls = 0
+
+        async def fetch(self, url: str) -> FetchResult:
+            self.calls += 1
+            return FetchResult(
+                requested_url=url,
+                final_url=url,
+                status_code=200,
+                html="<h1>Rendered</h1>",
+                encoding="utf-8",
+                byte_count=17,
+                elapsed_ms=1,
+                rendered=True,
+            )
+
+    renderer = PolicyCapableRenderer()
+    config = FetcherConfig(outbound_allowed_hosts=("allowed.example.test",))
+    async with AsyncFetcher(config, renderer=renderer) as fetcher:
+        result = await fetcher.fetch("https://allowed.example.test/", render=True)
+        renderer.outbound_allowed_hosts = ("denied.example.test",)
+        with pytest.raises(ValueError, match="must advertise the identical normalized policy"):
+            await fetcher.fetch("https://allowed.example.test/", render=True)
 
     assert result.rendered is True
     assert renderer.calls == 1
@@ -500,6 +648,10 @@ class FakeCDPSession:
         if method == "Page.createIsolatedWorld":
             return {"executionContextId": 17}
         if method == "Runtime.evaluate":
+            for network_request in self.page.late_network_requests:
+                route = FakeRoute()
+                await self.page.route_callback(route, network_request)
+                self.page.route_actions.append(route.action)
             if self.page.mutate_before_budget_url is not None:
                 self.page.url = self.page.mutate_before_budget_url
             html = self.page.html
@@ -541,10 +693,12 @@ class FakePage:
         html: str = "<html><h1>Rendered fixture</h1></html>",
         status: int | None = 200,
         error: Exception | None = None,
+        error_after_routes: Exception | None = None,
         network_bytes: int = 0,
         decoded_network_bytes: int = 0,
         request: FakeBrowserRequest | None = None,
         network_requests: list[Any] | None = None,
+        late_network_requests: list[Any] | None = None,
         dom_nodes: int = 1,
         dom_content_units: int = 0,
         mutate_after_budget_html: str | None = None,
@@ -555,10 +709,12 @@ class FakePage:
         self.html = html
         self.status = status
         self.error = error
+        self.error_after_routes = error_after_routes
         self.network_bytes = network_bytes
         self.decoded_network_bytes = decoded_network_bytes
         self.request = request
         self.network_requests = network_requests or []
+        self.late_network_requests = late_network_requests or []
         self.dom_nodes = dom_nodes
         self.dom_content_units = dom_content_units
         self.mutate_after_budget_html = mutate_after_budget_html
@@ -587,6 +743,8 @@ class FakePage:
             route = FakeRoute()
             await self.route_callback(route, network_request)
             self.route_actions.append(route.action)
+        if self.error_after_routes is not None:
+            raise self.error_after_routes
         if self.cdp is not None and (self.network_bytes or self.decoded_network_bytes):
             self.cdp.emit(
                 "Network.dataReceived",
@@ -899,6 +1057,111 @@ async def test_playwright_renderer_is_bounded_and_guards_subresources(monkeypatc
         ),
     )
     assert later_navigation_route.action == "abort"
+
+
+@pytest.mark.asyncio
+async def test_renderer_initial_allowlist_denial_precedes_dns_and_browser_launch(
+    monkeypatch: Any,
+) -> None:
+    resolver_calls = 0
+
+    def resolver(_host: str, _port: int) -> list[str]:
+        nonlocal resolver_calls
+        resolver_calls += 1
+        return [PUBLIC_IP]
+
+    browser = install_fake_playwright(monkeypatch, FakePage())
+    config = FetcherConfig(outbound_allowed_hosts=("allowed.example.test",))
+
+    with pytest.raises(URLSafetyError, match="allowlist"):
+        await PlaywrightRenderer(config, resolver=resolver).fetch("https://denied.example.test/")
+
+    assert resolver_calls == 0
+    assert browser.chromium.launch_count == 0
+
+
+@pytest.mark.asyncio
+async def test_renderer_denies_redirect_navigation_with_stable_url_policy_error(
+    monkeypatch: Any,
+) -> None:
+    page = FakePage(error_after_routes=RuntimeError("net::ERR_FAILED after route abort"))
+    page.network_requests = [
+        SimpleNamespace(
+            method="GET",
+            resource_type="document",
+            url="https://denied.example.test/final",
+            frame=page.main_frame,
+            redirected_from=FakeBrowserRequest("https://render.example.test/start"),
+        )
+    ]
+    browser = install_fake_playwright(monkeypatch, page)
+    config = FetcherConfig(outbound_allowed_hosts=("render.example.test",))
+
+    with pytest.raises(URLSafetyError) as caught:
+        await PlaywrightRenderer(config, resolver=public_resolver).fetch(
+            "https://render.example.test/start"
+        )
+
+    assert caught.value.code == "unsafe_url"
+    assert caught.value.public_message == (
+        "The URL is not permitted by the outbound network policy."
+    )
+    assert page.route_actions == ["abort"]
+    assert browser.context.closed is True
+    assert browser.closed is True
+
+
+@pytest.mark.asyncio
+async def test_renderer_denies_main_navigation_started_after_goto_completes(
+    monkeypatch: Any,
+) -> None:
+    page = FakePage()
+    page.late_network_requests = [
+        SimpleNamespace(
+            method="GET",
+            resource_type="document",
+            url="https://denied.example.test/late-navigation",
+            frame=page.main_frame,
+            redirected_from=None,
+        )
+    ]
+    browser = install_fake_playwright(monkeypatch, page)
+    config = FetcherConfig(outbound_allowed_hosts=("render.example.test",))
+
+    with pytest.raises(URLSafetyError) as caught:
+        await PlaywrightRenderer(config, resolver=public_resolver).fetch(
+            "https://render.example.test/start"
+        )
+
+    assert caught.value.code == "unsafe_url"
+    assert page.route_actions == ["abort"]
+    assert browser.context.closed is True
+    assert browser.closed is True
+
+
+@pytest.mark.asyncio
+async def test_renderer_allows_main_navigation_under_exact_host_policy(
+    monkeypatch: Any,
+) -> None:
+    page = FakePage()
+    page.network_requests = [
+        SimpleNamespace(
+            method="GET",
+            resource_type="document",
+            url="https://render.example.test/final",
+            frame=page.main_frame,
+            redirected_from=FakeBrowserRequest("https://render.example.test/start"),
+        )
+    ]
+    install_fake_playwright(monkeypatch, page)
+    config = FetcherConfig(outbound_allowed_hosts=("render.example.test",))
+
+    result = await PlaywrightRenderer(config, resolver=public_resolver).fetch(
+        "https://render.example.test/start"
+    )
+
+    assert result.rendered is True
+    assert page.route_actions == ["continue"]
 
 
 @pytest.mark.asyncio

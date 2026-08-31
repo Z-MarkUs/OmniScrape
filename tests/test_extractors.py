@@ -7,7 +7,7 @@ from typing import Any
 
 from bs4.element import Tag
 
-from omniscrape.extractors import extract_heuristic, extract_structured
+from omniscrape.extractors import extract_heuristic, extract_readability, extract_structured
 from omniscrape.extractors import structured as structured_module
 from omniscrape.extractors.common import (
     author_name,
@@ -67,6 +67,94 @@ def test_heuristic_article_keeps_content_and_drops_page_chrome(article_html: str
     assert "safe wiring" in candidate.values["text"]
     assert "Home — Weather" not in candidate.values["text"]
     assert "Copyright" not in candidate.values["text"]
+
+
+def test_readability_article_text_excludes_an_exact_leading_title() -> None:
+    html = """
+    <html lang="zh-Hant">
+      <head><title>社區天台花園迎來蜜蜂</title></head>
+      <body>
+        <article>
+          <h1>社區天台花園迎來蜜蜂</h1>
+          <p>義工在清晨安置了三個本地蜂箱, 並記錄第一批訪客。</p>
+          <p>導賞資料同時提供粵語、English 與日本語版本。</p>
+        </article>
+      </body>
+    </html>
+    """
+
+    candidate = extract_readability(html, ARTICLE_URL, ContentKind.ARTICLE)
+
+    assert candidate is not None
+    assert candidate.values["title"] == "社區天台花園迎來蜜蜂"
+    assert candidate.values["text"] == (
+        "義工在清晨安置了三個本地蜂箱, 並記錄第一批訪客。\n\n"
+        "導賞資料同時提供粵語、English 與日本語版本。"
+    )
+
+
+def test_readability_excludes_a_leading_title_with_nested_inline_markup() -> None:
+    html = """
+    <html>
+      <head><title>Island Grid Begins Trial</title></head>
+      <body>
+        <article>
+          <h1>Island Grid <em>Begins</em> Trial</h1>
+          <p>Engineers connected a tidal generator to a neighborhood battery before sunrise.</p>
+          <p>The trial will publish detailed open performance notes for local schools.</p>
+        </article>
+      </body>
+    </html>
+    """
+
+    candidate = extract_readability(html, ARTICLE_URL, ContentKind.ARTICLE)
+
+    assert candidate is not None
+    assert candidate.values["title"] == "Island Grid Begins Trial"
+    assert candidate.values["text"] == (
+        "Engineers connected a tidal generator to a neighborhood battery before sunrise.\n\n"
+        "The trial will publish detailed open performance notes for local schools."
+    )
+
+
+def test_readability_keeps_first_block_when_it_is_not_the_title() -> None:
+    html = """
+    <html>
+      <head><title>Independent heading</title></head>
+      <body>
+        <article>
+          <h2>Introduction</h2>
+          <p>The opening paragraph is meaningful body content and must remain intact.</p>
+          <p>A second paragraph keeps the document long enough for readability.</p>
+        </article>
+      </body>
+    </html>
+    """
+
+    candidate = extract_readability(html, ARTICLE_URL, ContentKind.ARTICLE)
+
+    assert candidate is not None
+    assert candidate.values["text"].startswith("Introduction\n\nThe opening paragraph")
+
+
+def test_readability_keeps_no_heading_paragraph_that_matches_document_title() -> None:
+    html = """
+    <html>
+      <head><title>A repeated opening</title></head>
+      <body>
+        <article>
+          <p>A repeated opening</p>
+          <p>This paragraph supplies the substantive article body after the repeated phrase.</p>
+          <p>A final paragraph makes the intended body selection unambiguous.</p>
+        </article>
+      </body>
+    </html>
+    """
+
+    candidate = extract_readability(html, ARTICLE_URL, ContentKind.ARTICLE)
+
+    assert candidate is not None
+    assert candidate.values["text"].startswith("A repeated opening\n\nThis paragraph")
 
 
 def test_hostile_markup_is_treated_as_inert_text(hostile_html: str) -> None:

@@ -10,7 +10,7 @@ import math
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
@@ -25,11 +25,13 @@ from ._tasking import (
     retain_task,
     wait_without_cancelling,
 )
-from .errors import FetchError, ResponseTooLargeError, UnsupportedContentError
+from .config import _normalize_hostname, _normalize_outbound_host_authorities
+from .errors import FetchError, ResponseTooLargeError, UnsupportedContentError, URLSafetyError
 from .security import (
     Resolver,
     ValidatedURL,
     default_resolver,
+    enforce_outbound_target,
     validate_peer_address,
     validate_url_async,
 )
@@ -55,12 +57,13 @@ class FetcherConfig:
     max_response_bytes: int = 2_000_000
     max_redirects: int = 5
     total_timeout_seconds: float = 30.0
-    user_agent: str = "OmniScrape/0.2 (+https://github.com/Z-MarkUs/OmniScrape)"
+    user_agent: str = "OmniScrape/0.3 (+https://github.com/Z-MarkUs/OmniScrape)"
     render_timeout_ms: int = 15_000
     max_render_requests: int = 128
     max_render_nodes: int = 50_000
     max_inflight_tasks: int = 8
     max_render_concurrency: int = 2
+    outbound_allowed_hosts: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         for name in (
@@ -99,6 +102,14 @@ class FetcherConfig:
                 raise ValueError(f"{name} is outside its supported integer range.")
         if not isinstance(self.user_agent, str) or not self.user_agent.strip():
             raise ValueError("user_agent must be a non-empty string.")
+        if self.outbound_allowed_hosts is not None:
+            if not isinstance(self.outbound_allowed_hosts, tuple):
+                raise ValueError("outbound_allowed_hosts must be a tuple of explicit authorities.")
+            object.__setattr__(
+                self,
+                "outbound_allowed_hosts",
+                _normalize_outbound_host_authorities(self.outbound_allowed_hosts),
+            )
 
 
 class RedirectHop(BaseModel):
@@ -129,6 +140,36 @@ class FetchResult(BaseModel):
 class Renderer(Protocol):
     async def fetch(self, url: str) -> FetchResult:
         """Render and return a validated public web page."""
+
+
+class OutboundPolicyRenderer(Renderer, Protocol):
+    """Renderer that explicitly enforces one normalized outbound host policy."""
+
+    @property
+    def outbound_allowed_hosts(self) -> tuple[str, ...] | None:
+        """Return the exact policy enforced by every renderer-owned request."""
+
+
+def _require_renderer_outbound_policy(
+    renderer: Renderer,
+    allowed_hosts: tuple[str, ...] | None,
+) -> None:
+    """Reject policy-unaware injected renderers before they can perform I/O."""
+
+    if allowed_hosts is None:
+        return
+    try:
+        renderer_policy = cast(OutboundPolicyRenderer, renderer).outbound_allowed_hosts
+    except Exception as exc:
+        raise ValueError(
+            "A custom renderer used with outbound_allowed_hosts must advertise "
+            "the identical normalized policy via outbound_allowed_hosts."
+        ) from exc
+    if renderer_policy != allowed_hosts:
+        raise ValueError(
+            "A custom renderer used with outbound_allowed_hosts must advertise "
+            "the identical normalized policy via outbound_allowed_hosts."
+        )
 
 
 def renderer_package_available() -> bool:
@@ -638,11 +679,17 @@ def _same_origin(url: str, validated: ValidatedURL) -> bool:
         scheme = parts.scheme.lower()
         if scheme not in {"http", "https"}:
             return False
-        host = parts.hostname.rstrip(".").encode("idna").decode("ascii").lower()
+        host = _normalize_hostname(parts.hostname)
         port = parts.port or (80 if scheme == "http" else 443)
-    except (UnicodeError, ValueError):
+    except ValueError:
         return False
     return (scheme, host, port) == (validated.scheme, validated.host, validated.port)
+
+
+def _browser_target_policy_error() -> URLSafetyError:
+    return URLSafetyError(
+        "The browser navigation target is not present in the outbound host allowlist."
+    )
 
 
 async def _close_browser_resources(context: Any | None, browser: Any | None) -> None:
@@ -710,6 +757,8 @@ class AsyncFetcher:
     ) -> None:
         self.config = config or FetcherConfig()
         self._resolver = resolver
+        if renderer is not None:
+            _require_renderer_outbound_policy(renderer, self.config.outbound_allowed_hosts)
         self._renderer = renderer
         self._operations = BoundedTaskSet(self.config.max_inflight_tasks, label="Outbound fetch")
         self._render_operations = BoundedTaskSet(
@@ -769,6 +818,16 @@ class AsyncFetcher:
     async def fetch(self, url: str, *, render: bool = False) -> FetchResult:
         if self._closed:
             raise FetchError("The fetcher is closed.")
+        if render and self._renderer is not None:
+            # Recheck at the point of use so a mutable custom renderer cannot
+            # change or discard its advertised policy after construction.
+            _require_renderer_outbound_policy(
+                self._renderer,
+                self.config.outbound_allowed_hosts,
+            )
+        # Apply configured policy before task admission, custom renderer
+        # delegation, and—most importantly—before any DNS resolution.
+        enforce_outbound_target(url, self.config.outbound_allowed_hosts)
         operation = (
             (
                 self._renderer
@@ -850,12 +909,22 @@ class AsyncFetcher:
 
     async def _fetch_http(self, url: str) -> FetchResult:
         started = time.perf_counter()
-        original = (await validate_url_async(url, self._resolver)).url
+        original = (
+            await validate_url_async(
+                url,
+                self._resolver,
+                allowed_hosts=self.config.outbound_allowed_hosts,
+            )
+        ).url
         current = original
         redirects: list[RedirectHop] = []
 
         for hop in range(self.config.max_redirects + 1):
-            validated = await validate_url_async(current, self._resolver)
+            validated = await validate_url_async(
+                current,
+                self._resolver,
+                allowed_hosts=self.config.outbound_allowed_hosts,
+            )
             response = await self._send_pinned(validated)
 
             try:
@@ -866,7 +935,11 @@ class AsyncFetcher:
                     if hop >= self.config.max_redirects:
                         raise FetchError("The remote server exceeded the redirect limit.")
                     candidate = urljoin(validated.url, location)
-                    target = await validate_url_async(candidate, self._resolver)
+                    target = await validate_url_async(
+                        candidate,
+                        self._resolver,
+                        allowed_hosts=self.config.outbound_allowed_hosts,
+                    )
                     redirects.append(
                         RedirectHop.model_validate(
                             {
@@ -971,9 +1044,19 @@ class PlaywrightRenderer:
         self.config = config or FetcherConfig()
         self._resolver = resolver
 
+    @property
+    def outbound_allowed_hosts(self) -> tuple[str, ...] | None:
+        """Advertise the exact policy enforced by browser request routing."""
+
+        return self.config.outbound_allowed_hosts
+
     async def fetch(self, url: str) -> FetchResult:
         started = time.perf_counter()
-        validated = await validate_url_async(url, self._resolver)
+        validated = await validate_url_async(
+            url,
+            self._resolver,
+            allowed_hosts=self.config.outbound_allowed_hosts,
+        )
         original = validated.url
         pinned_address = next(
             (
@@ -997,7 +1080,9 @@ class PlaywrightRenderer:
             browser: Any | None = None
             context: Any | None = None
             budget_watchdog: asyncio.Task[Any] | None = None
+            policy_watchdog: asyncio.Task[Any] | None = None
             resource_budget_exceeded: asyncio.Event | None = None
+            target_policy_denied: asyncio.Event | None = None
             try:
                 browser = await playwright.chromium.launch(
                     headless=True,
@@ -1056,6 +1141,8 @@ class PlaywrightRenderer:
                 budget_event = asyncio.Event()
                 resource_budget_exceeded = budget_event
                 redirect_limit_exceeded = asyncio.Event()
+                target_policy_event = asyncio.Event()
+                target_policy_denied = target_policy_event
                 transferred_bytes = 0
                 allowed_requests = 0
                 main_document_root: Any | None = None
@@ -1070,8 +1157,20 @@ class PlaywrightRenderer:
                         name="omniscrape-browser-budget-context-close",
                     )
 
+                async def abort_on_policy_denial() -> None:
+                    await target_policy_event.wait()
+                    await await_retained_cleanup(
+                        guarded_context.close(),
+                        tasks=_DEFERRED_SHUTDOWN_TASKS,
+                        name="omniscrape-browser-policy-context-close",
+                    )
+
                 budget_watchdog = asyncio.create_task(
                     abort_on_budget(), name="omniscrape-browser-budget-watchdog"
+                )
+                policy_watchdog = asyncio.create_task(
+                    abort_on_policy_denial(),
+                    name="omniscrape-browser-policy-watchdog",
                 )
 
                 def record_data(event: Mapping[str, Any]) -> None:
@@ -1098,6 +1197,20 @@ class PlaywrightRenderer:
                         return
                     if allowed_requests > max(1, self.config.max_render_requests):
                         budget_event.set()
+                        await route.abort()
+                        return
+                    try:
+                        enforce_outbound_target(
+                            request.url,
+                            self.config.outbound_allowed_hosts,
+                        )
+                    except URLSafetyError:
+                        # A denied main-frame document is an extraction failure,
+                        # not merely a blocked optional subresource. Signal the
+                        # navigation task so callers receive the stable URL policy
+                        # error instead of a browser-specific transport message.
+                        if request.resource_type == "document" and request.frame == page.main_frame:
+                            target_policy_event.set()
                         await route.abort()
                         return
                     # Rendering is observational. Never let page JavaScript turn an
@@ -1155,24 +1268,27 @@ class PlaywrightRenderer:
                 )
                 budget_wait = asyncio.create_task(budget_event.wait())
                 redirect_wait = asyncio.create_task(redirect_limit_exceeded.wait())
+                target_policy_wait = asyncio.create_task(target_policy_event.wait())
                 try:
                     await asyncio.wait(
-                        {navigation, budget_wait, redirect_wait},
+                        {navigation, budget_wait, redirect_wait, target_policy_wait},
                         return_when=asyncio.FIRST_COMPLETED,
                     )
+                    if target_policy_event.is_set():
+                        navigation.cancel()
+                        await asyncio.gather(navigation, return_exceptions=True)
+                        raise _browser_target_policy_error()
                     if redirect_limit_exceeded.is_set():
                         navigation.cancel()
-                        with contextlib.suppress(asyncio.CancelledError):
-                            await navigation
+                        await asyncio.gather(navigation, return_exceptions=True)
                         raise FetchError("The rendered page exceeded the redirect limit.")
                     if budget_event.is_set():
                         navigation.cancel()
-                        with contextlib.suppress(asyncio.CancelledError):
-                            await navigation
+                        await asyncio.gather(navigation, return_exceptions=True)
                         raise ResponseTooLargeError()
                     response = await navigation
                 finally:
-                    for waiter in (budget_wait, redirect_wait):
+                    for waiter in (budget_wait, redirect_wait, target_policy_wait):
                         waiter.cancel()
                         with contextlib.suppress(asyncio.CancelledError):
                             await waiter
@@ -1212,9 +1328,13 @@ class PlaywrightRenderer:
                         },
                     )
                 except Exception as exc:
+                    if target_policy_event.is_set():
+                        raise _browser_target_policy_error() from exc
                     if budget_event.is_set():
                         raise ResponseTooLargeError() from exc
                     raise
+                if target_policy_event.is_set():
+                    raise _browser_target_policy_error()
                 if not isinstance(evaluation, Mapping) or evaluation.get("exceptionDetails"):
                     raise FetchError("The rendered document could not be inspected.")
                 budget = (evaluation.get("result") or {}).get("value") or {}
@@ -1237,7 +1357,11 @@ class PlaywrightRenderer:
                 captured_url = budget.get("documentURL")
                 if not isinstance(captured_url, str) or not _same_origin(captured_url, validated):
                     raise FetchError("The rendered page crossed an unpinned origin.")
-                final_validated = await validate_url_async(captured_url, self._resolver)
+                final_validated = await validate_url_async(
+                    captured_url,
+                    self._resolver,
+                    allowed_hosts=self.config.outbound_allowed_hosts,
+                )
                 if budget_event.is_set():
                     raise ResponseTooLargeError()
                 # Stop the browsing context before committing a result. CDP byte
@@ -1251,6 +1375,8 @@ class PlaywrightRenderer:
                     name="omniscrape-browser-context-close",
                 )
                 await asyncio.sleep(0)
+                if target_policy_event.is_set():
+                    raise _browser_target_policy_error()
                 if budget_event.is_set():
                     raise ResponseTooLargeError()
                 body = html.encode("utf-8")
@@ -1275,19 +1401,31 @@ class PlaywrightRenderer:
                 )
             except ResponseTooLargeError:
                 raise
-            except FetchError:
+            except URLSafetyError:
+                raise
+            except FetchError as exc:
+                if target_policy_denied is not None and target_policy_denied.is_set():
+                    raise _browser_target_policy_error() from exc
                 raise
             except Exception as exc:
+                if target_policy_denied is not None and target_policy_denied.is_set():
+                    raise _browser_target_policy_error() from exc
                 if resource_budget_exceeded is not None and resource_budget_exceeded.is_set():
                     raise ResponseTooLargeError() from exc
                 raise FetchError("The browser could not render the remote page.") from exc
             finally:
-                closing_watchdog, budget_watchdog = budget_watchdog, None
-                if closing_watchdog is not None:
+                closing_budget_watchdog, budget_watchdog = budget_watchdog, None
+                closing_policy_watchdog, policy_watchdog = policy_watchdog, None
+                closing_watchdogs = tuple(
+                    watchdog
+                    for watchdog in (closing_budget_watchdog, closing_policy_watchdog)
+                    if watchdog is not None
+                )
+                if closing_watchdogs:
                     await await_retained_cleanup(
-                        _cancel_tasks((closing_watchdog,)),
+                        _cancel_tasks(closing_watchdogs),
                         tasks=_DEFERRED_SHUTDOWN_TASKS,
-                        name="omniscrape-browser-budget-watchdog-stop",
+                        name="omniscrape-browser-watchdogs-stop",
                     )
                 closing_context, context = context, None
                 closing_browser, browser = browser, None

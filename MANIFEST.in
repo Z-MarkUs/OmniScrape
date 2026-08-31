@@ -6,11 +6,14 @@ include SECURITY.md
 include RELEASING.md
 include .env.example
 include scripts/sync_agent_skills.py
+include scripts/release_notes.py
 graft docs/assets
 graft .agents/skills/omniscrape
 graft .claude/skills/omniscrape
 graft benchmarks
+graft evaluation
 graft tests
 prune benchmarks/__pycache__
+prune evaluation/__pycache__
 prune tests/__pycache__
 global-exclude *.py[cod]

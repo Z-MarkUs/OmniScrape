@@ -27,9 +27,11 @@ gates required on `main`.
 
 ## Publish
 
-Create an annotated tag on the verified `main` commit. Its annotation becomes
-the public release notes, so describe only shipped behavior and include the
-artifact-verification command.
+Create an annotated tag on the verified `main` commit. Use a concise annotation;
+the public release notes are generated from the exact tagged version section in
+`CHANGELOG.md` and include checksum, provenance, and immutable-release verification
+commands. The release workflow fails closed if that dated section is absent, empty,
+duplicated, malformed, or does not match the tag version.
 
 ```bash
 git switch main
@@ -37,7 +39,7 @@ git pull --ff-only
 release_version="$(python -c \
   'import pathlib, re; print(re.search(r"(?m)^version = \"([^\"]+)\"$", pathlib.Path("pyproject.toml").read_text()).group(1))')"
 release_tag="v${release_version}"
-git tag --annotate "$release_tag" --file release-notes.md
+git tag --annotate "$release_tag" --message "OmniScrape ${release_tag}"
 git push origin "refs/tags/${release_tag}"
 ```
 
@@ -46,9 +48,10 @@ exact distributions from that run, validates their versions, and creates signed 
 build-provenance attestations whose identity is the tagged commit. After CI succeeds,
 a separate release workflow loaded from protected `main` verifies that the annotated
 tag points to the CI-tested commit and that the commit belongs to `main`. It revalidates
-the distributions, generates `SHA256SUMS`, and publishes the GitHub release. The
-privileged release job has no OIDC permission and does not check out or execute
-tag-controlled repository code.
+the distributions, generates `SHA256SUMS`, and publishes the GitHub release. Before
+publishing, it loads the note generator from the protected workflow commit and treats
+the tagged commit's `CHANGELOG.md` only as data; it never checks out or executes
+tag-controlled repository code. The privileged release job has no OIDC permission.
 
 Do not create a release manually while that workflow is running. Release
 immutability locks the tag and uploaded assets after publication; correct a

@@ -94,6 +94,16 @@ def test_settings_forward_render_concurrency_to_fetcher() -> None:
     assert service.fetcher.config.max_render_concurrency == 1  # type: ignore[attr-defined]
 
 
+def test_settings_forward_outbound_allowlist_to_fetcher() -> None:
+    service = OmniScrape.from_settings(
+        Settings(outbound_allowed_hosts=("EXAMPLE.test.", "example.test:8443"))
+    )
+    assert service.fetcher.config.outbound_allowed_hosts == (  # type: ignore[attr-defined]
+        "example.test",
+        "example.test:8443",
+    )
+
+
 @pytest.mark.asyncio
 async def test_article_pipeline_merges_deterministic_layers(article_html: str) -> None:
     url = "https://news.example.test/stories/solar-workshop"

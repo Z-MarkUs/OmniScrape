@@ -12,6 +12,7 @@ import pytest
 from omniscrape.errors import BusyError, URLSafetyError
 from omniscrape.security import (
     _MAX_RESOLVER_WORKERS,
+    enforce_outbound_target,
     validate_peer_address,
     validate_url,
     validate_url_async,
@@ -49,6 +50,82 @@ def test_unicode_hostname_is_resolved_as_idna() -> None:
 
     validate_url("https://例子.test/path", resolver=resolver)
     assert observed == [("xn--fsqu00a.test", 443)]
+
+
+def test_outbound_allowlist_is_enforced_before_dns_resolution() -> None:
+    resolver_calls = 0
+
+    def resolver(_host: str, _port: int) -> list[str]:
+        nonlocal resolver_calls
+        resolver_calls += 1
+        return [PUBLIC_V4]
+
+    with pytest.raises(URLSafetyError, match="allowlist"):
+        validate_url(
+            "https://denied.example.test/",
+            resolver=resolver,
+            allowed_hosts=("allowed.example.test",),
+        )
+    assert resolver_calls == 0
+
+
+@pytest.mark.parametrize(
+    ("url", "allowed_hosts"),
+    [
+        ("https://example.test/", ("example.test",)),
+        ("https://EXAMPLE.test.:8443/", ("example.test",)),
+        ("https://example.test:8443/", ("example.test:8443",)),
+        ("https://例子.test/", ("xn--fsqu00a.test",)),
+        ("https://[2606:4700:4700::1111]/", ("2606:4700:4700::1111",)),
+        (
+            "https://[2606:4700:4700:0:0:0:0:1111]/",
+            ("2606:4700:4700::1111",),
+        ),
+        (
+            "https://[2606:4700:4700:0:0:0:0:1111]:8443/",
+            ("[2606:4700:4700::1111]:8443",),
+        ),
+    ],
+)
+def test_outbound_allowlist_exact_normalized_matches(
+    url: str, allowed_hosts: tuple[str, ...]
+) -> None:
+    enforce_outbound_target(url, allowed_hosts)
+
+
+def test_outbound_allowlist_keeps_sharp_s_distinct_from_ascii_ss() -> None:
+    enforce_outbound_target("https://faß.de/", ("xn--fa-hia.de",))
+    with pytest.raises(URLSafetyError, match="allowlist"):
+        enforce_outbound_target("https://fass.de/", ("xn--fa-hia.de",))
+
+
+@pytest.mark.parametrize(
+    ("url", "allowed_hosts"),
+    [
+        ("https://sub.example.test/", ("example.test",)),
+        ("https://example.test.evil/", ("example.test",)),
+        ("https://example.test:8443/", ("example.test:443",)),
+        ("https://example.test/", ("example.test:8443",)),
+    ],
+)
+def test_outbound_allowlist_never_uses_suffix_or_inexact_port_matching(
+    url: str, allowed_hosts: tuple[str, ...]
+) -> None:
+    with pytest.raises(URLSafetyError, match="allowlist"):
+        enforce_outbound_target(url, allowed_hosts)
+
+
+def test_absent_outbound_allowlist_preserves_default_policy() -> None:
+    enforce_outbound_target("not even parsed when policy is absent", None)
+
+
+def test_expanded_ipv6_url_is_canonicalized_in_validated_result() -> None:
+    validated = validate_url(
+        "https://[2606:4700:4700:0:0:0:0:1111]:8443/path",
+        allowed_hosts=("[2606:4700:4700::1111]:8443",),
+    )
+    assert validated.host == "2606:4700:4700::1111"
+    assert validated.url == "https://[2606:4700:4700::1111]:8443/path"
 
 
 @pytest.mark.parametrize(

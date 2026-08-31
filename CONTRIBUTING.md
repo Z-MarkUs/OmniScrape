@@ -20,7 +20,8 @@ make check
 ```
 
 The equivalent commands are `ruff check`, `ruff format --check`, `mypy`,
-`pytest`, and `python -m build`; see `Makefile` for exact arguments.
+`pytest`, the offline extraction-quality gate, dependency/security audits, and
+`python -m build`; see `Makefile` for exact arguments.
 
 ## Pull requests
 
@@ -35,14 +36,19 @@ The equivalent commands are `ruff check`, `ruff format --check`, `mypy`,
   behavior changes.
 - For performance work, include reproducible before-and-after benchmark JSON;
   do not optimize against a single warm run.
+- For extraction-quality work, keep gold labels independent of current output,
+  inspect every numerator and denominator, and refresh the checked-in scorecard
+  only after an intentional extractor or corpus change. Never weaken a threshold
+  merely to make a regression pass.
 
 By contributing, you agree that your work is licensed under the MIT License.
 
 ## Security-sensitive changes
 
-URL safety is checked before the first request and after every redirect.
-Changes that weaken scheme, credential, DNS, IP-range, timeout, redirect, or
-body-size checks need an explicit rationale and dedicated negative tests.
+URL safety and any configured exact outbound target policy are checked before the
+first DNS lookup and after every redirect. Changes that weaken allowlist matching,
+scheme, credential, DNS, IP-range, timeout, redirect, or body-size checks need an
+explicit rationale and dedicated negative tests.
 Report undisclosed vulnerabilities privately as described in `SECURITY.md`.
 
 ## Maintainer release checklist
@@ -51,7 +57,8 @@ Follow [RELEASING.md](RELEASING.md). In short: update the version and dated
 changelog in a focused pull request, pass the complete merge gate, then push one
 annotated `v<version>` tag. Tag CI and the protected default-branch release workflow
 validate, attest, and publish the immutable GitHub release; maintainers must never
-replace a published artifact.
+replace a published artifact. Public notes are generated from the exact dated
+version section in the tagged `CHANGELOG.md`, so that section must be meaningful.
 
 PyPI publication is intentionally separate and manual. The distribution name is
 `omniscrape-zmarkus`; never upload it—or any other external artifact—without the
