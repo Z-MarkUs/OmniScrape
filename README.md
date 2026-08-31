@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Z-MarkUs/OmniScrape/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Z-MarkUs/OmniScrape/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Z-MarkUs/OmniScrape/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Z-MarkUs/OmniScrape?display_name=tag&sort=semver"></a>
   <img alt="Python 3.10 through 3.13" src="https://img.shields.io/badge/Python-3.10--3.13-3776AB?logo=python&logoColor=white">
   <a href="https://github.com/Z-MarkUs/OmniScrape/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-34d399.svg"></a>
   <img alt="Deterministic by default" src="https://img.shields.io/badge/default-deterministic-22d3ee">
@@ -98,6 +99,14 @@ OmniScrape supports Python 3.10–3.13.
 The installable distribution is named `omniscrape-zmarkus` to avoid colliding
 with an unrelated project already using the generic PyPI name. The Python import,
 CLI command, and repository name remain `omniscrape` / OmniScrape.
+
+Install the latest immutable release directly from GitHub:
+
+```bash
+python -m pip install https://github.com/Z-MarkUs/OmniScrape/releases/download/v0.2.1/omniscrape_zmarkus-0.2.1-py3-none-any.whl
+```
+
+For an editable source checkout instead:
 
 ```bash
 python -m venv .venv
@@ -343,8 +352,30 @@ available. Ruff, strict mypy, Bandit, dependency audits, skill validation, and
 wheel/source-archive validation are separate blocking gates.
 
 CI repeats linting, strict type checking, branch-coverage enforcement, package validation,
-dependency auditing, static security analysis, and a production container build across
-supported Python versions.
+fresh-environment installs of the exact wheel and source archive, dependency auditing,
+static security analysis, and a production container build across supported Python versions.
+
+### Release integrity
+
+Version tags publish only after the complete CI gate succeeds. Tag CI accepts exact
+SemVer tags and matching wheel/source-archive metadata, then creates signed
+GitHub/Sigstore SLSA provenance for both distributions. A protected default-branch
+workflow revalidates the tag's `main` ancestry and provenance, writes `SHA256SUMS`, and
+publishes the release. Repository-level immutability locks the published tag and every
+asset and adds a separate release attestation.
+
+After downloading an artifact, verify its provenance with GitHub CLI:
+
+```bash
+gh attestation verify omniscrape_zmarkus-0.2.1-py3-none-any.whl \
+  --repo Z-MarkUs/OmniScrape \
+  --source-ref refs/tags/v0.2.1 \
+  --signer-workflow Z-MarkUs/OmniScrape/.github/workflows/ci.yml
+gh release verify v0.2.1 --repo Z-MarkUs/OmniScrape
+```
+
+The complete maintainer process is documented in
+[RELEASING.md](https://github.com/Z-MarkUs/OmniScrape/blob/main/RELEASING.md).
 
 ## Reproducible benchmark
 
@@ -387,9 +418,10 @@ Codex-specific UI metadata stays under `.agents`; only portable files are mirror
 .
 ├── .agents/skills/omniscrape/   # canonical Codex project skill
 ├── .claude/skills/omniscrape/   # synchronized Claude Code skill
-├── .github/                     # CI and dependency updates
+├── .github/                     # CI, release automation, and dependency updates
 ├── benchmarks/                  # fixture-backed benchmark and JSON results
 ├── docs/assets/                 # repository visuals
+├── RELEASING.md                 # immutable, attested release process
 ├── scripts/                     # skill synchronization
 ├── src/omniscrape/
 │   ├── extractors/              # structured, readability, and heuristic layers
