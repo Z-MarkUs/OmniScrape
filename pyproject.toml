@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "omniscrape-zmarkus"
-version = "0.2.1"
+version = "0.2.2"
 description = "Secure hybrid web extraction with deterministic parsing and optional browser and LLM fallbacks."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,7 +41,7 @@ dependencies = [
 [project.optional-dependencies]
 browser = ["playwright>=1.48,<2"]
 llm = ["openai>=2,<3"]
-mcp = ["mcp>=1.8,<2"]
+mcp = ["mcp>=1.28.1,<2"]
 dev = [
   "bandit>=1.8,<2",
   "build>=1.2,<2",

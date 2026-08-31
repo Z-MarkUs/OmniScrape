@@ -5,6 +5,26 @@ All notable changes to OmniScrape are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-01
+
+### Added
+
+- Added Python 3.11 to the hosted test matrix so every supported interpreter from
+  Python 3.10 through 3.13 now runs the offline suite.
+- Added enumerated MCP inputs, a discriminated success/error output schema, and
+  read-only, non-destructive, idempotent tool annotations.
+- Added conditional OpenAPI security schemes for both supported API-key transports,
+  an eager CLI `--version` option, and `Retry-After` guidance on busy responses.
+- Added a recruiter-focused engineering-evidence summary and a credential-free,
+  deterministic console result capture.
+
+### Changed
+
+- Refreshed the checked-in synthetic benchmark under the current package version and
+  added a regression test that prevents version-stale benchmark evidence.
+- Raised the optional MCP SDK floor to `1.28.1`, which supports the typed contract
+  and contains fixes for known advisories, and added a real-SDK CI smoke at that floor.
+
 ## [0.2.1] - 2026-09-01
 
 ### Added
@@ -78,6 +98,7 @@ All notable changes to OmniScrape are documented here. This project follows
   and `/labs*` routes. Migrate health checks to `/health` and extraction clients
   to `/v1/extract` or `/v1/extract/stream`.
 
-[Unreleased]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Z-MarkUs/OmniScrape/releases/tag/v0.2.0

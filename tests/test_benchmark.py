@@ -7,6 +7,18 @@ import subprocess
 import sys
 from pathlib import Path
 
+from omniscrape import __version__
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_checked_in_benchmark_matches_current_package_version() -> None:
+    payload = json.loads(
+        (ROOT / "benchmarks" / "results" / "latest.json").read_text(encoding="utf-8")
+    )
+
+    assert payload["omniscrape_version"] == __version__
+
 
 def test_benchmark_runner_writes_machine_readable_results(tmp_path: Path) -> None:
     output = tmp_path / "result.json"

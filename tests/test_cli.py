@@ -11,6 +11,7 @@ import pytest
 from click.utils import strip_ansi
 from typer.testing import CliRunner
 
+from omniscrape import __version__
 from omniscrape.cli import app
 from omniscrape.errors import URLSafetyError
 from omniscrape.models import Article, ExtractionMetadata, ExtractionResult
@@ -41,6 +42,13 @@ def test_module_entrypoint_help_smoke() -> None:
     assert "extract" in completed.stdout
     assert "serve" in completed.stdout
     assert "mcp" in completed.stdout
+
+
+def test_version_option_reports_installed_package_version() -> None:
+    result = runner.invoke(app, ["--version"])
+
+    assert result.exit_code == 0
+    assert result.stdout.strip() == __version__
 
 
 def test_extract_help_documents_safe_modes() -> None:

@@ -25,7 +25,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from . import __version__
 from ._tasking import BoundedAdmission
 from .config import Settings, _normalize_host_authorities, _parse_host_authority
-from .errors import OmniScrapeError, RenderingDisabledError
+from .errors import BusyError, OmniScrapeError, RenderingDisabledError
 from .fetcher import renderer_available
 from .models import (
     ContentKind,
@@ -44,6 +44,42 @@ _SENTINEL = object()
 _MAX_REQUEST_BODY_BYTES = 16_384
 _LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
 _PROTECTED_PATHS = frozenset({"/v1/extract", "/extract", "/v1/extract/stream", "/extract-stream"})
+_DOCUMENTED_PROTECTED_PATHS = ("/v1/extract", "/v1/extract/stream")
+
+
+def _document_configured_authentication(app: FastAPI) -> None:
+    """Describe both accepted API-key transports without changing runtime auth."""
+
+    default_openapi = app.openapi
+
+    def openapi_with_authentication() -> dict[str, Any]:
+        schema = default_openapi()
+        components = schema.setdefault("components", {})
+        schemes = components.setdefault("securitySchemes", {})
+        schemes.update(
+            {
+                "ApiKeyHeader": {
+                    "type": "apiKey",
+                    "in": "header",
+                    "name": "X-API-Key",
+                    "description": "OmniScrape API key supplied directly as a header.",
+                },
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "description": "The same OmniScrape API key supplied as a Bearer token.",
+                },
+            }
+        )
+        accepted: list[dict[str, list[str]]] = [{"ApiKeyHeader": []}, {"BearerAuth": []}]
+        paths = schema.get("paths", {})
+        for path in _DOCUMENTED_PROTECTED_PATHS:
+            operation = paths.get(path, {}).get("post")
+            if operation is not None:
+                operation["security"] = accepted
+        return schema
+
+    app.openapi = openapi_with_authentication  # type: ignore[method-assign]
 
 
 def _scope_has_valid_api_key(scope: Scope, expected: str) -> bool:
@@ -269,6 +305,7 @@ class _RequestBodyLimitMiddleware:
                 status_code=503,
                 code="service_busy",
                 message="The service is busy; try again shortly.",
+                headers={"Retry-After": "1"},
             )
             return
         self._active_body_readers += 1
@@ -434,6 +471,7 @@ def create_app(
             status_code=exc.status_code,
             code=exc.code,
             message=exc.public_message,
+            headers={"Retry-After": "1"} if isinstance(exc, BusyError) else None,
         )
 
     @app.exception_handler(RequestValidationError)
@@ -633,6 +671,9 @@ def create_app(
                 "X-Accel-Buffering": "no",
             },
         )
+
+    if resolved.api_key:
+        _document_configured_authentication(app)
 
     return app
 

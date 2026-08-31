@@ -6,14 +6,19 @@ import asyncio
 import builtins
 import sys
 from types import ModuleType
-from typing import Any
+from typing import Any, get_type_hints
 
 import pytest
+from pydantic import TypeAdapter
 
 from omniscrape.config import Settings
 from omniscrape.errors import URLSafetyError
-from omniscrape.mcp import create_mcp_server
-from omniscrape.models import Article, ExtractionMetadata, ExtractionResult
+from omniscrape.mcp import MCPToolResult, create_mcp_server
+from omniscrape.models import (
+    Article,
+    ExtractionMetadata,
+    ExtractionResult,
+)
 
 URL = "https://news.example.test/story"
 
@@ -23,13 +28,21 @@ class FakeFastMCP:
         self.name = name
         self.lifespan = lifespan
         self.tool_function: Any = None
+        self.tool_options: dict[str, Any] = {}
 
-    def tool(self) -> Any:
+    def tool(self, **options: Any) -> Any:
+        self.tool_options = options
+
         def register(function: Any) -> Any:
             self.tool_function = function
             return function
 
         return register
+
+
+class FakeToolAnnotations:
+    def __init__(self, **values: Any) -> None:
+        vars(self).update(values)
 
 
 class StubService:
@@ -58,12 +71,42 @@ class StubService:
 @pytest.fixture
 def fake_mcp_sdk(monkeypatch: Any) -> None:
     mcp = ModuleType("mcp")
+    types = ModuleType("mcp.types")
     server = ModuleType("mcp.server")
     fastmcp = ModuleType("mcp.server.fastmcp")
+    types.ToolAnnotations = FakeToolAnnotations  # type: ignore[attr-defined]
     fastmcp.FastMCP = FakeFastMCP  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "mcp", mcp)
+    monkeypatch.setitem(sys.modules, "mcp.types", types)
     monkeypatch.setitem(sys.modules, "mcp.server", server)
     monkeypatch.setitem(sys.modules, "mcp.server.fastmcp", fastmcp)
+
+
+def payload(result: MCPToolResult) -> dict[str, Any]:
+    return result.model_dump(mode="json", exclude_none=True)
+
+
+def test_mcp_tool_advertises_typed_contract_and_safe_annotations(fake_mcp_sdk: None) -> None:
+    server = create_mcp_server(StubService())
+    hints = get_type_hints(server.tool_function)
+
+    kind_schema = TypeAdapter(hints["kind"]).json_schema()
+    mode_schema = TypeAdapter(hints["mode"]).json_schema()
+    output_schema = hints["return"].model_json_schema()
+
+    assert kind_schema["enum"] == ["article", "product"]
+    assert mode_schema["enum"] == ["deterministic", "llm", "auto"]
+    assert output_schema["discriminator"]["propertyName"] == "success"
+    assert {branch["$ref"] for branch in output_schema["oneOf"]} == {
+        "#/$defs/ErrorResponse",
+        "#/$defs/ExtractionResult",
+    }
+
+    annotations = server.tool_options["annotations"]
+    assert annotations.readOnlyHint is True
+    assert annotations.destructiveHint is False
+    assert annotations.idempotentHint is True
+    assert annotations.openWorldHint is True
 
 
 @pytest.mark.asyncio
@@ -71,11 +114,13 @@ async def test_mcp_tool_returns_typed_result_and_forwards_options(fake_mcp_sdk: 
     service = StubService()
     server = create_mcp_server(service)
 
-    payload = await server.tool_function(URL, kind="article", mode="deterministic", render=True)
+    result = payload(
+        await server.tool_function(URL, kind="article", mode="deterministic", render=True)
+    )
 
     assert server.name == "OmniScrape"
-    assert payload["success"] is True
-    assert payload["data"]["title"] == "Fixture title"
+    assert result["success"] is True
+    assert result["data"]["title"] == "Fixture title"
     assert service.calls[0][0] == URL
     assert service.calls[0][1].value == "article"
     assert service.calls[0][2].value == "deterministic"
@@ -87,9 +132,9 @@ async def test_mcp_tool_defaults_to_deterministic_mode(fake_mcp_sdk: None) -> No
     service = StubService()
     server = create_mcp_server(service)
 
-    payload = await server.tool_function(URL)
+    result = payload(await server.tool_function(URL))
 
-    assert payload["success"] is True
+    assert result["success"] is True
     assert service.calls[0][2].value == "deterministic"
 
 
@@ -102,9 +147,9 @@ async def test_falsey_injected_mcp_service_is_preserved(fake_mcp_sdk: None) -> N
     service = FalseyService()
     server = create_mcp_server(service)
 
-    payload = await server.tool_function(URL)
+    result = payload(await server.tool_function(URL))
 
-    assert payload["success"] is True
+    assert result["success"] is True
     assert len(service.calls) == 1
 
 
@@ -127,11 +172,11 @@ async def test_mcp_honors_configured_concurrency_and_queue_timeout(fake_mcp_sdk:
     first = asyncio.create_task(server.tool_function(URL))
     await asyncio.wait_for(entered.wait(), timeout=0.1)
     try:
-        invalid = await server.tool_function(URL, kind="video")
-        second = await server.tool_function(URL)
+        invalid = payload(await server.tool_function(URL, kind="video"))
+        second = payload(await server.tool_function(URL))
     finally:
         release.set()
-    first_result = await first
+    first_result = payload(await first)
 
     assert first_result["success"] is True
     assert invalid["error"]["code"] == "invalid_request"
@@ -161,11 +206,13 @@ async def test_mcp_waiter_queue_is_capacity_bounded(fake_mcp_sdk: None) -> None:
     await asyncio.sleep(0)
     started = asyncio.get_running_loop().time()
     try:
-        overflow = await server.tool_function(URL)
+        overflow = payload(await server.tool_function(URL))
         assert asyncio.get_running_loop().time() - started < 0.1
     finally:
         release.set()
-    first_result, waiter_result = await asyncio.gather(first, waiter)
+    first_output, waiter_output = await asyncio.gather(first, waiter)
+    first_result = payload(first_output)
+    waiter_result = payload(waiter_output)
 
     assert overflow["error"]["code"] == "service_busy"
     assert first_result["success"] is True
@@ -176,9 +223,9 @@ async def test_mcp_waiter_queue_is_capacity_bounded(fake_mcp_sdk: None) -> None:
 @pytest.mark.asyncio
 async def test_mcp_tool_returns_stable_invalid_request(fake_mcp_sdk: None) -> None:
     server = create_mcp_server(StubService())
-    payload = await server.tool_function(URL, kind="video")
-    assert payload["success"] is False
-    assert payload["error"] == {
+    result = payload(await server.tool_function(URL, kind="video"))
+    assert result["success"] is False
+    assert result["error"] == {
         "code": "invalid_request",
         "message": "kind or mode is invalid.",
     }
@@ -190,10 +237,10 @@ async def test_mcp_tool_hides_domain_error_details(fake_mcp_sdk: None) -> None:
     service.error = URLSafetyError("internal private address")
     server = create_mcp_server(service)
 
-    payload = await server.tool_function(URL, mode="deterministic")
+    result = payload(await server.tool_function(URL, mode="deterministic"))
 
-    assert payload["error"]["code"] == "unsafe_url"
-    assert "internal private address" not in payload["error"]["message"]
+    assert result["error"]["code"] == "unsafe_url"
+    assert "internal private address" not in result["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -202,13 +249,13 @@ async def test_mcp_tool_redacts_unexpected_errors(fake_mcp_sdk: None, caplog: An
     service.error = RuntimeError("fixture secret internal detail")
     server = create_mcp_server(service)
 
-    payload = await server.tool_function(URL)
+    result = payload(await server.tool_function(URL))
 
-    assert payload["error"] == {
+    assert result["error"] == {
         "code": "internal_error",
         "message": "An unexpected server error occurred.",
     }
-    assert "fixture secret" not in str(payload)
+    assert "fixture secret" not in str(result)
     assert "RuntimeError" in caplog.text
     assert "fixture secret" not in caplog.text
 

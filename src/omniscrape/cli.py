@@ -8,6 +8,7 @@ from typing import Annotated
 
 import typer
 
+from . import __version__
 from .config import Settings
 from .errors import OmniScrapeError
 from .models import ContentKind, ExtractionMode, jsonable
@@ -20,6 +21,27 @@ app = typer.Typer(
     add_completion=False,
     pretty_exceptions_enable=False,
 )
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(__version__)
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the installed OmniScrape version and exit.",
+        ),
+    ] = False,
+) -> None:
+    """Safe, typed article and product extraction."""
 
 
 def _fail(exc: OmniScrapeError) -> None:

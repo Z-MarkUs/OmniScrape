@@ -6,15 +6,38 @@ import inspect
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import Field, RootModel
 
 from ._tasking import BoundedAdmission
 from .config import Settings
 from .errors import OmniScrapeError
-from .models import ContentKind, ErrorBody, ErrorResponse, ExtractionMode, jsonable
+from .models import (
+    ContentKind,
+    ErrorBody,
+    ErrorResponse,
+    ExtractionMode,
+    ExtractionResult,
+)
 from .pipeline import OmniScrape
 
 logger = logging.getLogger(__name__)
+
+
+class MCPToolResult(
+    RootModel[
+        Annotated[
+            ExtractionResult | ErrorResponse,
+            Field(discriminator="success"),
+        ]
+    ]
+):
+    """Discriminated MCP output that preserves the shared top-level contract."""
+
+
+def _tool_result(result: ExtractionResult | ErrorResponse) -> MCPToolResult:
+    return MCPToolResult(root=result)
 
 
 def create_mcp_server(
@@ -29,6 +52,7 @@ def create_mcp_server(
 
     try:
         from mcp.server.fastmcp import FastMCP
+        from mcp.types import ToolAnnotations
     except ImportError as exc:  # pragma: no cover - optional dependency path
         raise RuntimeError("MCP support is not installed; install OmniScrape's mcp extra.") from exc
 
@@ -53,13 +77,21 @@ def create_mcp_server(
         server_options["lifespan"] = lifespan
     server = FastMCP("OmniScrape", **server_options)
 
-    @server.tool()
+    @server.tool(
+        annotations=ToolAnnotations(
+            title="Extract authorized web content",
+            readOnlyHint=True,
+            destructiveHint=False,
+            idempotentHint=True,
+            openWorldHint=True,
+        )
+    )
     async def extract(
         url: str,
-        kind: str = "article",
-        mode: str = "deterministic",
+        kind: ContentKind = ContentKind.ARTICLE,
+        mode: ExtractionMode = ExtractionMode.DETERMINISTIC,
         render: bool = False,
-    ) -> dict[str, Any]:
+    ) -> MCPToolResult:
         """Extract a public web page into typed article or product data.
 
         Args:
@@ -77,7 +109,7 @@ def create_mcp_server(
                 resolved_kind = ContentKind(kind)
                 resolved_mode = ExtractionMode(mode)
             except ValueError:
-                return jsonable(
+                return _tool_result(
                     ErrorResponse(
                         error=ErrorBody(code="invalid_request", message="kind or mode is invalid.")
                     )
@@ -92,16 +124,16 @@ def create_mcp_server(
                 )
             finally:
                 admission.release()
-            return jsonable(result)
+            return _tool_result(result)
         except (ValueError, OmniScrapeError) as exc:
             if isinstance(exc, OmniScrapeError):
                 code, message = exc.code, exc.public_message
             else:
                 code, message = "invalid_request", "kind or mode is invalid."
-            return jsonable(ErrorResponse(error=ErrorBody(code=code, message=message)))
+            return _tool_result(ErrorResponse(error=ErrorBody(code=code, message=message)))
         except Exception as exc:
             logger.error("Unhandled OmniScrape MCP error (%s)", type(exc).__name__)
-            return jsonable(
+            return _tool_result(
                 ErrorResponse(
                     error=ErrorBody(
                         code="internal_error",
@@ -113,4 +145,4 @@ def create_mcp_server(
     return server
 
 
-__all__ = ["create_mcp_server"]
+__all__ = ["MCPToolResult", "create_mcp_server"]
