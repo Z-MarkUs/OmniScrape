@@ -43,7 +43,7 @@ def test_module_entrypoint_help_smoke() -> None:
 
 
 def test_extract_help_documents_safe_modes() -> None:
-    result = runner.invoke(app, ["extract", "--help"])
+    result = runner.invoke(app, ["extract", "--help"], color=False)
     assert result.exit_code == 0
     assert "--kind" in result.stdout
     assert "--mode" in result.stdout
