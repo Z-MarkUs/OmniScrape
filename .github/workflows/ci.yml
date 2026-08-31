@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   quality:
@@ -122,6 +122,7 @@ jobs:
                       "CHANGELOG.md",
                       "CONTRIBUTING.md",
                       "SECURITY.md",
+                      "RELEASING.md",
                       ".env.example",
                       "benchmarks/run.py",
                       "docs/assets/omniscrape-hero.svg",
@@ -151,9 +152,77 @@ jobs:
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: python-distributions
+          name: python-distributions-${{ github.run_attempt }}
           path: dist/
           if-no-files-found: error
+      - name: Install and smoke-test exact distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="$(
+            python - <<'PY'
+          import pathlib
+          import tomllib
+
+          with pathlib.Path("pyproject.toml").open("rb") as file:
+              print(tomllib.load(file)["project"]["version"])
+          PY
+          )"
+          wheel="dist/omniscrape_zmarkus-${version}-py3-none-any.whl"
+          sdist="dist/omniscrape_zmarkus-${version}.tar.gz"
+          test -f "$wheel"
+          test -f "$sdist"
+
+          smoke_distribution() {
+            local artifact="$1"
+            local environment_name="$2"
+            local environment="$RUNNER_TEMP/$environment_name"
+
+            python -m venv "$environment"
+            "$environment/bin/python" -m pip install \
+              --disable-pip-version-check "$artifact"
+            "$environment/bin/python" -m pip check
+            "$environment/bin/omniscrape" --help >/dev/null
+            "$environment/bin/python" - "$version" <<'PY'
+          import asyncio
+          import importlib.metadata
+          import importlib.resources
+          import sys
+
+          import httpx
+
+          import omniscrape
+
+          expected_version = sys.argv[1]
+          assert omniscrape.__version__ == expected_version
+          assert importlib.metadata.version("omniscrape-zmarkus") == expected_version
+
+          package_root = importlib.resources.files("omniscrape")
+          for asset in ("index.html", "styles.css", "app.js"):
+              assert package_root.joinpath("web", asset).is_file(), asset
+
+          async def smoke_api() -> None:
+              app = omniscrape.create_app()
+              transport = httpx.ASGITransport(app=app, raise_app_exceptions=True)
+              try:
+                  async with httpx.AsyncClient(
+                      transport=transport, base_url="http://127.0.0.1"
+                  ) as client:
+                      health = await client.get("/health")
+                      assert health.status_code == 200
+                      assert health.json()["version"] == expected_version
+                      assert (await client.get("/")).status_code == 200
+                      assert (await client.get("/assets/app.js")).status_code == 200
+              finally:
+                  await app.state.scraper.aclose()
+
+          asyncio.run(smoke_api())
+          PY
+          }
+
+          smoke_distribution "$wheel" "omniscrape-wheel-smoke"
+          smoke_distribution "$sdist" "omniscrape-sdist-smoke"
       - name: Build production image
         run: docker build --tag omniscrape:ci .
       - name: Smoke-test production image
@@ -210,3 +279,55 @@ jobs:
         run: python -m pip_audit --skip-editable
       - name: Static security analysis
         run: python -m bandit -q -r src/omniscrape
+
+  provenance:
+    name: Attest release distributions
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - quality
+      - tests
+      - browser-security
+      - build
+      - security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Download verified distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-distributions-${{ github.run_attempt }}
+          path: dist
+      - name: Validate tag and distribution metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="$GITHUB_REF_NAME"
+          if [[ ! "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR.PATCH: $tag" >&2
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+          wheel="dist/omniscrape_zmarkus-${version}-py3-none-any.whl"
+          sdist="dist/omniscrape_zmarkus-${version}.tar.gz"
+
+          test -f "$wheel"
+          test -f "$sdist"
+          test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 2
+          unzip -p "$wheel" \
+            "omniscrape_zmarkus-${version}.dist-info/METADATA" \
+            | grep --fixed-strings --line-regexp "Version: ${version}"
+          tar -xOf "$sdist" \
+            "omniscrape_zmarkus-${version}/PKG-INFO" \
+            | grep --fixed-strings --line-regexp "Version: ${version}"
+      - name: Attest tag-build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.whl
+            dist/*.tar.gz

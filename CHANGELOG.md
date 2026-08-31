@@ -5,6 +5,14 @@ All notable changes to OmniScrape are documented here. This project follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-01
+
+### Added
+
+- Added tag-gated GitHub release publishing with exact-distribution install smokes,
+  SHA-256 checksums, and signed SLSA build-provenance attestations after every
+  required CI job succeeds.
+
 ### Changed
 
 - Limited routine Dependabot updates to supported dependency and container-runtime
@@ -70,5 +78,6 @@ All notable changes to OmniScrape are documented here. This project follows
   and `/labs*` routes. Migrate health checks to `/health` and extraction clients
   to `/v1/extract` or `/v1/extract/stream`.
 
-[Unreleased]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Z-MarkUs/OmniScrape/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Z-MarkUs/OmniScrape/releases/tag/v0.2.0

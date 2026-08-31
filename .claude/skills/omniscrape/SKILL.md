@@ -151,6 +151,21 @@ Before claiming a speed, quality, or reliability improvement:
 - run the correctness tests as well as the benchmark so a faster regression is not called an improvement;
 - distinguish measured results from hypotheses and do not generalize fixture results to the open web.
 
+## Release safely
+
+Follow `RELEASING.md` for maintainer-authorized release work. Keep
+`pyproject.toml`, `src/omniscrape/__init__.py`, and the dated changelog entry on
+the same version, then use a protected pull request and wait for every CI and
+CodeQL gate before creating an annotated tag.
+
+Never move a published tag, replace a published asset, bypass release automation,
+or upload to PyPI or another registry without explicit maintainer authorization.
+Tag CI must create provenance for its exact verified distributions. The default-branch
+release workflow must then validate protected-main ancestry plus artifact names and
+metadata, generate checksums, and publish the immutable GitHub release without executing
+tag-controlled code. Verify the public release and both distributions against the
+tag-build provenance before reporting success.
+
 ## Keep the portable skill synchronized
 
 `.agents/skills/omniscrape` is canonical. After changing portable skill content, run:

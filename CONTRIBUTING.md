@@ -47,13 +47,11 @@ Report undisclosed vulnerabilities privately as described in `SECURITY.md`.
 
 ## Maintainer release checklist
 
-1. Update the version and dated changelog entry, then run `make check` from a
-   clean checkout.
-2. Rebuild `dist/`, run `python -m twine check dist/*`, and install the wheel in
-   a fresh environment for CLI, import, API, and package-data smoke tests.
-3. Push `main` and wait for both CI and CodeQL to succeed.
-4. Create the `v<version>` tag, wait for the tag-triggered CI run, then create
-   the GitHub release and attach the verified wheel and source archive.
+Follow [RELEASING.md](RELEASING.md). In short: update the version and dated
+changelog in a focused pull request, pass the complete merge gate, then push one
+annotated `v<version>` tag. Tag CI and the protected default-branch release workflow
+validate, attest, and publish the immutable GitHub release; maintainers must never
+replace a published artifact.
 
 PyPI publication is intentionally separate and manual. The distribution name is
 `omniscrape-zmarkus`; never upload it—or any other external artifact—without the
