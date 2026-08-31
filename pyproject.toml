@@ -41,7 +41,7 @@ dependencies = [
 [project.optional-dependencies]
 browser = ["playwright>=1.48,<2"]
 llm = ["openai>=2,<3"]
-mcp = ["mcp>=1.8,<2"]
+mcp = ["mcp>=1.8,<3"]
 dev = [
   "bandit>=1.8,<2",
   "build>=1.2,<2",
