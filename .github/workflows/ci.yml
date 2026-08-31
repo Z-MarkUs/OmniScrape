@@ -122,6 +122,7 @@ jobs:
                       "CHANGELOG.md",
                       "CONTRIBUTING.md",
                       "SECURITY.md",
+                      ".env.example",
                       "benchmarks/run.py",
                       "docs/assets/omniscrape-hero.svg",
                       "scripts/sync_agent_skills.py",

@@ -3,6 +3,7 @@ include LICENSE
 include CHANGELOG.md
 include CONTRIBUTING.md
 include SECURITY.md
+include .env.example
 include scripts/sync_agent_skills.py
 graft docs/assets
 graft .agents/skills/omniscrape

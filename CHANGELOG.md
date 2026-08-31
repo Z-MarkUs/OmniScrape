@@ -5,6 +5,16 @@ All notable changes to OmniScrape are documented here. This project follows
 
 ## [Unreleased]
 
+### Changed
+
+- Limited routine Dependabot updates to supported dependency and container-runtime
+  lines so automated maintenance stays aligned with the tested compatibility policy.
+
+### Fixed
+
+- Included `.env.example` in source distributions so the documented configuration
+  workflow remains self-contained outside a Git checkout.
+
 ## [0.2.0] - 2026-08-31
 
 ### Added
