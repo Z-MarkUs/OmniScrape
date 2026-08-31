@@ -8,6 +8,7 @@ import sys
 from typing import Any
 
 import pytest
+from click.utils import strip_ansi
 from typer.testing import CliRunner
 
 from omniscrape.cli import app
@@ -45,9 +46,10 @@ def test_module_entrypoint_help_smoke() -> None:
 def test_extract_help_documents_safe_modes() -> None:
     result = runner.invoke(app, ["extract", "--help"], color=False)
     assert result.exit_code == 0
-    assert "--kind" in result.stdout
-    assert "--mode" in result.stdout
-    assert "--render" in result.stdout
+    help_text = strip_ansi(result.stdout)
+    assert "--kind" in help_text
+    assert "--mode" in help_text
+    assert "--render" in help_text
 
 
 def test_extract_command_outputs_compact_json_without_network(monkeypatch: Any) -> None:
