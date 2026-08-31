@@ -1,0 +1,30 @@
+services:
+  omniscrape:
+    build:
+      context: .
+      target: runtime
+    image: omniscrape:local
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      OMNISCRAPE_API_KEY: "${OMNISCRAPE_API_KEY:?Set OMNISCRAPE_API_KEY before starting OmniScrape}"
+      OMNISCRAPE_ALLOWED_HOSTS: "${OMNISCRAPE_ALLOWED_HOSTS:-localhost,127.0.0.1}"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2).read()
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

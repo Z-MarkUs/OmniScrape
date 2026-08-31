@@ -1,218 +1,423 @@
-# OmniScrape API
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Z-MarkUs/OmniScrape/main/docs/assets/omniscrape-hero.svg" alt="OmniScrape secure hybrid extraction pipeline" width="100%">
+</p>
 
-A sophisticated, multi-layered web scraping service that can extract articles and products from any website using a cascading fallback strategy.
+<p align="center">
+  <a href="https://github.com/Z-MarkUs/OmniScrape/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Z-MarkUs/OmniScrape/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="Python 3.10 through 3.13" src="https://img.shields.io/badge/Python-3.10--3.13-3776AB?logo=python&logoColor=white">
+  <a href="https://github.com/Z-MarkUs/OmniScrape/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-34d399.svg"></a>
+  <img alt="Deterministic by default" src="https://img.shields.io/badge/default-deterministic-22d3ee">
+</p>
 
-## ✨ Features
+<p align="center">
+  <strong>Turn an authorized web page into validated article or product data—locally first, with browser and AI escalation only when requested.</strong>
+</p>
 
-- **Multi-layered Extraction**: Structured data → Readability → LLM fallback
-- **Article Extraction**: Title, author, content, images, publication date
-- **Product Extraction**: Name, price, currency, description, images, SKU
-- **Browser Rendering**: Playwright for JavaScript-heavy sites
-- **FastAPI**: Modern, fast web framework with automatic API documentation
-- **Type Safety**: Full Pydantic validation and type hints
-- **Interactive Labs**: Test ScrapeGraphAI capabilities with real-time results
-- **Token Usage Tracking**: Real-time LLM token consumption monitoring
+OmniScrape is a secure hybrid extraction service and Python toolkit. It combines
+machine-readable metadata, readability parsing, and DOM heuristics behind one typed
+contract; optional Playwright rendering handles JavaScript pages, while an optional
+OpenAI Responses adapter fills incomplete fields in explicitly selected AI modes.
 
-## 🚀 Quick Start
+This repository is deliberately built as more than a scraping script. It demonstrates
+outbound-request security, async resource limits, typed boundaries, provider isolation,
+API authentication, streaming progress, reproducible tests and benchmarks, container
+hardening, and portable project skills for coding agents.
 
-1. **Install dependencies**:
-   ```bash
-   pip install -e .
-   playwright install chromium
-   ```
+> **Use responsibly.** Extract only content you are authorized to access. Respect site
+> terms, robots directives, access controls, privacy, copyright, rate limits, and
+> applicable law. OmniScrape does not include CAPTCHA, paywall, authentication, or
+> anti-bot bypasses.
 
-2. **Configure environment**:
-   ```bash
-   export OPENAI_API_KEY="your_openai_api_key"
-   export SCRAPEGRAPH_MODEL="gpt-4o-mini"
-   ```
+## Why OmniScrape
 
-3. **Start the server**:
-   ```bash
-   python src/main.py
-   ```
+| Design goal | Implementation |
+| --- | --- |
+| Useful without a paid model | Deterministic JSON-LD, microdata, metadata, readability, and heuristic extraction |
+| Safe outbound networking | HTTP(S)-only policy, credential rejection, DNS/IP checks, redirect revalidation, peer checks, byte caps, and timeouts |
+| Controlled AI escalation | Separate `deterministic`, `auto`, and `llm` modes; validated structured output; real provider usage only |
+| One contract everywhere | The same Pydantic models power the Python library, CLI, FastAPI service, SSE stream, web UI, and MCP tool |
+| Production-minded operation | Optional API-key auth, bounded concurrency, safe error responses, non-root container, health checks, and CI security gates |
+| Agent-friendly maintenance | Synchronized Codex and Claude Code project skills encode safe workflows and verification commands |
 
-4. **Access the services**:
-   - **Main API**: http://localhost:8000
-   - **API Documentation**: http://localhost:8000/docs
-   - **Interactive Labs**: http://localhost:8000/labs
-   - **Status Page**: http://localhost:8000/status
-   - **Health JSON**: http://localhost:8000/health.json
+## Pipeline
 
-## 📚 Documentation
+```mermaid
+flowchart LR
+    U["Authorized URL"] --> G["URL policy<br/>scheme · DNS · IP"]
+    G --> F["Bounded fetch<br/>redirects · bytes · timeouts"]
+    F -->|optional| B["Playwright render"]
+    F --> D["Deterministic extractors"]
+    B --> D
+    D --> C{"Complete enough?"}
+    C -->|yes| V["Pydantic validation"]
+    C -->|no, auto mode| L["Structured AI fallback"]
+    L --> V
+    C -->|no, deterministic| V
+    V --> R["Typed result + real metadata"]
 
-### 📖 Comprehensive Documentation
-- **[API Documentation](docs/api/)** - Complete API reference and usage examples
-- **[Extractors Guide](docs/extractors/)** - Detailed extraction methods documentation
-- **[Labs Documentation](docs/labs/)** - Interactive ScrapeGraphAI testing environment
-- **[Architecture Overview](docs/architecture/)** - System design and technical details
-
-### 🏗️ Project Structure
-```
-OmniScrape/
-├── src/                    # Source code
-│   ├── core/              # Core engine components
-│   ├── api/               # FastAPI application
-│   ├── extractors/        # Extraction methods
-│   └── labs/              # ScrapeGraphAI implementations
-├── docs/                  # Comprehensive documentation
-│   ├── api/               # API documentation
-│   ├── extractors/        # Extraction methods guide
-│   ├── labs/              # Labs documentation
-│   └── architecture/      # System architecture
-├── tests/                 # Test suites
-├── examples/              # Usage examples
-├── config/                # Configuration files
-└── old/                   # Legacy implementations (untouched)
+    classDef safe fill:#0d2728,stroke:#34d399,color:#d1fae5;
+    classDef core fill:#0c2230,stroke:#22d3ee,color:#cffafe;
+    classDef optional fill:#1b1936,stroke:#a78bfa,color:#ede9fe;
+    class G,V safe;
+    class F,D,C,R core;
+    class B,L optional;
 ```
 
-## 🔧 API Usage
+The deterministic path is the default because it is reproducible, private, and free.
+Python, CLI, HTTP, MCP, and the web console all use it when no mode is supplied;
+`auto` and `llm` remain explicit opt-ins. Rendering and AI are independent choices:
+a page can be rendered without using a model, and an already-fetched document can use
+a model without browser automation.
 
-### Extract Article
+For rebinding safety, browser mode pins the validated page hostname to one public IP and
+allows same-origin scripts/styles/XHR only; cross-origin subresources are blocked. This
+deliberate tradeoff keeps the renderer inside the same outbound trust boundary, but a
+CDN-dependent application may extract better through its server-rendered HTML.
+
+Browser rendering executes target-controlled JavaScript. The HTTP API therefore rejects
+`render: true` by default. Enable it with `OMNISCRAPE_ENABLE_API_RENDERING=true` only for
+trusted, explicitly authorized targets and keep the default
+`OMNISCRAPE_MAX_RENDER_CONCURRENCY=2` (the strict supported values are `1` and `2`).
+The CLI, Python API, and MCP renderer remain explicit caller choices and are not enabled
+by this HTTP-specific switch.
+
+### Extraction modes
+
+| Mode | Network behavior after fetching the page | Best for |
+| --- | --- | --- |
+| `deterministic` | No provider call | CI, private data, reproducible runs, and most structured pages |
+| `auto` | Calls the configured provider only below the completeness threshold | Mixed corpora where selective cost and data egress are acceptable |
+| `llm` | Sends extracted page context to the configured provider | Explicit provider-backed extraction |
+
+Legacy values `none`, `sd`, and `local` are accepted as aliases for `deterministic`.
+
+## Quick start
+
+OmniScrape supports Python 3.10–3.13.
+
+The installable distribution is named `omniscrape-zmarkus` to avoid colliding
+with an unrelated project already using the generic PyPI name. The Python import,
+CLI command, and repository name remain `omniscrape` / OmniScrape.
+
 ```bash
-curl -X POST "http://localhost:8000/extract" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/article", "kind": "article"}'
+python -m venv .venv
+# macOS/Linux: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
 ```
 
-### Extract Product
+Set a URL you own or are authorized to test:
+
 ```bash
-curl -X POST "http://localhost:8000/extract" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/product", "kind": "product"}'
+python -m omniscrape extract "$TARGET_URL" --kind article --mode deterministic --pretty
 ```
 
-### Interactive Labs
-Visit [http://localhost:8000/labs](http://localhost:8000/labs) to test:
-- **SmartScraperGraph** - Single page extraction with custom prompts
-- **SearchGraph** - Multi-page search-based extraction
-- **SpeechGraph** - Audio generation from web content
-- **ScriptCreatorGraph** - Python script generation
-- **SmartScraperMultiGraph** - Multi-page extraction
-- **ScriptCreatorMultiGraph** - Multi-page script generation
+Optional capabilities are installed independently:
 
-## ⚙️ Environment Variables
+```bash
+python -m pip install -e ".[browser]"  # Playwright renderer
+python -m playwright install chromium
 
-### Required
-- `OPENAI_API_KEY` - OpenAI API key for LLM features
+python -m pip install -e ".[llm]"      # OpenAI Responses adapter
+python -m pip install -e ".[mcp]"      # MCP server
+```
 
-### Optional
-- `SCRAPEGRAPH_MODEL` - LLM model (default: "gpt-4o-mini")
-- `BING_SEARCH_API_KEY` - Bing Search API key (for SearchGraph)
-- `MAX_RENDER_MS` - Maximum page render time (default: 15000)
-- `HTTP_PROXY` / `HTTPS_PROXY` - Proxy configuration
+Copy `.env.example` as a reference, but load secrets through your environment or
+secret manager. Never commit a populated `.env` file.
 
-## 🏗️ Architecture
+## Use it from every surface
 
-The extraction pipeline uses a cascading fallback strategy:
+### Python
 
-### For Articles:
-1. **Structured Data** - JSON-LD, Microdata, OpenGraph
-2. **Readability** - Clean text extraction using readability-lxml
-3. **LLM Fallback** - ScrapeGraphAI for complex cases
+```python
+import asyncio
+import os
 
-### For Products:
-1. **Structured Data** - JSON-LD Product schemas
-2. **Pattern Matching** - Regex-based price detection
-3. **LLM Fallback** - ScrapeGraphAI for complex product pages
+from omniscrape import extract
 
-### LLM Modes
-- **SD (Structured Data Only)**: JSON-LD + Readability, never calls LLM
-- **LLM (LLM Only)**: Directly uses LLM-based extraction
-- **AUTO (Smart Fallback)**: SD first; if content insufficient, fallback to LLM
 
-## 🔬 Advanced Features
+async def main() -> None:
+    result = await extract(
+        os.environ["TARGET_URL"],
+        kind="article",
+        mode="deterministic",
+    )
+    print(result.data.title)
+    print(result.metadata.sources)
 
-### Anti-Bot Measures
-- User agent rotation
-- Stealth JavaScript injection
-- Human behavior simulation
-- Resource blocking
-- Proxy rotation support
 
-### Token Usage Tracking
-Real-time monitoring of LLM token consumption:
+asyncio.run(main())
+```
+
+For connection reuse or dependency injection, use the async client:
+
+```python
+from omniscrape import OmniScrape
+
+async with OmniScrape() as client:
+    result = await client.extract(
+        target_url,
+        kind="product",
+        mode="deterministic",
+        render=False,
+    )
+```
+
+Omitting `mode` from either Python callable selects `deterministic`. An ambient
+`OPENAI_API_KEY` configures a lazy provider but does not import the optional SDK or
+construct a provider client during deterministic extraction. Internally created OpenAI
+clients are closed by `OmniScrape.aclose()`; an injected provider client remains
+caller-owned unless `owns_client=True` explicitly transfers ownership.
+
+### CLI
+
+```bash
+python -m omniscrape --help
+python -m omniscrape extract "$TARGET_URL" --kind product --mode auto --render --compact
+python -m omniscrape serve --host 127.0.0.1 --port 8000
+python -m omniscrape mcp
+```
+
+### HTTP API and web console
+
+```bash
+python -m omniscrape serve --host 127.0.0.1 --port 8000
+```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) for the responsive extraction
+console, or call the versioned endpoint:
+
+![OmniScrape web console](https://raw.githubusercontent.com/Z-MarkUs/OmniScrape/main/docs/assets/omniscrape-console.png)
+
+```bash
+curl --request POST http://127.0.0.1:8000/v1/extract \
+  --header "Content-Type: application/json" \
+  --data "{\"url\":\"$TARGET_URL\",\"kind\":\"article\",\"mode\":\"deterministic\",\"render\":false}"
+```
+
+Set `OMNISCRAPE_API_KEY` to require either `X-API-Key` or a Bearer token on
+extraction routes. The request `mode` field is optional and defaults to
+`deterministic`. The request `render` field returns `403 rendering_disabled` unless
+`OMNISCRAPE_ENABLE_API_RENDERING=true`; installation of the browser extra alone does not
+enable API rendering. Health remains available at `GET /health` and distinguishes the
+renderer policy (`renderer_enabled`) from runtime readiness (`renderer_available`).
+
+| Route | Purpose |
+| --- | --- |
+| `GET /` | Dependency-free web console |
+| `GET /health` | Typed service capability check |
+| `POST /v1/extract` | JSON request and result |
+| `POST /v1/extract/stream` | Named server-sent progress events ending in `complete` or `error` |
+| `GET /docs` | OpenAPI explorer generated by FastAPI |
+
+Unversioned extraction routes remain hidden legacy aliases. `/healthz` is a hidden
+container-health alias; clients should use `/health`.
+
+Renderer health is deliberately fail-closed:
+
+| `renderer_enabled` | `renderer_available` | Meaning |
+| --- | --- | --- |
+| `false` | `false` | API policy is off; no Chromium readiness probe runs |
+| `true` | `false` | Policy is on, but Playwright or Chromium is not ready |
+| `true` | `true` | Policy is on and Chromium passed its readiness probe |
+
+`renderer_available` is effective API readiness, not a package-installation signal.
+
+### Container
+
+The production image runs as an unprivileged user and expects API authentication when
+binding outside loopback. Set `OMNISCRAPE_API_KEY` in your shell or an untracked local
+`.env`, then start the local-only Compose profile:
+
+```bash
+docker compose up --build
+```
+
+Compose publishes only `127.0.0.1:8000`, drops Linux capabilities, enables
+`no-new-privileges`, and uses a read-only root filesystem with a bounded temporary
+filesystem. The checked-in image installs neither the browser extra nor Chromium, so it
+is deterministic-only unless you deliberately build a separate browser-enabled image;
+the stock Compose profile intentionally does not forward renderer settings, and setting
+the API-rendering flag alone will not make the renderer ready.
+
+If you build a browser-enabled deployment, run the browser-enabled API in a dedicated
+container or VM isolated from sensitive workloads and apply external CPU, memory, and
+process limits (for example, Docker or orchestrator CPU/memory/PID quotas). Application
+semaphores, timeouts, and Chromium flags bound normal work but are not substitutes for
+OS-enforced isolation. Do not expose API rendering as a general-purpose public service;
+restrict its callers and targets to a trusted, authorized set.
+
+### MCP
+
+Install the `mcp` extra and launch a stdio server:
+
+```bash
+python -m omniscrape mcp
+```
+
+The server advertises one focused tool, `extract`, with `url`, `kind`, `mode`,
+and `render` arguments. Its schema defaults `mode` to `deterministic`; agent
+integrations can explicitly select `auto` or `llm` only when provider-backed
+processing was authorized.
+
+## Result contract
+
+Every successful surface returns the same discriminated article or product payload and
+auditable execution metadata. Missing source facts remain `null`; OmniScrape does not
+invent them.
+
 ```json
 {
-  "_llm_usage": {
-    "prompt_tokens": 150,
-    "completion_tokens": 300,
-    "total_tokens": 450,
-    "model": "gpt-4o-mini"
+  "success": true,
+  "url": "https://authorized.example/story",
+  "final_url": "https://authorized.example/story",
+  "kind": "article",
+  "mode": "deterministic",
+  "data": {
+    "kind": "article",
+    "url": "https://authorized.example/story",
+    "title": "Example title",
+    "author": "Example author",
+    "text": "Extracted source text",
+    "images": []
+  },
+  "metadata": {
+    "sources": ["json-ld", "readability"],
+    "content_bytes": 1842,
+    "redirect_count": 0,
+    "rendered": false,
+    "completeness_score": 0.9
   }
 }
 ```
 
-### Mobile Fallback
-- Generic mobile retry for insufficient content
-- Site-specific mobile URL mapping (e.g., 36kr)
+The values above illustrate the schema; measured metadata is derived from each real run.
+Provider token usage is included only when the provider reports it—never estimated or
+randomly generated.
 
-## 🧪 Development
+## Security model
 
-### Running Tests
+OmniScrape treats a URL as untrusted input and fetched HTML as untrusted data.
+
+| Threat | Control |
+| --- | --- |
+| SSRF through literal IPs or DNS | Reject loopback, private, link-local, reserved, multicast, and non-global destinations |
+| SSRF through redirects or rebinding | Revalidate every redirect, connect HTTP directly to a validated IP while preserving Host/SNI, and pin Chromium's same-origin hostname |
+| Credential smuggling | Reject URLs containing user information |
+| Resource exhaustion | Bound request-body/connect/read/render/queue time, redirect and request counts, deterministic markup structure, aggregate renderer transfer bytes, final DOM size, image count, and concurrent work; require external CPU/memory/process quotas for browser deployments |
+| Accidental provider use | Deterministic default, explicit modes, optional dependency, and visible provider metadata |
+| Secret leakage | Environment-only credentials, redacted errors, secret scanning, push protection, and a documented response process |
+| Unsafe service exposure | Loopback CLI default, optional constant-time API-key checks, non-root read-only container |
+| Target-controlled JavaScript | API rendering disabled by default, trusted-target-only enablement guidance, same-origin egress policy, and external browser isolation |
+| Untrusted output in the demo UI | Render result data as text rather than injecting returned HTML |
+
+See [SECURITY.md](https://github.com/Z-MarkUs/OmniScrape/blob/main/SECURITY.md) for
+private reporting and safe-research scope.
+
+## Verification
+
+All ordinary tests are fixture-backed and avoid paid services and arbitrary live targets.
+
 ```bash
-# Run all tests
-pytest tests/
+python -m pip install -e ".[dev]"
 
-# Run specific test categories
-pytest tests/unit/          # Unit tests
-pytest tests/integration/   # Integration tests
+python -m pytest -m "not live"
+python -m ruff check src tests benchmarks
+python -m ruff format --check src tests benchmarks
+python -m mypy src/omniscrape
+python -m bandit -q -r src/omniscrape
+python -m pip_audit --skip-editable
+python -m build
 ```
 
-### Code Quality
+Or run the main local merge gate:
+
 ```bash
-# Format code
-black src/
-
-# Lint code
-flake8 src/
-
-# Type checking
-mypy src/
+make check
 ```
 
-## 🚀 Deployment
+The release gate enforces at least 90% combined statement-and-branch coverage. It also
+runs controlled, loopback-only real-Chromium regressions when the browser test extra is
+available. Ruff, strict mypy, Bandit, dependency audits, skill validation, and
+wheel/source-archive validation are separate blocking gates.
 
-### Docker
+CI repeats linting, strict type checking, branch-coverage enforcement, package validation,
+dependency auditing, static security analysis, and a production container build across
+supported Python versions.
+
+## Reproducible benchmark
+
+The benchmark exercises the checked-in article and product fixtures with deterministic
+extractors only. It records the package version, Python and platform details, fixture
+hashes, iteration count, throughput, and distribution statistics in machine-readable
+JSON.
+
 ```bash
-docker build -t omniscrape .
-docker run -p 8000:8000 -e OPENAI_API_KEY=your_key omniscrape
+python benchmarks/run.py --iterations 100 --output benchmarks/results/latest.json
 ```
 
-### Production
+Fixture results are a regression signal, not a promise about arbitrary websites. The
+benchmark command, corpus, environment, and correctness tests must remain identical
+before describing a performance change.
+
+## Project skills for Codex and Claude Code
+
+The canonical project skill lives at `.agents/skills/omniscrape/SKILL.md`; a portable
+byte-identical copy lives at `.claude/skills/omniscrape/SKILL.md`.
+
+- In Codex, invoke `$omniscrape` or let the skill description route relevant work.
+- In Claude Code, invoke `/omniscrape`.
+- The skill defaults to offline fixtures, deterministic mode, and full verification.
+- It explicitly forbids access-control bypasses, secret handling in commands, invented
+  live targets, and unverified performance claims.
+
+After editing portable skill content:
+
 ```bash
-uvicorn src.api.api:app --host 0.0.0.0 --port 8000 --workers 4
+python scripts/sync_agent_skills.py
+python scripts/sync_agent_skills.py --check
 ```
 
-## 📊 Monitoring
+Codex-specific UI metadata stays under `.agents`; only portable files are mirrored.
 
-### Health & Status
-- **Status UI**: `GET /status` — OpenAI-like status with RSS incidents
-- **Health JSON**: `GET /health.json` — service checks and system metrics
+## Repository map
 
-### Metrics
-- Response times and throughput
-- Extraction success rates
-- Token usage statistics
-- Error tracking and analysis
+```text
+.
+├── .agents/skills/omniscrape/   # canonical Codex project skill
+├── .claude/skills/omniscrape/   # synchronized Claude Code skill
+├── .github/                     # CI and dependency updates
+├── benchmarks/                  # fixture-backed benchmark and JSON results
+├── docs/assets/                 # repository visuals
+├── scripts/                     # skill synchronization
+├── src/omniscrape/
+│   ├── extractors/              # structured, readability, and heuristic layers
+│   ├── providers/               # optional provider protocol and OpenAI adapter
+│   ├── web/                     # dependency-free browser console
+│   ├── api.py                   # FastAPI factory and SSE surface
+│   ├── fetcher.py               # bounded HTTP and Playwright fetching
+│   ├── pipeline.py              # deterministic / auto / llm orchestration
+│   └── security.py              # URL and address policy
+└── tests/                       # offline contract, security, and regression tests
+```
 
-## 🤝 Contributing
+## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+Read [CONTRIBUTING.md](https://github.com/Z-MarkUs/OmniScrape/blob/main/CONTRIBUTING.md),
+add an offline regression fixture for behavior
+changes, and keep every public surface consistent when the shared result contract moves.
+Security reports belong in GitHub's private vulnerability-reporting flow, not a public
+issue.
 
-## 📄 License
+## Migrating from the prototype
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Version 0.2 replaces the experimental multi-route server with one supported extraction
+contract. Use `/health` instead of `/health.json`; `/status*`, `/monitor`, `/crawl*`,
+`/crawler`, and `/labs*` are intentionally removed. The supported unversioned
+`/extract` and `/extract-stream` aliases remain, but new integrations should use the
+versioned `/v1/extract` routes.
 
-## 🙏 Acknowledgments
+## License
 
-- **ScrapeGraphAI** - LLM-powered extraction graphs
-- **Playwright** - Browser automation
-- **FastAPI** - Modern web framework
-- **OpenAI** - Language model services
-
+[MIT](https://github.com/Z-MarkUs/OmniScrape/blob/main/LICENSE) © Hehan Zhao.

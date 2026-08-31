@@ -1,0 +1,48 @@
+{
+  "cases": [
+    {
+      "iterations": 100,
+      "max_ms": 1.688,
+      "median_ms": 1.16065,
+      "min_ms": 1.0588,
+      "name": "structured_article",
+      "p95_ms": 1.5565,
+      "result_digest": "f245b1af0c79505f",
+      "throughput_ops_per_second": 833.683,
+      "warmup_iterations": 10
+    },
+    {
+      "iterations": 100,
+      "max_ms": 1.5719,
+      "median_ms": 0.8974,
+      "min_ms": 0.8267,
+      "name": "structured_product",
+      "p95_ms": 1.29143,
+      "result_digest": "f6af6b6a538045d3",
+      "throughput_ops_per_second": 1037.567,
+      "warmup_iterations": 10
+    }
+  ],
+  "dependency_versions": {
+    "beautifulsoup4": "4.15.0",
+    "fastapi": "0.141.1",
+    "httpx": "0.28.1",
+    "lxml": "6.1.2",
+    "pydantic": "2.13.5",
+    "readability-lxml": "0.9",
+    "typer": "0.27.2",
+    "uvicorn": "0.52.4"
+  },
+  "fixture_policy": "synthetic-offline",
+  "fixture_sha256": {
+    "article.html": "5065d49332ccca21ab3ae6771189ea57c4bbf9443a53d415a7f891a6bb8b5133",
+    "product.html": "53709cb32cbabe0be267d818bc3924f2d2980229321d609c57e3381fcba0abb9"
+  },
+  "generated_at": "2026-08-31T11:55:32.438447+00:00",
+  "omniscrape_version": "0.2.0",
+  "platform": "Windows",
+  "python_implementation": "CPython",
+  "python_version": "3.12.13",
+  "schema_version": 1,
+  "tool": "omniscrape-offline-benchmark"
+}

@@ -1,0 +1,202 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m ruff check src tests benchmarks scripts
+      - run: python -m ruff format --check src tests benchmarks scripts
+      - run: python -m mypy src/omniscrape
+      - run: python scripts/sync_agent_skills.py --check
+
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - name: Offline tests with coverage
+        run: python -m pytest --cov-fail-under=90
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: matrix.python-version == '3.12'
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: error
+
+  browser-security:
+    name: Browser policy (Playwright 1.48 floor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]" "playwright==1.48.0"
+      - run: python -m playwright install --with-deps chromium
+      - name: Real Chromium SSRF and compatibility regressions
+        run: python -m pytest tests/test_browser_security.py --no-cov
+
+  build:
+    name: Build distributions and container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - name: Verify distribution contents
+        shell: bash
+        run: |
+          python - <<'PY'
+          import pathlib
+          import tarfile
+          import zipfile
+
+          distributions = sorted(pathlib.Path("dist").iterdir())
+          assert distributions, "build produced no distributions"
+
+          def validate(names: list[str], artifact: pathlib.Path) -> None:
+              normalized = [name.replace("\\", "/") for name in names]
+              forbidden = [
+                  name for name in normalized
+                  if "__pycache__" in name
+                  or name.endswith((".pyc", ".pyo"))
+                  or pathlib.PurePosixPath(name).name in {".env", ".DS_Store"}
+              ]
+              assert not forbidden, f"{artifact.name} contains generated/private files: {forbidden}"
+              if artifact.suffix == ".whl":
+                  required = ("omniscrape/py.typed", "omniscrape/web/index.html")
+                  missing = [item for item in required if item not in normalized]
+                  assert not missing, f"{artifact.name} is missing package data: {missing}"
+              elif artifact.name.endswith(".tar.gz"):
+                  required = (
+                      "MANIFEST.in",
+                      "CHANGELOG.md",
+                      "CONTRIBUTING.md",
+                      "SECURITY.md",
+                      "benchmarks/run.py",
+                      "docs/assets/omniscrape-hero.svg",
+                      "scripts/sync_agent_skills.py",
+                      "tests/conftest.py",
+                      "tests/fixtures/article.html",
+                      "tests/fixtures/product.html",
+                      "tests/fixtures/redirect-target.html",
+                      "tests/fixtures/security.html",
+                      ".agents/skills/omniscrape/SKILL.md",
+                      ".claude/skills/omniscrape/SKILL.md",
+                  )
+                  missing = [
+                      item
+                      for item in required
+                      if not any(name.endswith(f"/{item}") for name in normalized)
+                  ]
+                  assert not missing, f"{artifact.name} is missing test support files: {missing}"
+
+          for artifact in distributions:
+              if artifact.suffix == ".whl":
+                  with zipfile.ZipFile(artifact) as archive:
+                      validate(archive.namelist(), artifact)
+              elif artifact.name.endswith(".tar.gz"):
+                  with tarfile.open(artifact, "r:gz") as archive:
+                      validate(archive.getnames(), artifact)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
+      - name: Build production image
+        run: docker build --tag omniscrape:ci .
+      - name: Smoke-test production image
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="omniscrape-ci-smoke"
+
+          cleanup() {
+            docker rm --force "$container" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker run --detach --name "$container" \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --env OMNISCRAPE_API_KEY=ci-smoke-only \
+            --env OMNISCRAPE_ALLOWED_HOSTS=127.0.0.1 \
+            --publish 127.0.0.1:18000:8000 \
+            omniscrape:ci
+
+          for _attempt in {1..30}; do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:18000/healthz >/dev/null; then
+              exit 0
+            fi
+            if ! docker inspect --format '{{.State.Running}}' "$container" \
+              | grep --quiet --extended-regexp '^true$'; then
+              docker logs "$container"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          docker logs "$container"
+          exit 1
+
+  security:
+    name: Security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev,browser,llm,mcp]"
+      - name: Audit runtime dependency resolution
+        run: python -m pip_audit .
+      - name: Audit development toolchain
+        run: python -m pip_audit --skip-editable
+      - name: Static security analysis
+        run: python -m bandit -q -r src/omniscrape

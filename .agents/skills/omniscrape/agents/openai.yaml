@@ -1,0 +1,4 @@
+interface:
+  display_name: "OmniScrape"
+  short_description: "Run and improve OmniScrape safely"
+  default_prompt: "Use $omniscrape to test and improve this OmniScrape change with offline fixtures."

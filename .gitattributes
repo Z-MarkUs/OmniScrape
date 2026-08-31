@@ -1,18 +1,13 @@
-[project]
-name = "universal-scraper"
-version = "0.1.0"
-requires-python = ">=3.10"
-dependencies = [
-  "fastapi", "uvicorn[standard]",
-  "httpx>=0.27.0", "tenacity",
-  "playwright>=1.47.0",
-  "readability-lxml", "lxml", "beautifulsoup4",
-  "trafilatura", "extruct", "w3lib", "python-dateutil",
-  "pydantic>=2.7.0", "pydantic-settings",
-  "scrapegraphai>=1.6.0",         # open-source extraction brain
-  "tiktoken",                      # optional: token budget checks
-  "orjson"
-]
+* text=auto eol=lf
 
-[tool.uvicorn]
-factory = false
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+*.gif binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.zip binary

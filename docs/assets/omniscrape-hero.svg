@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">OmniScrape secure hybrid extraction pipeline</title>
+  <desc id="desc">A dark technical illustration showing a URL moving through guard, fetch, parse, optional AI, and validated JSON stages.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="0.55" stop-color="#0b1b2d"/>
+      <stop offset="1" stop-color="#10182b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="0.5" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#818cf8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="70%" cy="45%" r="60%">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#020617" flood-opacity="0.65"/>
+    </filter>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#94a3b8" stroke-opacity="0.055"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="520" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="520" rx="28" fill="url(#grid)"/>
+  <rect width="1200" height="520" rx="28" fill="url(#glow)"/>
+  <circle cx="1030" cy="74" r="135" fill="#818cf8" opacity="0.07" filter="url(#soft)"/>
+  <circle cx="645" cy="470" r="180" fill="#34d399" opacity="0.055" filter="url(#soft)"/>
+
+  <g transform="translate(70 74)">
+    <g aria-label="OmniScrape logo">
+      <rect x="0" y="0" width="64" height="64" rx="18" fill="#0f2434" stroke="#34d399" stroke-opacity="0.55"/>
+      <path d="M18 21h28M18 32h18M18 43h24" stroke="url(#accent)" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="46" cy="32" r="8" fill="none" stroke="#22d3ee" stroke-width="3"/>
+      <path d="m52 38 7 7" stroke="#818cf8" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text x="84" y="44" fill="#f8fafc" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="42" font-weight="750" letter-spacing="-1.2">OmniScrape</text>
+    <rect x="0" y="93" width="402" height="4" rx="2" fill="url(#accent)"/>
+    <text x="0" y="145" fill="#dbeafe" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="25" font-weight="600">Extract facts. Escalate intelligently.</text>
+    <text x="0" y="181" fill="#94a3b8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17">Secure deterministic parsing with optional</text>
+    <text x="0" y="207" fill="#94a3b8" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17">browser rendering and structured AI fallback.</text>
+
+    <g transform="translate(0 256)" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="650">
+      <g><rect width="128" height="38" rx="19" fill="#0f2a2b" stroke="#34d399" stroke-opacity="0.45"/><text x="64" y="24" text-anchor="middle" fill="#6ee7b7">SSRF-hardened</text></g>
+      <g transform="translate(140 0)"><rect width="100" height="38" rx="19" fill="#0b2834" stroke="#22d3ee" stroke-opacity="0.45"/><text x="50" y="24" text-anchor="middle" fill="#67e8f9">Typed API</text></g>
+      <g transform="translate(252 0)"><rect width="116" height="38" rx="19" fill="#1b203e" stroke="#818cf8" stroke-opacity="0.5"/><text x="58" y="24" text-anchor="middle" fill="#a5b4fc">Agent-ready</text></g>
+    </g>
+  </g>
+
+  <g transform="translate(535 112)" filter="url(#shadow)" font-family="Inter,Segoe UI,Arial,sans-serif">
+    <rect width="595" height="312" rx="24" fill="#081522" stroke="#334155" stroke-opacity="0.72"/>
+    <g transform="translate(28 28)">
+      <circle cx="7" cy="7" r="6" fill="#fb7185"/>
+      <circle cx="29" cy="7" r="6" fill="#fbbf24"/>
+      <circle cx="51" cy="7" r="6" fill="#34d399"/>
+      <text x="78" y="13" fill="#64748b" font-size="13" font-weight="600">HYBRID PIPELINE / TRACE 9F3A</text>
+    </g>
+
+    <g transform="translate(28 80)">
+      <path d="M62 46H474" stroke="#1e3a4d" stroke-width="4" stroke-linecap="round"/>
+      <path d="M62 46H474" stroke="url(#accent)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 9" opacity="0.9"/>
+
+      <g transform="translate(0 10)"><rect width="92" height="72" rx="14" fill="#0c2230" stroke="#22d3ee" stroke-opacity="0.45"/><text x="46" y="31" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">INPUT</text><text x="46" y="52" text-anchor="middle" fill="#cbd5e1" font-size="14">URL</text></g>
+      <g transform="translate(112 10)"><rect width="92" height="72" rx="14" fill="#0d2728" stroke="#34d399" stroke-opacity="0.48"/><text x="46" y="31" text-anchor="middle" fill="#6ee7b7" font-size="12" font-weight="700">GUARD</text><text x="46" y="52" text-anchor="middle" fill="#cbd5e1" font-size="14">DNS + IP</text></g>
+      <g transform="translate(224 10)"><rect width="92" height="72" rx="14" fill="#0c2230" stroke="#22d3ee" stroke-opacity="0.45"/><text x="46" y="31" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">FETCH</text><text x="46" y="52" text-anchor="middle" fill="#cbd5e1" font-size="14">HTTP / JS</text></g>
+      <g transform="translate(336 10)"><rect width="92" height="72" rx="14" fill="#161d38" stroke="#818cf8" stroke-opacity="0.5"/><text x="46" y="31" text-anchor="middle" fill="#a5b4fc" font-size="12" font-weight="700">PARSE</text><text x="46" y="52" text-anchor="middle" fill="#cbd5e1" font-size="14">SD + Text</text></g>
+      <g transform="translate(448 10)"><rect width="92" height="72" rx="14" fill="#1b1936" stroke="#c084fc" stroke-opacity="0.5"/><text x="46" y="31" text-anchor="middle" fill="#d8b4fe" font-size="12" font-weight="700">OPTIONAL</text><text x="46" y="52" text-anchor="middle" fill="#cbd5e1" font-size="14">AI</text></g>
+
+      <g transform="translate(0 116)">
+        <rect width="540" height="86" rx="15" fill="#07111d" stroke="#1e293b"/>
+        <text x="18" y="27" fill="#64748b" font-size="12">RESULT</text>
+        <text x="18" y="53" fill="#34d399" font-size="14" font-weight="700">validated_json</text>
+        <text x="151" y="53" fill="#475569" font-size="14">•</text>
+        <text x="168" y="53" fill="#cbd5e1" font-size="14">method: deterministic</text>
+        <text x="353" y="53" fill="#475569" font-size="14">•</text>
+        <text x="370" y="53" fill="#cbd5e1" font-size="14">schema checked</text>
+        <rect x="18" y="66" width="504" height="4" rx="2" fill="#172554"/>
+        <rect x="18" y="66" width="436" height="4" rx="2" fill="url(#accent)"/>
+      </g>
+    </g>
+  </g>
+</svg>

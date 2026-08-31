@@ -1,29 +1,117 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "omniscrape"
-version = "0.1.0"
+name = "omniscrape-zmarkus"
+version = "0.2.0"
+description = "Secure hybrid web extraction with deterministic parsing and optional browser and LLM fallbacks."
+readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Hehan Zhao" }]
+keywords = [
+  "web-scraping",
+  "structured-data",
+  "fastapi",
+  "playwright",
+  "llm",
+  "mcp",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
 dependencies = [
-  "fastapi", "uvicorn[standard]",
-  "httpx>=0.27.0", "tenacity",
-  "playwright>=1.47.0",
-  "readability-lxml", "lxml", "beautifulsoup4",
-  "trafilatura", "extruct", "w3lib", "python-dateutil",
-  "pydantic>=2.7.0", "pydantic-settings",
-  "scrapegraphai>=1.6.0",         # open-source extraction brain
-  "tiktoken",                      # optional: token budget checks
-  "orjson",
-  "python-dotenv",
-  "psutil"                         # system metrics for health check
+  "beautifulsoup4>=4.12,<5",
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "lxml>=5,<7",
+  "pydantic>=2.9,<3",
+  "readability-lxml>=0.8.1,<1",
+  "typer>=0.15,<1",
+  "uvicorn[standard]>=0.30,<1",
 ]
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
-exclude = ["old*", "tests*", "docs*", "examples*", "config*"]
+[project.optional-dependencies]
+browser = ["playwright>=1.48,<2"]
+llm = ["openai>=2,<3"]
+mcp = ["mcp>=1.8,<2"]
+dev = [
+  "bandit>=1.8,<2",
+  "build>=1.2,<2",
+  "mypy>=1.13,<2",
+  "pip-audit>=2.7,<3",
+  "pytest>=9.0.3,<10",
+  "pytest-asyncio>=1.3,<2",
+  "pytest-cov>=7,<8",
+  "pytest-httpx>=0.36.2,<1",
+  "ruff>=0.8,<1",
+  "twine>=7,<8",
+]
 
-[tool.uvicorn]
-factory = false
+[project.scripts]
+omniscrape = "omniscrape.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/Z-MarkUs/OmniScrape"
+Documentation = "https://github.com/Z-MarkUs/OmniScrape#readme"
+Issues = "https://github.com/Z-MarkUs/OmniScrape/issues"
+Source = "https://github.com/Z-MarkUs/OmniScrape"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["omniscrape*"]
+
+[tool.setuptools.package-data]
+omniscrape = ["py.typed", "web/*.html", "web/*.css", "web/*.js"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.pyc", "__pycache__/*"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers --cov=omniscrape --cov-report=term-missing --cov-report=xml"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+  "browser: requires the optional Playwright dependency and Chromium binary",
+  "integration: exercises multiple package layers without using paid services",
+  "live: requires explicit authorization and external network access",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["omniscrape"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "C4", "RUF"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["omniscrape"]
+warn_unreachable = true

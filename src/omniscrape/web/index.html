@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="OmniScrape safe, typed web extraction demo">
+    <title>OmniScrape — Extract the web, predictably</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23c9ff4a'/%3E%3Cpath d='M32 14c-11 0-18 7-18 18s7 18 18 18 18-7 18-18-7-18-18-18Zm0 9c5.5 0 9 3.5 9 9s-3.5 9-9 9-9-3.5-9-9 3.5-9 9-9Z' fill='%23090c0f'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="/assets/styles.css">
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="OmniScrape home">
+        <span class="brand-mark" aria-hidden="true">O</span>
+        <span>OmniScrape</span>
+      </a>
+      <nav aria-label="Project resources">
+        <a href="/docs">API docs</a>
+        <a href="/openapi.json">OpenAPI</a>
+        <a href="https://github.com/Z-MarkUs/OmniScrape" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="eyebrow"><span class="pulse" aria-hidden="true"></span> Safe by default</div>
+        <h1 id="hero-title">Extract the web.<br><span>Keep the evidence.</span></h1>
+        <p class="hero-copy">
+          Typed article and product data from structured markup, readability, and
+          deterministic DOM signals—with an optional AI fallback when the page is incomplete.
+        </p>
+        <div class="capabilities" aria-label="Service capabilities">
+          <span class="capability" id="service-status">Checking service…</span>
+          <span class="capability" id="llm-status">AI status unknown</span>
+          <span class="capability" id="renderer-status" aria-live="polite">Renderer status unknown</span>
+        </div>
+      </section>
+
+      <section class="workbench" aria-labelledby="workbench-title">
+        <div class="panel form-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="kicker">Live workbench</p>
+              <h2 id="workbench-title">Try an extraction</h2>
+            </div>
+            <span class="step-badge">01</span>
+          </div>
+
+          <form id="extract-form">
+            <div class="field full-width">
+              <label for="url">Trusted public webpage URL</label>
+              <input id="url" name="url" type="url" inputmode="url"
+                placeholder="https://example.com/story" required autocomplete="url">
+              <p class="field-help">Use only a public HTTP(S) target you own, control, or are explicitly authorized to access. Private and local networks are blocked.</p>
+            </div>
+
+            <fieldset class="field">
+              <legend>Content type</legend>
+              <div class="segmented">
+                <label><input type="radio" name="kind" value="article" checked><span>Article</span></label>
+                <label><input type="radio" name="kind" value="product"><span>Product</span></label>
+              </div>
+            </fieldset>
+
+            <div class="field">
+              <label for="mode">Extraction mode</label>
+              <select id="mode" name="mode">
+                <option value="deterministic" selected>Deterministic</option>
+                <option value="auto">Auto fallback</option>
+                <option value="llm">AI provider</option>
+              </select>
+            </div>
+
+            <div class="field full-width option-row">
+              <label class="switch-label is-disabled" for="render">
+                <input id="render" name="render" type="checkbox" disabled>
+                <span class="switch" aria-hidden="true"></span>
+                <span><strong>Render JavaScript</strong><small id="render-help" aria-live="polite">Checking server rendering policy…</small></span>
+              </label>
+            </div>
+
+            <div class="field full-width">
+              <label for="api-key">Service API key <span class="optional">optional</span></label>
+              <input id="api-key" name="api-key" type="password" autocomplete="off"
+                placeholder="Sent only with this request">
+            </div>
+
+            <div id="network-warning" class="notice" role="note">
+              <strong>Before you run:</strong>
+              <span id="warning-copy">The server will make an outbound request to the URL above.</span>
+            </div>
+
+            <button id="submit-button" class="primary-button" type="submit">
+              <span>Extract page</span><span aria-hidden="true">↗</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="panel output-panel" aria-labelledby="output-title">
+          <div class="panel-heading output-heading">
+            <div>
+              <p class="kicker">Typed response</p>
+              <h2 id="output-title">Result</h2>
+            </div>
+            <div class="output-actions">
+              <span id="request-state" class="request-state" aria-live="polite">Ready</span>
+              <button id="copy-button" class="icon-button" type="button" disabled>Copy JSON</button>
+            </div>
+          </div>
+          <div class="result-shell">
+            <div class="terminal-bar" aria-hidden="true"><i></i><i></i><i></i><span>response.json</span></div>
+            <pre id="result" tabindex="0" aria-label="Extraction JSON result"><code>{
+  "ready": true,
+  "hint": "Submit an authorized public URL to inspect the typed result."
+}</code></pre>
+          </div>
+          <p id="timing" class="timing" aria-live="polite">No request yet.</p>
+        </div>
+      </section>
+
+      <section class="how-it-works" aria-labelledby="layers-title">
+        <p class="kicker">Auditable by design</p>
+        <h2 id="layers-title">Three extraction layers. One typed contract.</h2>
+        <div class="layer-grid">
+          <article><span>01</span><h3>Structured signals</h3><p>JSON-LD, Schema.org microdata, Open Graph, and canonical metadata provide the highest-confidence fields.</p></article>
+          <article><span>02</span><h3>Readable content</h3><p>Article-focused parsing separates the real story from navigation, widgets, advertisements, and boilerplate.</p></article>
+          <article><span>03</span><h3>Measured fallback</h3><p>DOM heuristics complete the local pass. Auto mode calls the configured AI provider only below a visible completeness threshold.</p></article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Built for observable extraction, not mystery scraping.</span>
+      <span>OmniScrape <span id="version"></span></span>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Hostile Markup Safety Fixture</title>
+    <meta http-equiv="refresh" content="0;url=http://127.0.0.1/admin">
+    <base href="http://169.254.169.254/latest/">
+    <script>globalThis.fixtureScriptExecuted = true;</script>
+    <script type="application/ld+json">
+      {"@context":"https://schema.org","@type":"Article","headline":"Hostile Markup Safety Fixture"}
+    </script>
+  </head>
+  <body onload="globalThis.fixtureOnloadExecuted = true">
+    <article>
+      <h1>Hostile Markup Safety Fixture</h1>
+      <p>Ordinary visible text remains extractable without executing scripts.</p>
+      <a href="file:///etc/passwd">unsafe file link</a>
+      <a href="http://localhost:8000/private">unsafe loopback link</a>
+      <img src="http://[::1]/pixel" alt="unsafe loopback image">
+    </article>
+  </body>
+</html>
