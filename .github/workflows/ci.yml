@@ -37,7 +37,7 @@ jobs:
         run: >-
           python -m evaluation.run --check
           --output build/evaluation-scorecard.json
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: evaluation-scorecard-${{ github.run_attempt }}
           path: build/evaluation-scorecard.json
@@ -62,7 +62,7 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - name: Offline tests with coverage
         run: python -m pytest --cov-fail-under=90
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: matrix.python-version == '3.12'
         with:
           name: coverage-xml
@@ -167,7 +167,7 @@ jobs:
                   with tarfile.open(artifact, "r:gz") as archive:
                       validate(archive.getnames(), artifact)
           PY
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: python-distributions-${{ github.run_attempt }}
           path: dist/
